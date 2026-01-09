@@ -7,31 +7,20 @@ from datetime import datetime
 # Configuração de página
 st.set_page_config(page_title="Monitor de Ações", layout="wide")
 
-# Estado para controlar qual gráfico exibir via clique na tabela
 if "ticker_selecionado" not in st.session_state:
     st.session_state.ticker_selecionado = None
 
-# CSS para ajuste de layout e mobile
+# CSS Otimizado
 st.markdown("""
     <style>
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
     div[data-testid="stDataFrame"] > div { margin-bottom: -20px; }
-    div[data-testid="stPopoverBody"] { width: 750px !important; }
-    
-    [data-testid="stDataFrame"] td[data-col-index="0"] {
-        min-width: 280px !important;
-    }
-
-    @media screen and (max-width: 768px) {
-        [data-testid="stPopover"] button {
-            width: 100% !important;
-        }
-    }
+    [data-testid="stDataFrame"] td[data-col-index="0"] { min-width: 280px !important; }
     </style>
 """, unsafe_allow_html=True)
 
 # =========================================================
-# 1. DICIONÁRIOS DE DADOS
+# 1. DICIONÁRIOS E DADOS (CARREGAMENTO OTIMIZADO)
 # =========================================================
 
 COBERTURA = {
@@ -73,22 +62,23 @@ CARTEIRA_PESSOAL_QTD = {
     "UNIP3.SA": 2, "PRIO3.SA": 5, "VULC3.SA": 5, "PSSA3.SA": 5
 }
 
-# =========================================================
-# 2. FUNÇÕES DE APOIO
-# =========================================================
-
 st.sidebar.title("Navegação")
 aba_selecionada = st.sidebar.radio("Selecione o Monitor:", ["Cobertura", "Acompanhamentos", "Carteira pessoal"])
+
+# =========================================================
+# 2. FUNÇÕES DE APOIO COM CACHE AGRESSIVO
+# =========================================================
+
+@st.cache_data(ttl=300)
+def get_all_data(tickers):
+    if not tickers: return None
+    # Baixa apenas o essencial para reduzir latência
+    return yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False)
 
 def format_val(val, is_pct=False, sym=""):
     if pd.isna(val) or (val == 0 and not is_pct): return ""
     f = "{:,.2f}".format(val).replace(",", "X").replace(".", ",").replace("X", ".")
     return f"{f}%" if is_pct else (f"{sym}{f}" if sym else f)
-
-@st.cache_data(ttl=300)
-def get_data(tickers):
-    if not tickers: return None
-    return yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False)
 
 def calc_v(h, d=None, ytd=False):
     try:
@@ -107,6 +97,10 @@ def calc_v(h, d=None, ytd=False):
 # 3. RENDERIZAÇÃO
 # =========================================================
 
+# Pré-carregamento dos dados para evitar delay no clique
+all_tickers = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()))))
+master_data = get_all_data(all_tickers)
+
 @st.fragment(run_every=300)
 def render_monitor(aba_nome):
     st.title(f"Monitor: {aba_nome}")
@@ -115,9 +109,7 @@ def render_monitor(aba_nome):
     elif aba_nome == "Acompanhamentos": t_list = sorted(list(set([t for sub in SETORES_ACOMPANHAMENTO.values() for t in sub])))
     else: t_list = sorted(list(CARTEIRA_PESSOAL_QTD.keys()))
     
-    data = get_data(t_list)
-
-    # Gráfico (Bloqueio de Zoom Implementado)
+    # Gráfico Otimizado (Sem delay de rede no clique)
     if st.session_state.ticker_selecionado:
         t_sel = st.session_state.ticker_selecionado
         with st.container(border=True):
@@ -129,7 +121,8 @@ def render_monitor(aba_nome):
 
             p_sel = st.segmented_control("Período", options=["30D", "6M", "12M", "5A", "YTD"], default="12M", key=f"sc_p_master")
             
-            h_plot = data[t_sel] if len(t_list) > 1 else data
+            # Busca do Master Data (Já em cache)
+            h_plot = master_data[t_sel] if len(all_tickers) > 1 else master_data
             df_all = h_plot['Close'].dropna()
             
             if not df_all.empty:
@@ -140,43 +133,32 @@ def render_monitor(aba_nome):
                 
                 fig = go.Figure(go.Scatter(x=df_view.index, y=df_view.values, line=dict(color="#00FF00" if v_p >= 0 else "#FF4B4B", width=2.5)))
                 fig.update_layout(
-                    template="plotly_dark", height=380, margin=dict(l=0, r=40, t=20, b=0),
-                    yaxis=dict(side="right", fixedrange=True),
-                    xaxis=dict(fixedrange=True),
-                    dragmode=False, # Bloqueia seleção/zoom de área
-                    hovermode='x unified'
+                    template="plotly_dark", height=320, margin=dict(l=0, r=40, t=10, b=0),
+                    yaxis=dict(side="right", fixedrange=True), xaxis=dict(fixedrange=True),
+                    dragmode=False, hovermode='x unified'
                 )
-                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'staticPlot': False})
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    c1, c2, _ = st.columns([0.15, 0.2, 0.65])
-    with c1:
-        if st.button("Atualizar", key=f"btn_refresh_{aba_nome}"):
-            st.cache_data.clear()
-            st.rerun()
-    with c2:
-        with st.popover("Busca Direta"):
-            t_sel_pop = st.segmented_control("Ativo", options=t_list, key=f"sc_t_{aba_nome}")
-            if t_sel_pop:
-                st.session_state.ticker_selecionado = t_sel_pop
-                st.rerun()
+    # Botão de Refresh
+    if st.button("Atualizar Dados", key=f"btn_refresh_{aba_nome}"):
+        st.cache_data.clear()
+        st.rerun()
 
-    # Construção da Tabela
+    # Construção da Tabela (Foco em Velocidade)
     rows = []
     for t in t_list:
         try:
-            h = data[t] if len(t_list) > 1 else data
+            h = master_data[t]
             cl = h['Close'].dropna()
             p = float(cl.iloc[-1])
             row = {
                 "Ticker": t, "Moeda": "R$ " if ".SA" in t or t == "^BVSP" else "$ ",
                 "Preço": p, "Hoje %": ((p/cl.iloc[-2])-1)*100 if len(cl) > 1 else 0,
-                "30D %": calc_v(h, 21), "6M %": calc_v(h, 126),
-                "12M %": calc_v(h, 252), "YTD %": calc_v(h, ytd=True),
-                "5A %": calc_v(h, 1260), "is_h": False, "ValPos": 0.0
+                "30D %": calc_v(h, 21), "6M %": calc_v(h, 126), "12M %": calc_v(h, 252), 
+                "YTD %": calc_v(h, ytd=True), "5A %": calc_v(h, 1260), "is_h": False, "ValPos": 0.0
             }
             if aba_nome == "Cobertura":
-                alvo = COBERTURA[t]["Alvo"]
-                row.update({"Rec": COBERTURA[t]["Rec"], "Alvo": alvo, "Upside": (alvo/p - 1)*100 if alvo > 0 else 0})
+                alvo = COBERTURA[t]["Alvo"]; row.update({"Rec": COBERTURA[t]["Rec"], "Alvo": alvo, "Upside": (alvo/p - 1)*100 if alvo > 0 else 0})
             if aba_nome == "Carteira pessoal": row["ValPos"] = p * CARTEIRA_PESSOAL_QTD[t]
             rows.append(row)
         except: continue
@@ -185,7 +167,6 @@ def render_monitor(aba_nome):
     if aba_nome == "Carteira pessoal" and not df_raw.empty:
         df_raw["Peso %"] = (df_raw["ValPos"] / df_raw["ValPos"].sum()) * 100
         df_raw = df_raw.sort_values(by="Peso %", ascending=False)
-
     if aba_nome == "Acompanhamentos":
         final_rows = []
         for setor, ticks in SETORES_ACOMPANHAMENTO.items():
@@ -193,16 +174,13 @@ def render_monitor(aba_nome):
             final_rows.extend([r for r in rows if r["Ticker"] in ticks])
         df_raw = pd.DataFrame(final_rows)
 
-    if df_raw.empty: return
-
+    # Formatação de exibição
     df_v = df_raw.copy()
     pct_cols = ["Peso %", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %", "Upside"]
     for c in ["Preço", "Alvo"]:
-        if c in df_v.columns: 
-            df_v[c] = df_raw.apply(lambda r: format_val(r[c], sym=r["Moeda"]) if not r["is_h"] else "", axis=1)
+        if c in df_v.columns: df_v[c] = df_raw.apply(lambda r: format_val(r[c], sym=r["Moeda"]) if not r["is_h"] else "", axis=1)
     for c in pct_cols:
-        if c in df_v.columns:
-            df_v[c] = df_raw.apply(lambda r: format_val(r[c], is_pct=True) if not r["is_h"] else "", axis=1)
+        if c in df_v.columns: df_v[c] = df_raw.apply(lambda r: format_val(r[c], is_pct=True) if not r["is_h"] else "", axis=1)
 
     def style_r(row):
         orig = df_raw.loc[row.name]
@@ -220,15 +198,11 @@ def render_monitor(aba_nome):
         "Acompanhamentos": ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
     }
 
-    st.caption(f"Atualização: {datetime.now().strftime('%H:%M:%S')} (Auto-refresh 5min)")
-    
+    # Tabela de Alta Performance
     event = st.dataframe(
         df_v[cols_map[aba_nome]].style.apply(style_r, axis=1),
-        use_container_width=True,
-        hide_index=True,
-        on_select="rerun",
-        selection_mode="single-row",
-        height=(len(df_v) * 35) + 38
+        use_container_width=True, hide_index=True, on_select="rerun",
+        selection_mode="single-row", height=(len(df_v) * 35) + 38
     )
 
     if len(event.selection.rows) > 0:
