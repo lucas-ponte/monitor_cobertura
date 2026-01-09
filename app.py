@@ -7,28 +7,36 @@ from datetime import datetime
 # Configuração de página
 st.set_page_config(page_title="Monitor de Ações", layout="wide")
 
-# CSS para customização avançada
+# CSS e Injeção de JS para bloquear teclado no Safari Mobile
 st.markdown("""
     <style>
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
     div[data-testid="stDataFrame"] > div { margin-bottom: -20px; }
     div[data-testid="stPopoverBody"] { width: 750px !important; }
     
-    /* Ajuste da largura da coluna Ticker */
     [data-testid="stDataFrame"] td[data-col-index="0"] {
         min-width: 280px !important;
     }
 
-    /* Mobile: Bloqueio de teclado ao interagir com seletores */
-    input, select, textarea {
-        font-size: 16px !important; /* Evita zoom automático no iOS */
-    }
-    
-    /* Remove o foco visual que dispara o teclado em alguns browsers mobile */
-    .stSelectbox div[data-baseweb="select"] > div {
-        cursor: pointer;
+    /* Força o input do selectbox a não disparar teclado no mobile */
+    @media screen and (max-width: 768px) {
+        input {
+            pointer-events: none;
+        }
+        .stSelectbox div[data-baseweb="select"] {
+            pointer-events: auto;
+        }
     }
     </style>
+    
+    <script>
+    // Remove o foco automático de qualquer input que surja dinamicamente (Safari fix)
+    document.addEventListener('focusin', function(e) {
+        if (e.target.tagName === 'INPUT' && window.innerWidth < 768) {
+            e.target.blur();
+        }
+    }, True);
+    </script>
 """, unsafe_allow_html=True)
 
 # =========================================================
@@ -125,7 +133,7 @@ def render_monitor(aba_nome):
             st.rerun()
     with c2:
         with st.popover("Gráficos"):
-            # Para mobile, desativamos o label do selectbox para reduzir foco indesejado
+            # Otimização mobile: Selectbox limpo para evitar foco no Safari
             t_sel = st.selectbox("Ativo", options=sorted(list(set(t_list))), key=f"sb_{aba_nome}", label_visibility="collapsed")
             p_sel = st.segmented_control("Período", options=["30D", "6M", "12M", "5A", "YTD"], default="12M", key=f"sc_{aba_nome}")
             
@@ -134,11 +142,8 @@ def render_monitor(aba_nome):
                 df_all = h_plot['Close'].dropna()
                 if not df_all.empty:
                     map_p = {"30D": 21, "6M": 126, "12M": 252, "5A": 1260, "YTD": "ytd"}
-                    if map_p[p_sel] == "ytd":
-                        df_view = df_all.loc[f"{datetime.now().year}-01-01":]
-                    else:
-                        d_val = map_p[p_sel]
-                        df_view = df_all.iloc[-d_val:] if len(df_all) > d_val else df_all
+                    d_val = map_p[p_sel]
+                    df_view = df_all.loc[f"{datetime.now().year}-01-01":] if d_val == "ytd" else (df_all.iloc[-d_val:] if len(df_all) > d_val else df_all)
 
                     v_p = ((df_view.iloc[-1] / df_view.iloc[0]) - 1) * 100 if len(df_view) > 1 else 0.0
                     color_line = "#00FF00" if v_p >= 0 else "#FF4B4B"
@@ -150,16 +155,9 @@ def render_monitor(aba_nome):
                         template="plotly_dark", height=380, margin=dict(l=0, r=40, t=50, b=0),
                         xaxis=dict(showgrid=False), 
                         yaxis=dict(showgrid=True, gridcolor="#333", side="right", autorange=True),
-                        autosize=True,
-                        dragmode=False,
-                        hovermode='x unified' # Otimiza leitura no toque sem precisar clicar
+                        dragmode=False, hovermode='x unified'
                     )
-                    st.plotly_chart(fig, use_container_width=True, config={
-                        'displayModeBar': False, 
-                        'scrollZoom': False,
-                        'doubleClick': False,
-                        'showAxisDragHandles': False # Remove handles que disparam foco no mobile
-                    })
+                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False, 'staticPlot': False})
 
     # Construção da Tabela
     rows = []
@@ -218,14 +216,13 @@ def render_monitor(aba_nome):
                 styles[i] = 'color: #00FF00' if val > 0 else 'color: #FF4B4B' if val < 0 else ''
         return styles
 
-    if aba_nome == "Cobertura":
-        cols = ["Ticker", "Preço", "Rec", "Alvo", "Upside", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
-    elif aba_nome == "Carteira pessoal":
-        cols = ["Ticker", "Peso %", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
-    else:
-        cols = ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
+    cols_map = {
+        "Cobertura": ["Ticker", "Preço", "Rec", "Alvo", "Upside", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
+        "Carteira pessoal": ["Ticker", "Peso %", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
+        "Acompanhamentos": ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
+    }
 
     st.caption(f"Atualização: {datetime.now().strftime('%H:%M:%S')}")
-    st.dataframe(df_v[cols].style.apply(style_r, axis=1), use_container_width=True, hide_index=True, height=(len(df_v) * 35) + 38)
+    st.dataframe(df_v[cols_map[aba_nome]].style.apply(style_r, axis=1), use_container_width=True, hide_index=True, height=(len(df_v) * 35) + 38)
 
 render_monitor(aba_selecionada)
