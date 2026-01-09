@@ -20,7 +20,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =========================================================
-# 1. DICIONÁRIOS E DADOS (CARREGAMENTO OTIMIZADO)
+# 1. DICIONÁRIOS E DADOS
 # =========================================================
 
 COBERTURA = {
@@ -66,13 +66,12 @@ st.sidebar.title("Navegação")
 aba_selecionada = st.sidebar.radio("Selecione o Monitor:", ["Cobertura", "Acompanhamentos", "Carteira pessoal"])
 
 # =========================================================
-# 2. FUNÇÕES DE APOIO COM CACHE AGRESSIVO
+# 2. FUNÇÕES DE APOIO
 # =========================================================
 
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
     if not tickers: return None
-    # Baixa apenas o essencial para reduzir latência
     return yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False)
 
 def format_val(val, is_pct=False, sym=""):
@@ -97,7 +96,6 @@ def calc_v(h, d=None, ytd=False):
 # 3. RENDERIZAÇÃO
 # =========================================================
 
-# Pré-carregamento dos dados para evitar delay no clique
 all_tickers = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()))))
 master_data = get_all_data(all_tickers)
 
@@ -109,7 +107,7 @@ def render_monitor(aba_nome):
     elif aba_nome == "Acompanhamentos": t_list = sorted(list(set([t for sub in SETORES_ACOMPANHAMENTO.values() for t in sub])))
     else: t_list = sorted(list(CARTEIRA_PESSOAL_QTD.keys()))
     
-    # Gráfico Otimizado (Sem delay de rede no clique)
+    # Gráfico
     if st.session_state.ticker_selecionado:
         t_sel = st.session_state.ticker_selecionado
         with st.container(border=True):
@@ -121,7 +119,6 @@ def render_monitor(aba_nome):
 
             p_sel = st.segmented_control("Período", options=["30D", "6M", "12M", "5A", "YTD"], default="12M", key=f"sc_p_master")
             
-            # Busca do Master Data (Já em cache)
             h_plot = master_data[t_sel] if len(all_tickers) > 1 else master_data
             df_all = h_plot['Close'].dropna()
             
@@ -139,12 +136,17 @@ def render_monitor(aba_nome):
                 )
                 st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    # Botão de Refresh
-    if st.button("Atualizar Dados", key=f"btn_refresh_{aba_nome}"):
-        st.cache_data.clear()
-        st.rerun()
+    # Controles superiores
+    c1, c2 = st.columns([0.2, 0.8])
+    with c1:
+        if st.button("🔄 Atualizar", key=f"btn_refresh_{aba_nome}"):
+            st.cache_data.clear()
+            st.rerun()
+    with c2:
+        # A MENSAGEM DE ATUALIZAÇÃO VOLTOU AQUI
+        st.caption(f"Última atualização: **{datetime.now().strftime('%H:%M:%S')}** (Próxima em 5 min)")
 
-    # Construção da Tabela (Foco em Velocidade)
+    # Construção da Tabela
     rows = []
     for t in t_list:
         try:
@@ -174,7 +176,6 @@ def render_monitor(aba_nome):
             final_rows.extend([r for r in rows if r["Ticker"] in ticks])
         df_raw = pd.DataFrame(final_rows)
 
-    # Formatação de exibição
     df_v = df_raw.copy()
     pct_cols = ["Peso %", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %", "Upside"]
     for c in ["Preço", "Alvo"]:
@@ -198,7 +199,6 @@ def render_monitor(aba_nome):
         "Acompanhamentos": ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
     }
 
-    # Tabela de Alta Performance
     event = st.dataframe(
         df_v[cols_map[aba_nome]].style.apply(style_r, axis=1),
         use_container_width=True, hide_index=True, on_select="rerun",
@@ -213,5 +213,3 @@ def render_monitor(aba_nome):
             st.rerun()
 
 render_monitor(aba_selecionada)
-
-
