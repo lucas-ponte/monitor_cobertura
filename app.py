@@ -7,36 +7,25 @@ from datetime import datetime
 # Configuração de página
 st.set_page_config(page_title="Monitor de Ações", layout="wide")
 
-# CSS e Injeção de JS para bloquear teclado no Safari Mobile
+# CSS para ajuste de layout e mobile
 st.markdown("""
     <style>
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
     div[data-testid="stDataFrame"] > div { margin-bottom: -20px; }
     div[data-testid="stPopoverBody"] { width: 750px !important; }
     
+    /* Largura da coluna Ticker */
     [data-testid="stDataFrame"] td[data-col-index="0"] {
         min-width: 280px !important;
     }
 
-    /* Força o input do selectbox a não disparar teclado no mobile */
+    /* Impede zoom e comportamentos de input no mobile */
     @media screen and (max-width: 768px) {
-        input {
-            pointer-events: none;
-        }
-        .stSelectbox div[data-baseweb="select"] {
-            pointer-events: auto;
+        [data-testid="stPopover"] button {
+            width: 100% !important;
         }
     }
     </style>
-    
-    <script>
-    // Remove o foco automático de qualquer input que surja dinamicamente (Safari fix)
-    document.addEventListener('focusin', function(e) {
-        if (e.target.tagName === 'INPUT' && window.innerWidth < 768) {
-            e.target.blur();
-        }
-    }, True);
-    </script>
 """, unsafe_allow_html=True)
 
 # =========================================================
@@ -120,9 +109,9 @@ def calc_v(h, d=None, ytd=False):
 def render_monitor(aba_nome):
     st.title(f"Monitor: {aba_nome}")
     
-    if aba_nome == "Cobertura": t_list = list(COBERTURA.keys())
-    elif aba_nome == "Acompanhamentos": t_list = [t for sub in SETORES_ACOMPANHAMENTO.values() for t in sub]
-    else: t_list = list(CARTEIRA_PESSOAL_QTD.keys())
+    if aba_nome == "Cobertura": t_list = sorted(list(COBERTURA.keys()))
+    elif aba_nome == "Acompanhamentos": t_list = sorted(list(set([t for sub in SETORES_ACOMPANHAMENTO.values() for t in sub])))
+    else: t_list = sorted(list(CARTEIRA_PESSOAL_QTD.keys()))
     
     data = get_data(t_list)
 
@@ -133,9 +122,12 @@ def render_monitor(aba_nome):
             st.rerun()
     with c2:
         with st.popover("Gráficos"):
-            # Otimização mobile: Selectbox limpo para evitar foco no Safari
-            t_sel = st.selectbox("Ativo", options=sorted(list(set(t_list))), key=f"sb_{aba_nome}", label_visibility="collapsed")
-            p_sel = st.segmented_control("Período", options=["30D", "6M", "12M", "5A", "YTD"], default="12M", key=f"sc_{aba_nome}")
+            # MUDANÇA CHAVE: Segmented control em vez de Selectbox para matar o teclado
+            st.write("**Selecione o Ativo:**")
+            t_sel = st.segmented_control("Ativo", options=t_list, key=f"sc_t_{aba_nome}", label_visibility="collapsed")
+            
+            st.write("**Período:**")
+            p_sel = st.segmented_control("Período", options=["30D", "6M", "12M", "5A", "YTD"], default="12M", key=f"sc_p_{aba_nome}")
             
             if t_sel:
                 h_plot = data[t_sel] if len(t_list) > 1 else data
@@ -143,9 +135,13 @@ def render_monitor(aba_nome):
                 if not df_all.empty:
                     map_p = {"30D": 21, "6M": 126, "12M": 252, "5A": 1260, "YTD": "ytd"}
                     d_val = map_p[p_sel]
-                    df_view = df_all.loc[f"{datetime.now().year}-01-01":] if d_val == "ytd" else (df_all.iloc[-d_val:] if len(df_all) > d_val else df_all)
+                    
+                    if d_val == "ytd":
+                        df_view = df_all.loc[f"{datetime.now().year}-01-01":]
+                    else:
+                        df_view = df_all.iloc[-d_val:] if len(df_all) > d_val else df_all
 
-                    v_p = ((df_view.iloc[-1] / df_view.iloc[0]) - 1) * 100 if len(df_view) > 1 else 0.0
+                    v_p = float(((df_view.iloc[-1] / df_view.iloc[0]) - 1) * 100) if len(df_view) > 1 else 0.0
                     color_line = "#00FF00" if v_p >= 0 else "#FF4B4B"
 
                     fig = go.Figure()
@@ -157,7 +153,7 @@ def render_monitor(aba_nome):
                         yaxis=dict(showgrid=True, gridcolor="#333", side="right", autorange=True),
                         dragmode=False, hovermode='x unified'
                     )
-                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False, 'staticPlot': False})
+                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'staticPlot': True})
 
     # Construção da Tabela
     rows = []
@@ -226,3 +222,4 @@ def render_monitor(aba_nome):
     st.dataframe(df_v[cols_map[aba_nome]].style.apply(style_r, axis=1), use_container_width=True, hide_index=True, height=(len(df_v) * 35) + 38)
 
 render_monitor(aba_selecionada)
+
