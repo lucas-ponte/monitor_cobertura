@@ -117,7 +117,7 @@ def render_monitor(aba_nome):
     
     data = get_data(t_list)
 
-    # Lógica de Gráfico (via Seleção na Tabela ou Popover)
+    # Gráfico (Bloqueio de Zoom Implementado)
     if st.session_state.ticker_selecionado:
         t_sel = st.session_state.ticker_selecionado
         with st.container(border=True):
@@ -139,8 +139,14 @@ def render_monitor(aba_nome):
                 v_p = float(((df_view.iloc[-1] / df_view.iloc[0]) - 1) * 100)
                 
                 fig = go.Figure(go.Scatter(x=df_view.index, y=df_view.values, line=dict(color="#00FF00" if v_p >= 0 else "#FF4B4B", width=2.5)))
-                fig.update_layout(template="plotly_dark", height=380, margin=dict(l=0, r=40, t=50, b=0), yaxis=dict(side="right"), hovermode='x unified')
-                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+                fig.update_layout(
+                    template="plotly_dark", height=380, margin=dict(l=0, r=40, t=20, b=0),
+                    yaxis=dict(side="right", fixedrange=True),
+                    xaxis=dict(fixedrange=True),
+                    dragmode=False, # Bloqueia seleção/zoom de área
+                    hovermode='x unified'
+                )
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'staticPlot': False})
 
     c1, c2, _ = st.columns([0.15, 0.2, 0.65])
     with c1:
@@ -216,7 +222,6 @@ def render_monitor(aba_nome):
 
     st.caption(f"Atualização: {datetime.now().strftime('%H:%M:%S')} (Auto-refresh 5min)")
     
-    # RENDERIZAÇÃO DA TABELA COM SELEÇÃO
     event = st.dataframe(
         df_v[cols_map[aba_nome]].style.apply(style_r, axis=1),
         use_container_width=True,
@@ -226,7 +231,6 @@ def render_monitor(aba_nome):
         height=(len(df_v) * 35) + 38
     )
 
-    # Processar o clique na linha
     if len(event.selection.rows) > 0:
         idx = event.selection.rows[0]
         ticker = df_raw.iloc[idx]["Ticker"]
