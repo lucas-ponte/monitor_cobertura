@@ -7,16 +7,26 @@ from datetime import datetime
 # Configuração de página
 st.set_page_config(page_title="Monitor de Ações", layout="wide")
 
-# CSS para customização
+# CSS para customização avançada
 st.markdown("""
     <style>
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
     div[data-testid="stDataFrame"] > div { margin-bottom: -20px; }
     div[data-testid="stPopoverBody"] { width: 750px !important; }
     
-    /* Ajuste da largura da coluna Ticker para não cortar nomes de segmentos */
+    /* Ajuste da largura da coluna Ticker */
     [data-testid="stDataFrame"] td[data-col-index="0"] {
         min-width: 280px !important;
+    }
+
+    /* Mobile: Bloqueio de teclado ao interagir com seletores */
+    input, select, textarea {
+        font-size: 16px !important; /* Evita zoom automático no iOS */
+    }
+    
+    /* Remove o foco visual que dispara o teclado em alguns browsers mobile */
+    .stSelectbox div[data-baseweb="select"] > div {
+        cursor: pointer;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -115,7 +125,8 @@ def render_monitor(aba_nome):
             st.rerun()
     with c2:
         with st.popover("Gráficos"):
-            t_sel = st.selectbox("Ativo", options=sorted(list(set(t_list))), key=f"sb_{aba_nome}")
+            # Para mobile, desativamos o label do selectbox para reduzir foco indesejado
+            t_sel = st.selectbox("Ativo", options=sorted(list(set(t_list))), key=f"sb_{aba_nome}", label_visibility="collapsed")
             p_sel = st.segmented_control("Período", options=["30D", "6M", "12M", "5A", "YTD"], default="12M", key=f"sc_{aba_nome}")
             
             if t_sel:
@@ -140,14 +151,14 @@ def render_monitor(aba_nome):
                         xaxis=dict(showgrid=False), 
                         yaxis=dict(showgrid=True, gridcolor="#333", side="right", autorange=True),
                         autosize=True,
-                        dragmode=False, # BLOQUEIA SELEÇÃO/BOX ZOOM
+                        dragmode=False,
+                        hovermode='x unified' # Otimiza leitura no toque sem precisar clicar
                     )
-                    # BLOQUEIA ZOOM DE SCROLL E DUPLO CLIQUE
                     st.plotly_chart(fig, use_container_width=True, config={
                         'displayModeBar': False, 
-                        'staticPlot': False, 
                         'scrollZoom': False,
-                        'doubleClick': False
+                        'doubleClick': False,
+                        'showAxisDragHandles': False # Remove handles que disparam foco no mobile
                     })
 
     # Construção da Tabela
@@ -218,5 +229,3 @@ def render_monitor(aba_nome):
     st.dataframe(df_v[cols].style.apply(style_r, axis=1), use_container_width=True, hide_index=True, height=(len(df_v) * 35) + 38)
 
 render_monitor(aba_selecionada)
-
-
