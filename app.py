@@ -3,21 +3,20 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
-import time
 
 # Configuração de página
 st.set_page_config(page_title="Monitor de Ações", layout="wide")
 
-# CSS para customização (Largura do Popover e ajuste da coluna Ticker)
+# CSS para customização
 st.markdown("""
     <style>
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
     div[data-testid="stDataFrame"] > div { margin-bottom: -20px; }
     div[data-testid="stPopoverBody"] { width: 750px !important; }
     
-    /* Ajuste para evitar que o texto dos segmentos seja cortado */
+    /* Ajuste da largura da coluna Ticker para não cortar nomes de segmentos */
     [data-testid="stDataFrame"] td[data-col-index="0"] {
-        min-width: 250px !important;
+        min-width: 280px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -138,10 +137,18 @@ def render_monitor(aba_nome):
                     fig.update_layout(
                         title=f"<b>{t_sel} | {v_p:.2f}%</b>",
                         template="plotly_dark", height=380, margin=dict(l=0, r=40, t=50, b=0),
-                        xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor="#333", side="right", autorange=True),
-                        autosize=True
+                        xaxis=dict(showgrid=False), 
+                        yaxis=dict(showgrid=True, gridcolor="#333", side="right", autorange=True),
+                        autosize=True,
+                        dragmode=False, # BLOQUEIA SELEÇÃO/BOX ZOOM
                     )
-                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+                    # BLOQUEIA ZOOM DE SCROLL E DUPLO CLIQUE
+                    st.plotly_chart(fig, use_container_width=True, config={
+                        'displayModeBar': False, 
+                        'staticPlot': False, 
+                        'scrollZoom': False,
+                        'doubleClick': False
+                    })
 
     # Construção da Tabela
     rows = []
