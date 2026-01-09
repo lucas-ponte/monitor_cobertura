@@ -1,8 +1,3 @@
-Para que o seu projeto seja profissional e facilite a manutenção (especialmente para um perfil **ISTJ** e **analista de equity research**), o README deve ser pragmático e direto.
-
-Crie um arquivo chamado `README.md` na raiz do seu repositório do GitHub e cole o conteúdo abaixo:
-
----
 
 # Monitor de Ações - Análise Fundamentalista
 
