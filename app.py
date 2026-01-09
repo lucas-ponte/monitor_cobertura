@@ -13,7 +13,7 @@ st.set_page_config(page_title="Monitor de Ações", layout="wide")
 # =========================================================
 MINHA_COBERTURA = {
     "AZZA3.SA": {"Rec": "Compra", "Alvo": 50.00},
-    "LRNE3.SA": {"Rec": "Compra", "Alvo": 23.00},
+    "LREN3.SA": {"Rec": "Compra", "Alvo": 23.00},
     "MGLU3.SA": {"Rec": "Neutro", "Alvo": 10.00},
     "MELI": {"Rec": "Compra", "Alvo": 2810.00},
     "ASAI3.SA": {"Rec": "Compra", "Alvo": 18.00},
@@ -139,3 +139,4 @@ if not df.empty:
     
     time.sleep(refresh_interval)
     st.rerun()
+
