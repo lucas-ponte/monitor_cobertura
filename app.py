@@ -111,12 +111,6 @@ def render_monitor(aba_nome):
     if st.session_state.ticker_selecionado:
         t_sel = st.session_state.ticker_selecionado
         with st.container(border=True):
-            col_t, col_close = st.columns([0.9, 0.1])
-            col_t.subheader(f"Análise: {t_sel}")
-            if col_close.button("✖", key="close_chart_master"):
-                st.session_state.ticker_selecionado = None
-                st.rerun()
-
             p_sel = st.segmented_control("Período", options=["30D", "6M", "12M", "5A", "YTD"], default="12M", key=f"sc_p_master")
             
             h_plot = master_data[t_sel] if len(all_tickers) > 1 else master_data
@@ -128,6 +122,9 @@ def render_monitor(aba_nome):
                 df_view = df_all.loc[f"{datetime.now().year}-01-01":] if d_val == "ytd" else (df_all.iloc[-d_val:] if len(df_all) > d_val else df_all)
                 v_p = float(((df_view.iloc[-1] / df_view.iloc[0]) - 1) * 100)
                 
+                # Título com variação
+                st.subheader(f"{t_sel} | {v_p:+.2f}%")
+                
                 fig = go.Figure(go.Scatter(x=df_view.index, y=df_view.values, line=dict(color="#00FF00" if v_p >= 0 else "#FF4B4B", width=2.5)))
                 fig.update_layout(
                     template="plotly_dark", height=320, margin=dict(l=0, r=40, t=10, b=0),
@@ -135,6 +132,10 @@ def render_monitor(aba_nome):
                     dragmode=False, hovermode='x unified'
                 )
                 st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+            
+            if st.button("Fechar Gráfico", key="close_chart_master"):
+                st.session_state.ticker_selecionado = None
+                st.rerun()
 
     # Controles superiores
     c1, c2 = st.columns([0.2, 0.8])
@@ -143,7 +144,6 @@ def render_monitor(aba_nome):
             st.cache_data.clear()
             st.rerun()
     with c2:
-        # A MENSAGEM DE ATUALIZAÇÃO VOLTOU AQUI
         st.caption(f"Última atualização: **{datetime.now().strftime('%H:%M:%S')}** (Próxima em 5 min)")
 
     # Construção da Tabela
