@@ -7,6 +7,10 @@ from datetime import datetime
 # Configuração de página
 st.set_page_config(page_title="Monitor de Ações", layout="wide")
 
+# Estado para controlar qual gráfico exibir via clique na tabela
+if "ticker_selecionado" not in st.session_state:
+    st.session_state.ticker_selecionado = None
+
 # CSS para ajuste de layout e mobile
 st.markdown("""
     <style>
@@ -14,12 +18,10 @@ st.markdown("""
     div[data-testid="stDataFrame"] > div { margin-bottom: -20px; }
     div[data-testid="stPopoverBody"] { width: 750px !important; }
     
-    /* Largura da coluna Ticker */
     [data-testid="stDataFrame"] td[data-col-index="0"] {
         min-width: 280px !important;
     }
 
-    /* Impede zoom e comportamentos de input no mobile */
     @media screen and (max-width: 768px) {
         [data-testid="stPopover"] button {
             width: 100% !important;
@@ -115,45 +117,42 @@ def render_monitor(aba_nome):
     
     data = get_data(t_list)
 
-    c1, c2, _ = st.columns([0.1, 0.2, 0.7])
+    # Lógica de Gráfico (via Seleção na Tabela ou Popover)
+    if st.session_state.ticker_selecionado:
+        t_sel = st.session_state.ticker_selecionado
+        with st.container(border=True):
+            col_t, col_close = st.columns([0.9, 0.1])
+            col_t.subheader(f"Análise: {t_sel}")
+            if col_close.button("✖", key="close_chart_master"):
+                st.session_state.ticker_selecionado = None
+                st.rerun()
+
+            p_sel = st.segmented_control("Período", options=["30D", "6M", "12M", "5A", "YTD"], default="12M", key=f"sc_p_master")
+            
+            h_plot = data[t_sel] if len(t_list) > 1 else data
+            df_all = h_plot['Close'].dropna()
+            
+            if not df_all.empty:
+                map_p = {"30D": 21, "6M": 126, "12M": 252, "5A": 1260, "YTD": "ytd"}
+                d_val = map_p[p_sel]
+                df_view = df_all.loc[f"{datetime.now().year}-01-01":] if d_val == "ytd" else (df_all.iloc[-d_val:] if len(df_all) > d_val else df_all)
+                v_p = float(((df_view.iloc[-1] / df_view.iloc[0]) - 1) * 100)
+                
+                fig = go.Figure(go.Scatter(x=df_view.index, y=df_view.values, line=dict(color="#00FF00" if v_p >= 0 else "#FF4B4B", width=2.5)))
+                fig.update_layout(template="plotly_dark", height=380, margin=dict(l=0, r=40, t=50, b=0), yaxis=dict(side="right"), hovermode='x unified')
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+
+    c1, c2, _ = st.columns([0.15, 0.2, 0.65])
     with c1:
         if st.button("Atualizar", key=f"btn_refresh_{aba_nome}"):
             st.cache_data.clear()
             st.rerun()
     with c2:
-        with st.popover("Gráficos"):
-            # MUDANÇA CHAVE: Segmented control em vez de Selectbox para matar o teclado
-            st.write("**Selecione o Ativo:**")
-            t_sel = st.segmented_control("Ativo", options=t_list, key=f"sc_t_{aba_nome}", label_visibility="collapsed")
-            
-            st.write("**Período:**")
-            p_sel = st.segmented_control("Período", options=["30D", "6M", "12M", "5A", "YTD"], default="12M", key=f"sc_p_{aba_nome}")
-            
-            if t_sel:
-                h_plot = data[t_sel] if len(t_list) > 1 else data
-                df_all = h_plot['Close'].dropna()
-                if not df_all.empty:
-                    map_p = {"30D": 21, "6M": 126, "12M": 252, "5A": 1260, "YTD": "ytd"}
-                    d_val = map_p[p_sel]
-                    
-                    if d_val == "ytd":
-                        df_view = df_all.loc[f"{datetime.now().year}-01-01":]
-                    else:
-                        df_view = df_all.iloc[-d_val:] if len(df_all) > d_val else df_all
-
-                    v_p = float(((df_view.iloc[-1] / df_view.iloc[0]) - 1) * 100) if len(df_view) > 1 else 0.0
-                    color_line = "#00FF00" if v_p >= 0 else "#FF4B4B"
-
-                    fig = go.Figure()
-                    fig.add_trace(go.Scatter(x=df_view.index, y=df_view.values, line=dict(color=color_line, width=2.5)))
-                    fig.update_layout(
-                        title=f"<b>{t_sel} | {v_p:.2f}%</b>",
-                        template="plotly_dark", height=380, margin=dict(l=0, r=40, t=50, b=0),
-                        xaxis=dict(showgrid=False), 
-                        yaxis=dict(showgrid=True, gridcolor="#333", side="right", autorange=True),
-                        dragmode=False, hovermode='x unified'
-                    )
-                    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'staticPlot': True})
+        with st.popover("Busca Direta"):
+            t_sel_pop = st.segmented_control("Ativo", options=t_list, key=f"sc_t_{aba_nome}")
+            if t_sel_pop:
+                st.session_state.ticker_selecionado = t_sel_pop
+                st.rerun()
 
     # Construção da Tabela
     rows = []
@@ -177,7 +176,6 @@ def render_monitor(aba_nome):
         except: continue
 
     df_raw = pd.DataFrame(rows)
-
     if aba_nome == "Carteira pessoal" and not df_raw.empty:
         df_raw["Peso %"] = (df_raw["ValPos"] / df_raw["ValPos"].sum()) * 100
         df_raw = df_raw.sort_values(by="Peso %", ascending=False)
@@ -193,11 +191,9 @@ def render_monitor(aba_nome):
 
     df_v = df_raw.copy()
     pct_cols = ["Peso %", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %", "Upside"]
-    
     for c in ["Preço", "Alvo"]:
         if c in df_v.columns: 
             df_v[c] = df_raw.apply(lambda r: format_val(r[c], sym=r["Moeda"]) if not r["is_h"] else "", axis=1)
-    
     for c in pct_cols:
         if c in df_v.columns:
             df_v[c] = df_raw.apply(lambda r: format_val(r[c], is_pct=True) if not r["is_h"] else "", axis=1)
@@ -218,8 +214,26 @@ def render_monitor(aba_nome):
         "Acompanhamentos": ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
     }
 
-    st.caption(f"Atualização: {datetime.now().strftime('%H:%M:%S')}")
-    st.dataframe(df_v[cols_map[aba_nome]].style.apply(style_r, axis=1), use_container_width=True, hide_index=True, height=(len(df_v) * 35) + 38)
+    st.caption(f"Atualização: {datetime.now().strftime('%H:%M:%S')} (Auto-refresh 5min)")
+    
+    # RENDERIZAÇÃO DA TABELA COM SELEÇÃO
+    event = st.dataframe(
+        df_v[cols_map[aba_nome]].style.apply(style_r, axis=1),
+        use_container_width=True,
+        hide_index=True,
+        on_select="rerun",
+        selection_mode="single-row",
+        height=(len(df_v) * 35) + 38
+    )
+
+    # Processar o clique na linha
+    if len(event.selection.rows) > 0:
+        idx = event.selection.rows[0]
+        ticker = df_raw.iloc[idx]["Ticker"]
+        if not df_raw.iloc[idx]["is_h"] and ticker != st.session_state.ticker_selecionado:
+            st.session_state.ticker_selecionado = ticker
+            st.rerun()
 
 render_monitor(aba_selecionada)
+
 
