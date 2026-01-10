@@ -10,18 +10,28 @@ st.set_page_config(page_title="Monitor de Ações", layout="wide")
 if "ticker_selecionado" not in st.session_state:
     st.session_state.ticker_selecionado = None
 
-# CSS Otimizado
+# CSS Otimizado - Ajuste da largura da coluna (column-content)
 st.markdown("""
     <style>
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
-    div[data-testid="stDataFrame"] > div { margin-bottom: -20px; }
-    [data-testid="stDataFrame"] td[data-col-index="0"] { min-width: 280px !important; }
+    /* Força a largura mínima da primeira coluna para evitar cortes no texto */
+    [data-testid="stDataFrame"] div[data-testid="stTable"] th:first-child,
+    [data-testid="stDataFrame"] div[data-testid="stTable"] td:first-child {
+        min-width: 350px !important;
+    }
+    header[data-testid="stHeader"] { background: transparent; }
     </style>
 """, unsafe_allow_html=True)
 
+# Navegação Superior
+opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
+aba_selecionada = st.pills("Monitor", options=opcoes_nav, default="Cobertura")
+
 # =========================================================
-# 1. DICIONÁRIOS E DADOS
+# 1. DICIONÁRIOS DE DADOS
 # =========================================================
+
+INDICES_LIST = ["^BVSP", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225", "^HSI", "000001.SS", "^GDAXI", "^FTSE", "^FCHI", "^STOXX50E", "BRL=X", "DX-Y.NYB", "BTC-USD", "BZ=F", "TIO=F", "GC=F"]
 
 COBERTURA = {
     "AZZA3.SA": {"Rec": "Compra", "Alvo": 50.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 23.00},
@@ -62,9 +72,6 @@ CARTEIRA_PESSOAL_QTD = {
     "UNIP3.SA": 2, "PRIO3.SA": 5, "VULC3.SA": 5, "PSSA3.SA": 5
 }
 
-st.sidebar.title("Navegação")
-aba_selecionada = st.sidebar.radio("Selecione o Monitor:", ["Cobertura", "Acompanhamentos", "Carteira pessoal"])
-
 # =========================================================
 # 2. FUNÇÕES DE APOIO
 # =========================================================
@@ -78,6 +85,11 @@ def format_val(val, is_pct=False, sym=""):
     if pd.isna(val) or (val == 0 and not is_pct): return ""
     f = "{:,.2f}".format(val).replace(",", "X").replace(".", ",").replace("X", ".")
     return f"{f}%" if is_pct else (f"{sym}{f}" if sym else f)
+
+def get_moeda(t):
+    if ".SA" in t or t == "^BVSP" or t == "BRL=X": return "R$ "
+    if "BTC-USD" in t: return "US$ "
+    return ""
 
 def calc_v(h, d=None, ytd=False):
     try:
@@ -96,55 +108,48 @@ def calc_v(h, d=None, ytd=False):
 # 3. RENDERIZAÇÃO
 # =========================================================
 
-all_tickers = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()))))
+all_tickers = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()) + INDICES_LIST)))
 master_data = get_all_data(all_tickers)
 
 @st.fragment(run_every=300)
 def render_monitor(aba_nome):
-    st.title(f"Monitor: {aba_nome}")
+    st.subheader(f"Monitor: {aba_nome}")
     
     if aba_nome == "Cobertura": t_list = sorted(list(COBERTURA.keys()))
     elif aba_nome == "Acompanhamentos": t_list = sorted(list(set([t for sub in SETORES_ACOMPANHAMENTO.values() for t in sub])))
-    else: t_list = sorted(list(CARTEIRA_PESSOAL_QTD.keys()))
-    
+    elif aba_nome == "Carteira pessoal": t_list = sorted(list(CARTEIRA_PESSOAL_QTD.keys()))
+    else: t_list = INDICES_LIST
+
     # Gráfico
-    if st.session_state.ticker_selecionado:
+    if aba_nome != "Índices" and st.session_state.ticker_selecionado:
         t_sel = st.session_state.ticker_selecionado
         with st.container(border=True):
-            p_sel = st.segmented_control("Período", options=["30D", "6M", "12M", "5A", "YTD"], default="12M", key=f"sc_p_master")
-            
-            h_plot = master_data[t_sel] if len(all_tickers) > 1 else master_data
+            col_title, col_close = st.columns([0.94, 0.06])
+            h_plot = master_data[t_sel]
             df_all = h_plot['Close'].dropna()
             
             if not df_all.empty:
+                p_sel = st.segmented_control("Período", options=["30D", "6M", "12M", "5A", "YTD"], default="12M", key=f"sc_p_{aba_nome}")
                 map_p = {"30D": 21, "6M": 126, "12M": 252, "5A": 1260, "YTD": "ytd"}
                 d_val = map_p[p_sel]
                 df_view = df_all.loc[f"{datetime.now().year}-01-01":] if d_val == "ytd" else (df_all.iloc[-d_val:] if len(df_all) > d_val else df_all)
                 v_p = float(((df_view.iloc[-1] / df_view.iloc[0]) - 1) * 100)
                 
-                # Título com variação
-                st.subheader(f"{t_sel} | {v_p:+.2f}%")
-                
-                fig = go.Figure(go.Scatter(x=df_view.index, y=df_view.values, line=dict(color="#00FF00" if v_p >= 0 else "#FF4B4B", width=2.5)))
-                fig.update_layout(
-                    template="plotly_dark", height=320, margin=dict(l=0, r=40, t=10, b=0),
-                    yaxis=dict(side="right", fixedrange=True), xaxis=dict(fixedrange=True),
-                    dragmode=False, hovermode='x unified'
-                )
-                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-            
-            if st.button("Fechar Gráfico", key="close_chart_master"):
-                st.session_state.ticker_selecionado = None
-                st.rerun()
+                with col_title: st.markdown(f"**{t_sel} | {v_p:+.2f}%**")
+                with col_close:
+                    if st.button("X", key=f"close_{aba_nome}", help="Fechar Gráfico"):
+                        st.session_state.ticker_selecionado = None
+                        st.rerun()
 
-    # Controles superiores
-    c1, c2 = st.columns([0.2, 0.8])
-    with c1:
-        if st.button("🔄 Atualizar", key=f"btn_refresh_{aba_nome}"):
-            st.cache_data.clear()
-            st.rerun()
-    with c2:
-        st.caption(f"Última atualização: **{datetime.now().strftime('%H:%M:%S')}** (Próxima em 5 min)")
+                fig = go.Figure(go.Scatter(x=df_view.index, y=df_view.values, line=dict(color="#00FF00" if v_p >= 0 else "#FF4B4B", width=2.5)))
+                fig.update_layout(template="plotly_dark", height=300, margin=dict(l=0, r=40, t=10, b=0), yaxis=dict(side="right"), hovermode='x unified')
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+
+    # Atualização
+    if st.button("Atualizar", key=f"btn_refresh_{aba_nome}"):
+        st.cache_data.clear()
+        st.rerun()
+    st.caption(f"Última atualização: **{datetime.now().strftime('%H:%M:%S')}**")
 
     # Construção da Tabela
     rows = []
@@ -154,7 +159,7 @@ def render_monitor(aba_nome):
             cl = h['Close'].dropna()
             p = float(cl.iloc[-1])
             row = {
-                "Ticker": t, "Moeda": "R$ " if ".SA" in t or t == "^BVSP" else "$ ",
+                "Ticker": t, "Moeda": get_moeda(t),
                 "Preço": p, "Hoje %": ((p/cl.iloc[-2])-1)*100 if len(cl) > 1 else 0,
                 "30D %": calc_v(h, 21), "6M %": calc_v(h, 126), "12M %": calc_v(h, 252), 
                 "YTD %": calc_v(h, ytd=True), "5A %": calc_v(h, 1260), "is_h": False, "ValPos": 0.0
@@ -196,16 +201,22 @@ def render_monitor(aba_nome):
     cols_map = {
         "Cobertura": ["Ticker", "Preço", "Rec", "Alvo", "Upside", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
         "Carteira pessoal": ["Ticker", "Peso %", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
-        "Acompanhamentos": ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
+        "Acompanhamentos": ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
+        "Índices": ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
     }
+
+    # FIX: on_select deve ser sempre 'rerun' ou 'ignore'
+    sel_mode = "rerun" if aba_nome != "Índices" else "ignore"
 
     event = st.dataframe(
         df_v[cols_map[aba_nome]].style.apply(style_r, axis=1),
-        use_container_width=True, hide_index=True, on_select="rerun",
-        selection_mode="single-row", height=(len(df_v) * 35) + 38
+        use_container_width=True, hide_index=True, 
+        on_select=sel_mode, # Corrigido aqui
+        selection_mode="single-row", 
+        height=(len(df_v) * 35) + 38    
     )
 
-    if len(event.selection.rows) > 0:
+    if aba_nome != "Índices" and len(event.selection.rows) > 0:
         idx = event.selection.rows[0]
         ticker = df_raw.iloc[idx]["Ticker"]
         if not df_raw.iloc[idx]["is_h"] and ticker != st.session_state.ticker_selecionado:
