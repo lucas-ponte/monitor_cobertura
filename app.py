@@ -10,15 +10,10 @@ st.set_page_config(page_title="Monitor de Ações", layout="wide")
 if "ticker_selecionado" not in st.session_state:
     st.session_state.ticker_selecionado = None
 
-# CSS Otimizado - Ajuste da largura da coluna (column-content)
+# CSS Otimizado
 st.markdown("""
     <style>
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
-    /* Força a largura mínima da primeira coluna para evitar cortes no texto */
-    [data-testid="stDataFrame"] div[data-testid="stTable"] th:first-child,
-    [data-testid="stDataFrame"] div[data-testid="stTable"] td:first-child {
-        min-width: 350px !important;
-    }
     header[data-testid="stHeader"] { background: transparent; }
     </style>
 """, unsafe_allow_html=True)
@@ -120,7 +115,7 @@ def render_monitor(aba_nome):
     elif aba_nome == "Carteira pessoal": t_list = sorted(list(CARTEIRA_PESSOAL_QTD.keys()))
     else: t_list = INDICES_LIST
 
-    # Gráfico
+    # Gráfico com Zoom Desabilitado
     if aba_nome != "Índices" and st.session_state.ticker_selecionado:
         t_sel = st.session_state.ticker_selecionado
         with st.container(border=True):
@@ -142,8 +137,19 @@ def render_monitor(aba_nome):
                         st.rerun()
 
                 fig = go.Figure(go.Scatter(x=df_view.index, y=df_view.values, line=dict(color="#00FF00" if v_p >= 0 else "#FF4B4B", width=2.5)))
-                fig.update_layout(template="plotly_dark", height=300, margin=dict(l=0, r=40, t=10, b=0), yaxis=dict(side="right"), hovermode='x unified')
-                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+                
+                # Desabilita interação de Zoom e Pan
+                fig.update_layout(
+                    template="plotly_dark", 
+                    height=300, 
+                    margin=dict(l=0, r=40, t=10, b=0), 
+                    yaxis=dict(side="right", fixedrange=True), # Trava eixo Y
+                    xaxis=dict(fixedrange=True),               # Trava eixo X
+                    dragmode=False,                            # Remove ferramenta de seleção/zoom
+                    hovermode='x unified'
+                )
+                
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'staticPlot': False})
 
     # Atualização
     if st.button("Atualizar", key=f"btn_refresh_{aba_nome}"):
@@ -205,15 +211,16 @@ def render_monitor(aba_nome):
         "Índices": ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
     }
 
-    # FIX: on_select deve ser sempre 'rerun' ou 'ignore'
     sel_mode = "rerun" if aba_nome != "Índices" else "ignore"
 
     event = st.dataframe(
         df_v[cols_map[aba_nome]].style.apply(style_r, axis=1),
         use_container_width=True, hide_index=True, 
-        on_select=sel_mode, # Corrigido aqui
+        on_select=sel_mode,
         selection_mode="single-row", 
-        height=(len(df_v) * 35) + 38    
+        height=(len(df_v) * 35) + 38,
+        # Ajuste nativo da largura da primeira coluna
+        column_config={"Ticker": st.column_config.TextColumn(width=200)}
     )
 
     if aba_nome != "Índices" and len(event.selection.rows) > 0:
