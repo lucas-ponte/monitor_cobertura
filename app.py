@@ -10,10 +10,24 @@ st.set_page_config(page_title="Monitor de Ações", layout="wide")
 if "ticker_selecionado" not in st.session_state:
     st.session_state.ticker_selecionado = None
 
-# CSS Otimizado
+# CSS Otimizado para Mobile (Modo App) e Desktop
 st.markdown("""
     <style>
+    /* Desktop: Margens padrão */
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
+    
+    /* Mobile: Otimização para preencher a tela */
+    @media (max-width: 640px) {
+        .block-container {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+            padding-top: 0.5rem !important;
+        }
+        /* Ajusta o tamanho das fontes em tabelas e botões para mobile */
+        .stButton button { width: 100%; }
+        [data-testid="stHeader"] { display: none; } /* Remove header para ganhar espaço */
+    }
+    
     header[data-testid="stHeader"] { background: transparent; }
     </style>
 """, unsafe_allow_html=True)
@@ -119,7 +133,7 @@ def render_monitor(aba_nome):
     if aba_nome != "Índices" and st.session_state.ticker_selecionado:
         t_sel = st.session_state.ticker_selecionado
         with st.container(border=True):
-            col_title, col_close = st.columns([0.94, 0.06])
+            col_title, col_close = st.columns([0.85, 0.15]) # Ajustado col para mobile
             h_plot = master_data[t_sel]
             df_all = h_plot['Close'].dropna()
             
@@ -132,24 +146,17 @@ def render_monitor(aba_nome):
                 
                 with col_title: st.markdown(f"**{t_sel} | {v_p:+.2f}%**")
                 with col_close:
-                    if st.button("X", key=f"close_{aba_nome}", help="Fechar Gráfico"):
+                    if st.button("X", key=f"close_{aba_nome}"):
                         st.session_state.ticker_selecionado = None
                         st.rerun()
 
                 fig = go.Figure(go.Scatter(x=df_view.index, y=df_view.values, line=dict(color="#00FF00" if v_p >= 0 else "#FF4B4B", width=2.5)))
-                
-                # Desabilita interação de Zoom e Pan
                 fig.update_layout(
-                    template="plotly_dark", 
-                    height=300, 
-                    margin=dict(l=0, r=40, t=10, b=0), 
-                    yaxis=dict(side="right", fixedrange=True), # Trava eixo Y
-                    xaxis=dict(fixedrange=True),               # Trava eixo X
-                    dragmode=False,                            # Remove ferramenta de seleção/zoom
-                    hovermode='x unified'
+                    template="plotly_dark", height=250, margin=dict(l=0, r=30, t=10, b=0), 
+                    yaxis=dict(side="right", fixedrange=True), xaxis=dict(fixedrange=True),
+                    dragmode=False, hovermode='x unified'
                 )
-                
-                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'staticPlot': False})
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     # Atualização
     if st.button("Atualizar", key=f"btn_refresh_{aba_nome}"):
@@ -219,7 +226,6 @@ def render_monitor(aba_nome):
         on_select=sel_mode,
         selection_mode="single-row", 
         height=(len(df_v) * 35) + 38,
-        # Ajuste nativo da largura da primeira coluna
         column_config={"Ticker": st.column_config.TextColumn(width=200)}
     )
 
