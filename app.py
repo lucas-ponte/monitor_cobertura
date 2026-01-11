@@ -211,28 +211,22 @@ def render_monitor(aba_nome):
                 styles[i] = 'color: #00FF00' if val > 0 else 'color: #FF4B4B' if val < 0 else ''
         return styles
 
-    # Colunas reordenadas para priorizar Ticker e Preço (estilo TradingView Mobile)
     cols_map = {
-        "Cobertura": ["Ticker", "Hoje %", "Preço", "Upside", "Rec", "Alvo", "30D %", "6M %", "12M %", "YTD %", "5A %"],
-        "Carteira pessoal": ["Ticker", "Hoje %", "Peso %", "Preço", "30D %", "6M %", "12M %", "YTD %", "5A %"],
-        "Acompanhamentos": ["Ticker", "Hoje %", "Preço", "30D %", "6M %", "12M %", "YTD %", "5A %"],
-        "Índices": ["Ticker", "Hoje %", "Preço", "30D %", "6M %", "12M %", "YTD %", "5A %"]
+        "Cobertura": ["Ticker", "Preço", "Rec", "Alvo", "Upside", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
+        "Carteira pessoal": ["Ticker", "Peso %", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
+        "Acompanhamentos": ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
+        "Índices": ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
     }
 
     sel_mode = "rerun" if aba_nome != "Índices" else "ignore"
 
-    # Configuração de coluna "pinned" para mobile (fixa o Ticker na esquerda no scroll)
     event = st.dataframe(
         df_v[cols_map[aba_nome]].style.apply(style_r, axis=1),
         use_container_width=True, hide_index=True, 
         on_select=sel_mode,
         selection_mode="single-row", 
         height=(len(df_v) * 35) + 38,
-        column_config={
-            "Ticker": st.column_config.TextColumn("Ativo", width=120, pinned="left"),
-            "Hoje %": st.column_config.TextColumn("Var. %", width=80),
-            "Preço": st.column_config.TextColumn("Cotação", width=100)
-        }
+        column_config={"Ticker": st.column_config.TextColumn(width=200)}
     )
 
     if aba_nome != "Índices" and len(event.selection.rows) > 0:
