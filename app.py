@@ -10,23 +10,22 @@ st.set_page_config(page_title="Monitor de Ações", layout="wide")
 if "ticker_selecionado" not in st.session_state:
     st.session_state.ticker_selecionado = None
 
-# CSS Otimizado para Mobile (Estilo Lista/App)
+# CSS Otimizado para Mobile (Modo App) e Desktop
 st.markdown("""
     <style>
+    /* Desktop: Margens padrão */
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
     
+    /* Mobile: Otimização para preencher a tela */
     @media (max-width: 640px) {
         .block-container {
             padding-left: 0.5rem !important;
             padding-right: 0.5rem !important;
             padding-top: 0.5rem !important;
         }
-        [data-testid="stHeader"] { display: none; }
-        
-        /* Ajuste para esconder colunas menos importantes em telas pequenas no st.dataframe */
-        div[data-testid="stHorizontalBlock"] > div:nth-child(n+4) {
-            display: none;
-        }
+        /* Ajusta o tamanho das fontes em tabelas e botões para mobile */
+        .stButton button { width: 100%; }
+        [data-testid="stHeader"] { display: none; } /* Remove header para ganhar espaço */
     }
     
     header[data-testid="stHeader"] { background: transparent; }
@@ -123,11 +122,18 @@ master_data = get_all_data(all_tickers)
 
 @st.fragment(run_every=300)
 def render_monitor(aba_nome):
-    # Gráfico Detalhado
-    if st.session_state.ticker_selecionado:
+    st.subheader(f"Monitor: {aba_nome}")
+    
+    if aba_nome == "Cobertura": t_list = sorted(list(COBERTURA.keys()))
+    elif aba_nome == "Acompanhamentos": t_list = sorted(list(set([t for sub in SETORES_ACOMPANHAMENTO.values() for t in sub])))
+    elif aba_nome == "Carteira pessoal": t_list = sorted(list(CARTEIRA_PESSOAL_QTD.keys()))
+    else: t_list = INDICES_LIST
+
+    # Gráfico com Zoom Desabilitado
+    if aba_nome != "Índices" and st.session_state.ticker_selecionado:
         t_sel = st.session_state.ticker_selecionado
         with st.container(border=True):
-            col_title, col_close = st.columns([0.85, 0.15])
+            col_title, col_close = st.columns([0.85, 0.15]) # Ajustado col para mobile
             h_plot = master_data[t_sel]
             df_all = h_plot['Close'].dropna()
             
@@ -153,50 +159,34 @@ def render_monitor(aba_nome):
                 st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     # Atualização
-    col_upd, col_time = st.columns([0.3, 0.7])
-    with col_upd:
-        if st.button("🔄", key=f"btn_refresh_{aba_nome}"):
-            st.cache_data.clear()
-            st.rerun()
-    with col_time:
-        st.caption(f"Atualizado: {datetime.now().strftime('%H:%M:%S')}")
+    if st.button("Atualizar", key=f"btn_refresh_{aba_nome}"):
+        st.cache_data.clear()
+        st.rerun()
+    st.caption(f"Última atualização: **{datetime.now().strftime('%H:%M:%S')}**")
 
-    # Preparação dos dados para a Tabela
+    # Construção da Tabela
     rows = []
-    for t in t_list if 't_list' in locals() else []: # t_list definido abaixo por aba
-        pass # Lógica de t_list movida para dentro da definição de aba para clareza
-
-    if aba_nome == "Cobertura": t_list = sorted(list(COBERTURA.keys()))
-    elif aba_nome == "Acompanhamentos": t_list = sorted(list(set([t for sub in SETORES_ACOMPANHAMENTO.values() for t in sub])))
-    elif aba_nome == "Carteira pessoal": t_list = sorted(list(CARTEIRA_PESSOAL_QTD.keys()))
-    else: t_list = INDICES_LIST
-
     for t in t_list:
         try:
             h = master_data[t]
             cl = h['Close'].dropna()
             p = float(cl.iloc[-1])
-            var_dia = ((p/cl.iloc[-2])-1)*100 if len(cl) > 1 else 0
             row = {
                 "Ticker": t, "Moeda": get_moeda(t),
-                "Preço": p, "Hoje %": var_dia,
+                "Preço": p, "Hoje %": ((p/cl.iloc[-2])-1)*100 if len(cl) > 1 else 0,
                 "30D %": calc_v(h, 21), "6M %": calc_v(h, 126), "12M %": calc_v(h, 252), 
                 "YTD %": calc_v(h, ytd=True), "5A %": calc_v(h, 1260), "is_h": False, "ValPos": 0.0
             }
             if aba_nome == "Cobertura":
-                alvo = COBERTURA[t]["Alvo"]
-                row.update({"Rec": COBERTURA[t]["Rec"], "Alvo": alvo, "Upside": (alvo/p - 1)*100 if alvo > 0 else 0})
+                alvo = COBERTURA[t]["Alvo"]; row.update({"Rec": COBERTURA[t]["Rec"], "Alvo": alvo, "Upside": (alvo/p - 1)*100 if alvo > 0 else 0})
             if aba_nome == "Carteira pessoal": row["ValPos"] = p * CARTEIRA_PESSOAL_QTD[t]
             rows.append(row)
         except: continue
 
     df_raw = pd.DataFrame(rows)
-    
-    # Lógica de Agrupamento/Ordenação
     if aba_nome == "Carteira pessoal" and not df_raw.empty:
         df_raw["Peso %"] = (df_raw["ValPos"] / df_raw["ValPos"].sum()) * 100
         df_raw = df_raw.sort_values(by="Peso %", ascending=False)
-    
     if aba_nome == "Acompanhamentos":
         final_rows = []
         for setor, ticks in SETORES_ACOMPANHAMENTO.items():
@@ -206,8 +196,6 @@ def render_monitor(aba_nome):
 
     df_v = df_raw.copy()
     pct_cols = ["Peso %", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %", "Upside"]
-    
-    # Formatação Visual
     for c in ["Preço", "Alvo"]:
         if c in df_v.columns: df_v[c] = df_raw.apply(lambda r: format_val(r[c], sym=r["Moeda"]) if not r["is_h"] else "", axis=1)
     for c in pct_cols:
@@ -223,7 +211,7 @@ def render_monitor(aba_nome):
                 styles[i] = 'color: #00FF00' if val > 0 else 'color: #FF4B4B' if val < 0 else ''
         return styles
 
-    # Configuração de Colunas Adaptativa
+    # Colunas reordenadas para priorizar Ticker e Preço (estilo TradingView Mobile)
     cols_map = {
         "Cobertura": ["Ticker", "Hoje %", "Preço", "Upside", "Rec", "Alvo", "30D %", "6M %", "12M %", "YTD %", "5A %"],
         "Carteira pessoal": ["Ticker", "Hoje %", "Peso %", "Preço", "30D %", "6M %", "12M %", "YTD %", "5A %"],
@@ -231,17 +219,19 @@ def render_monitor(aba_nome):
         "Índices": ["Ticker", "Hoje %", "Preço", "30D %", "6M %", "12M %", "YTD %", "5A %"]
     }
 
-    # Renderização da Tabela Estilo Mobile (Ticker e Hoje % primeiro)
+    sel_mode = "rerun" if aba_nome != "Índices" else "ignore"
+
+    # Configuração de coluna "pinned" para mobile (fixa o Ticker na esquerda no scroll)
     event = st.dataframe(
         df_v[cols_map[aba_nome]].style.apply(style_r, axis=1),
         use_container_width=True, hide_index=True, 
-        on_select="rerun" if aba_nome != "Índices" else "ignore",
+        on_select=sel_mode,
         selection_mode="single-row", 
         height=(len(df_v) * 35) + 38,
         column_config={
-            "Ticker": st.column_config.TextColumn("Ativo", width="medium", pinned=True),
-            "Hoje %": st.column_config.TextColumn("Var %", width="small"),
-            "Preço": st.column_config.TextColumn("Cotação", width="small")
+            "Ticker": st.column_config.TextColumn("Ativo", width=120, pinned="left"),
+            "Hoje %": st.column_config.TextColumn("Var. %", width=80),
+            "Preço": st.column_config.TextColumn("Cotação", width=100)
         }
     )
 
