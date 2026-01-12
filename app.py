@@ -105,7 +105,6 @@ st.markdown(f"""
     
     .mob-sector {{ background-color: #1a1a1a; color: #FFA500; padding: 10px 10px; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #333; margin-top: 10px; }}
 
-    /* ESTILO DESKTOP PADRÃO */
     [data-testid="stBaseButton-pills"] {{ 
         background-color: transparent !important; 
         border: none !important; 
@@ -127,15 +126,8 @@ st.markdown(f"""
         .mobile-view {{ display: block !important; }}
         .desktop-view {{ display: none !important; }}
         
-        /* TRANSFORMAÇÃO PARA LISTA MOBILE */
-        div[data-testid="stPills"] {{
-            display: block !important;
-        }}
-        div[data-testid="stPills"] > div {{
-            display: flex !important;
-            flex-direction: column !important;
-            width: 100% !important;
-        }}
+        div[data-testid="stPills"] {{ display: block !important; }}
+        div[data-testid="stPills"] > div {{ display: flex !important; flex-direction: column !important; width: 100% !important; }}
         div[data-testid="stPills"] button {{
             width: 100% !important;
             max-width: 100% !important;
@@ -148,11 +140,25 @@ st.markdown(f"""
             text-align: left !important;
             padding: 12px !important;
         }}
-        /* ABA ATIVA NO MOBILE */
         div[data-testid="stPills"] button[aria-checked="true"] {{
             background-color: #111 !important;
             border: 1px solid #FFFFFF !important;
-            border-bottom: 1px solid #FFFFFF !important;
+        }}
+
+        /* AJUSTE BOTÃO ATUALIZAR MOBILE */
+        div[data-testid="column"]:nth-child(2) {{ 
+            margin-top: 15px !important; 
+            width: 100% !important; 
+            display: flex !important;
+            justify-content: flex-end !important;
+        }}
+        
+        /* CENTRALIZAR MENU DO POPOVER NO MOBILE */
+        div[data-testid="stPopoverBody"] > div {{
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
         }}
     }}
 
