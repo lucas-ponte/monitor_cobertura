@@ -105,24 +105,23 @@ st.markdown(f"""
     
     .mob-sector {{ background-color: #1a1a1a; color: #FFA500; padding: 10px 10px; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #333; margin-top: 10px; }}
 
-    /* Estilização Minimalista das Abas (Pills) */
-    div[data-testid="stPills"] {{
-        background-color: transparent !important;
-        padding-bottom: 20px;
+    /* Customização das Abas (Pills) */
+    div[data-testid="stPills"] {{ 
+        margin-bottom: 1rem;
     }}
-    div[data-testid="stBaseButton-pills"] {{
-        background-color: transparent !important;
-        border: none !important;
-        color: #555 !important;
+    div[data-testid="stBaseButton-pills"] {{ 
+        background-color: transparent !important; 
+        border: none !important; 
+        color: #666 !important; 
         font-family: 'Tinos', sans-serif !important;
-        font-size: 0.9rem !important;
+        font-size: 0.85rem !important;
         text-transform: uppercase;
         letter-spacing: 1px;
-        border-radius: 0px !important;
         padding: 4px 12px !important;
+        border-radius: 0px !important;
     }}
-    div[data-testid="stBaseButton-pillsActive"] {{
-        color: #FFFFFF !important;
+    div[data-testid="stBaseButton-pillsActive"] {{ 
+        color: #FFFFFF !important; 
         border-bottom: 2px solid #FFFFFF !important;
         background-color: transparent !important;
     }}
@@ -138,7 +137,6 @@ st.markdown(f"""
         .main-title {{ font-size: 1.8rem; }}
         div[data-testid="column"]:nth-child(2) {{ margin-top: 15px !important; width: 100% !important; }}
         div[data-testid="column"]:nth-child(2) button {{ padding: 8px 15px !important; font-size: 0.7rem !important; min-height: 0px !important; width: auto !important; }}
-        div[data-testid="stBaseButton-pills"] {{ width: auto !important; }}
     }}
 
     div.stButton > button {{ background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; }}
@@ -157,7 +155,7 @@ st.markdown(f"""
     div[data-testid="stPopoverBody"] {{ background-color: #0A0A0A !important; border: 1px solid #333 !important; }}
 
     header {{ visibility: hidden; }}
-    .block-container {{ padding-top: 0.5rem !important; }}
+    .block-container {{ padding-top: 1rem !important; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -230,7 +228,7 @@ def format_val_html(val, is_pct=False, sym="", force_white=False):
     return f'<span class="{color_class}">{f + "%" if is_pct else sym + f}</span>'
 
 # 4. INTERFACE
-# ABAS NO TOPO
+# NAVEGAÇÃO NO TOPO
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
 aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
@@ -246,7 +244,7 @@ master_data = get_all_data(all_tickers_master)
 
 st.write("---")
 
-# CONFIGURAÇÃO DE DADOS POR ABA
+# CONFIGURAÇÃO DE COLUNAS POR ABA
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
 if aba_selecionada == "Cobertura":
     headers, t_list = ["Ticker", "Preço", "Rec.", "Alvo", "Upside"] + cols_base, sorted(list(COBERTURA.keys()))
