@@ -247,7 +247,7 @@ else:
 tickers_da_aba = [tk for tk in t_list if not isinstance(tk, dict)]
 
 # Menu minimalista em Popover abaixo das abas
-with st.popover("📊 GRÁFICOS", use_container_width=False):
+with st.popover("GRÁFICOS", use_container_width=False):
     col_pop1, col_pop2 = st.columns(2)
     for i, tk in enumerate(tickers_da_aba):
         target_col = col_pop1 if i % 2 == 0 else col_pop2
