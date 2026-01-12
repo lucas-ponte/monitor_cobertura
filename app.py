@@ -258,6 +258,7 @@ with c2:
         st.cache_data.clear()
         st.rerun()
 
+# CORREÇÃO DA SINTAXE QUEBRA NA VERSÃO ANTERIOR
 all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()) + INDICES_LIST)))
 master_data = get_all_data(all_tickers_master)
 
@@ -329,22 +330,8 @@ for t in t_list:
         html_desktop += f'<td>{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</td>'
         html_desktop += f'<td>{format_val_html(calc_variation(h, 1260), is_pct=True)}</td></tr>'
         
-        # --- PREENCHIMENTO MOBILE (ACCORDION) ---
-        # Cabeçalho do Card (Ticker | Preço | Variação Hoje)
-        html_mobile += f"""
-        <details>
-            <summary>
-                <div class="mob-header-left">
-                    <span class="mob-ticker">{t}</span>
-                    <span class="mob-price">{sym}{"{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")}</span>
-                </div>
-                <div class="mob-today">
-                    {format_val_html(var_hoje, is_pct=True)}
-                </div>
-            </summary>
-            <div class="mob-content">
-                <div class="mob-grid">
-        """
+        # --- PREENCHIMENTO MOBILE (ACCORDION) - SEM INDENTAÇÃO NA STRING PARA CORRIGIR BUG DO STREAMLIT ---
+        html_mobile += f"""<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span><span class="mob-price">{sym}{"{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")}</span></div><div class="mob-today">{format_val_html(var_hoje, is_pct=True)}</div></summary><div class="mob-content"><div class="mob-grid">"""
         
         # Corpo do Card (Grid com Infos Específicas)
         
@@ -361,18 +348,13 @@ for t in t_list:
             html_mobile += f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(peso_val, is_pct=True, force_white=True)}</span></div>'
 
         # Timeframes (Comum a todos)
-        # Note que pulamos o "1D" (hoje) pois já está no cabeçalho
         html_mobile += f'<div class="mob-item"><span class="mob-label">30 DIAS</span><span class="mob-val">{format_val_html(calc_variation(h, 21), is_pct=True)}</span></div>'
         html_mobile += f'<div class="mob-item"><span class="mob-label">6 MESES</span><span class="mob-val">{format_val_html(calc_variation(h, 126), is_pct=True)}</span></div>'
         html_mobile += f'<div class="mob-item"><span class="mob-label">12 MESES</span><span class="mob-val">{format_val_html(calc_variation(h, 252), is_pct=True)}</span></div>'
         html_mobile += f'<div class="mob-item"><span class="mob-label">YTD</span><span class="mob-val">{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</span></div>'
         html_mobile += f'<div class="mob-item"><span class="mob-label">5 ANOS</span><span class="mob-val">{format_val_html(calc_variation(h, 1260), is_pct=True)}</span></div>'
         
-        html_mobile += """
-                </div>
-            </div>
-        </details>
-        """
+        html_mobile += """</div></div></details>"""
         
     except: continue
 
