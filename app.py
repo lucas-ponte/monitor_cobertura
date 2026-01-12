@@ -145,20 +145,26 @@ st.markdown(f"""
             border: 1px solid #FFFFFF !important;
         }}
 
-        /* AJUSTE BOTÃO ATUALIZAR MOBILE */
+        /* AJUSTE BOTÃO ATUALIZAR MOBILE: MAIS ESPAÇO DO TOPO E ALINHADO À DIREITA */
         div[data-testid="column"]:nth-child(2) {{ 
-            margin-top: 15px !important; 
+            margin-top: 30px !important; 
             width: 100% !important; 
             display: flex !important;
             justify-content: flex-end !important;
         }}
         
         /* CENTRALIZAR MENU DO POPOVER NO MOBILE */
+        div[data-testid="stPopoverBody"] {{
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: 90% !important;
+            margin: 0 auto !important;
+        }}
+        
         div[data-testid="stPopoverBody"] > div {{
-            display: center !important;
+            display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
-            text-align: center !important;
         }}
     }}
 
@@ -182,7 +188,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. DICIONÁRIOS MESTRE
+# 2. DICIONÁRIOS MESTRE (MANTIDOS CONFORME TURN ANTERIOR)
 INDICES_LIST = ["^BVSP", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225", "^HSI", "000001.SS", "^GDAXI", "^FTSE", "^FCHI", "^STOXX50E", "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
 COBERTURA = {
     "AZZA3.SA": {"Rec": "Compra", "Alvo": 50.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 23.00},
@@ -224,7 +230,7 @@ CARTEIRA_PESSOAL_QTD = {
     "UNIP3.SA": 2, "PRIO3.SA": 5, "VULC3.SA": 5, "PSSA3.SA": 5
 }
 
-# 3. FUNÇÕES
+# 3. FUNÇÕES (MANTIDAS)
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
     return yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False)
@@ -284,7 +290,6 @@ else:
 
 tickers_da_aba = [tk for tk in t_list if not isinstance(tk, dict)]
 
-# Menu minimalista em Popover abaixo das abas
 with st.popover("GRÁFICOS", use_container_width=False):
     col_pop1, col_pop2 = st.columns(2)
     for i, tk in enumerate(tickers_da_aba):
@@ -292,7 +297,7 @@ with st.popover("GRÁFICOS", use_container_width=False):
         if target_col.button(tk, key=f"btn_{tk}", use_container_width=True):
             exibir_grafico_popup(tk, master_data)
 
-# --- RENDERIZAÇÃO ---
+# --- RENDERIZAÇÃO (Tabelas Desktop / Lista Mobile) ---
 html_desktop = f'<div class="desktop-view"><table class="list-container"><tr class="list-header">'
 for h in headers: html_desktop += f'<th>{h}</th>'
 html_desktop += '</tr>'
