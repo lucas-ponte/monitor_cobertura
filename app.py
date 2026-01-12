@@ -10,25 +10,66 @@ st.set_page_config(page_title="Monitor de Ações", layout="wide")
 if "ticker_selecionado" not in st.session_state:
     st.session_state.ticker_selecionado = None
 
-# CSS Otimizado para Mobile (Modo App) e Desktop
+# CSS Ajustado: Aba selecionada (Branco/Preto) e Dataframe sem negrito
 st.markdown("""
     <style>
-    /* Desktop: Margens padrão */
+    /* Fundo Geral */
+    .stApp {
+        background-color: #000000;
+    }
+    
+    /* Botão Atualizar - Fundo Preto */
+    div.stButton > button {
+        background-color: #000000 !important;
+        color: white !important;
+        border: 1px solid #333 !important;
+    }
+
+    /* Seletor de Abas (Pills) */
+    [data-testid="stBaseButton-pills"] {
+        background-color: #000000 !important;
+        color: white !important;
+        border: 1px solid #333 !important;
+    }
+
+    /* Aba Selecionada: Fundo Branco e Texto Preto */
+    [data-testid="stBaseButton-pillsActive"] {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        border: 1px solid #FFFFFF !important;
+    }
+
+    /* Dataframe - Fundo Preto e Remoção de Negrito */
+    [data-testid="stDataFrame"] {
+        background-color: #000000 !important;
+    }
+    [data-testid="stDataFrame"] * {
+        font-weight: normal !important;
+    }
+
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
     
-    /* Mobile: Otimização para preencher a tela */
     @media (max-width: 640px) {
         .block-container {
             padding-left: 0.5rem !important;
             padding-right: 0.5rem !important;
             padding-top: 0.5rem !important;
         }
-        /* Ajusta o tamanho das fontes em tabelas e botões para mobile */
         .stButton button { width: 100%; }
-        [data-testid="stHeader"] { display: none; } /* Remove header para ganhar espaço */
+        [data-testid="stHeader"] { display: none; } 
     }
     
     header[data-testid="stHeader"] { background: transparent; }
+
+    /* Cor do texto do Dataframe */
+    [data-testid="stDataFrame"] [data-testid="stTableDataCell"], 
+    [data-testid="stDataFrame"] th {
+        color: white !important;
+    }
+    
+    div[data-testid="stDataFrame"] canvas {
+        filter: brightness(1.1);
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -49,7 +90,10 @@ COBERTURA = {
     "SMFT3.SA": {"Rec": "Compra", "Alvo": 36.00}, "NATU3.SA": {"Rec": "Compra", "Alvo": 15.00},
     "AUAU3.SA": {"Rec": "Neutro", "Alvo": 3.00}, "ABEV3.SA": {"Rec": "Neutro", "Alvo": 15.00},
     "MULT3.SA": {"Rec": "Compra", "Alvo": 35.00}, "WEGE3.SA": {"Rec": "Neutro", "Alvo": 49.00},
-    "RENT3.SA": {"Rec": "Compra", "Alvo": 58.00},
+    "RENT3.SA": {"Rec": "Compra", "Alvo": 58.00}, "SLCE3.SA": {"Rec": "Compra", "Alvo": 24.60},
+    "JBS": {"Rec": "Compra", "Alvo": 20.00}, "MBRF3.SA": {"Rec": "Neutro", "Alvo": 22.00},
+    "BEEF3.SA": {"Rec": "Neutro", "Alvo": 7.00}, "EZTC3.SA": {"Rec": "Compra", "Alvo": 24.00},
+    "MRVE3.SA": {"Rec": "Neutro", "Alvo": 9.50}
 }
 
 SETORES_ACOMPANHAMENTO = {
@@ -95,9 +139,10 @@ def format_val(val, is_pct=False, sym=""):
     f = "{:,.2f}".format(val).replace(",", "X").replace(".", ",").replace("X", ".")
     return f"{f}%" if is_pct else (f"{sym}{f}" if sym else f)
 
-def get_moeda(t):
+def get_moeda(t, aba=""):
+    if aba == "Índices": return ""
     if ".SA" in t or t == "^BVSP" or t == "BRL=X": return "R$ "
-    if "BTC-USD" in t: return "US$ "
+    if "BTC-USD" in t or ".SA" not in t: return "US$ "
     return ""
 
 def calc_v(h, d=None, ytd=False):
@@ -129,54 +174,39 @@ def render_monitor(aba_nome):
     elif aba_nome == "Carteira pessoal": t_list = sorted(list(CARTEIRA_PESSOAL_QTD.keys()))
     else: t_list = INDICES_LIST
 
-    # Gráfico com Zoom Desabilitado
+    # Gráfico
     if aba_nome != "Índices" and st.session_state.ticker_selecionado:
         t_sel = st.session_state.ticker_selecionado
         with st.container(border=True):
-            col_title, col_close = st.columns([0.85, 0.15]) # Ajustado col para mobile
+            col_title, col_close = st.columns([0.85, 0.15]) 
             h_plot = master_data[t_sel]
             df_all = h_plot['Close'].dropna()
-            
             if not df_all.empty:
                 p_sel = st.segmented_control("Período", options=["30D", "6M", "12M", "5A", "YTD"], default="12M", key=f"sc_p_{aba_nome}")
                 map_p = {"30D": 21, "6M": 126, "12M": 252, "5A": 1260, "YTD": "ytd"}
                 d_val = map_p[p_sel]
                 df_view = df_all.loc[f"{datetime.now().year}-01-01":] if d_val == "ytd" else (df_all.iloc[-d_val:] if len(df_all) > d_val else df_all)
                 v_p = float(((df_view.iloc[-1] / df_view.iloc[0]) - 1) * 100)
-                
                 with col_title: st.markdown(f"**{t_sel} | {v_p:+.2f}%**")
                 with col_close:
                     if st.button("X", key=f"close_{aba_nome}"):
                         st.session_state.ticker_selecionado = None
                         st.rerun()
-
                 fig = go.Figure(go.Scatter(x=df_view.index, y=df_view.values, line=dict(color="#00FF00" if v_p >= 0 else "#FF4B4B", width=2.5)))
-                fig.update_layout(
-                    template="plotly_dark", height=250, margin=dict(l=0, r=30, t=10, b=0), 
-                    yaxis=dict(side="right", fixedrange=True), xaxis=dict(fixedrange=True),
-                    dragmode=False, hovermode='x unified'
-                )
+                fig.update_layout(template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=250, margin=dict(l=0, r=30, t=10, b=0), yaxis=dict(side="right", fixedrange=True), xaxis=dict(fixedrange=True), dragmode=False, hovermode='x unified')
                 st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    # Atualização
     if st.button("Atualizar", key=f"btn_refresh_{aba_nome}"):
         st.cache_data.clear()
         st.rerun()
     st.caption(f"Última atualização: **{datetime.now().strftime('%H:%M:%S')}**")
 
-    # Construção da Tabela
+    # Dados
     rows = []
     for t in t_list:
         try:
-            h = master_data[t]
-            cl = h['Close'].dropna()
-            p = float(cl.iloc[-1])
-            row = {
-                "Ticker": t, "Moeda": get_moeda(t),
-                "Preço": p, "Hoje %": ((p/cl.iloc[-2])-1)*100 if len(cl) > 1 else 0,
-                "30D %": calc_v(h, 21), "6M %": calc_v(h, 126), "12M %": calc_v(h, 252), 
-                "YTD %": calc_v(h, ytd=True), "5A %": calc_v(h, 1260), "is_h": False, "ValPos": 0.0
-            }
+            h = master_data[t]; cl = h['Close'].dropna(); p = float(cl.iloc[-1])
+            row = {"Ticker": t, "Moeda": get_moeda(t, aba=aba_nome), "Preço": p, "Hoje %": ((p/cl.iloc[-2])-1)*100 if len(cl) > 1 else 0, "30D %": calc_v(h, 21), "6M %": calc_v(h, 126), "12M %": calc_v(h, 252), "YTD %": calc_v(h, ytd=True), "5A %": calc_v(h, 1260), "is_h": False, "ValPos": 0.0}
             if aba_nome == "Cobertura":
                 alvo = COBERTURA[t]["Alvo"]; row.update({"Rec": COBERTURA[t]["Rec"], "Alvo": alvo, "Upside": (alvo/p - 1)*100 if alvo > 0 else 0})
             if aba_nome == "Carteira pessoal": row["ValPos"] = p * CARTEIRA_PESSOAL_QTD[t]
@@ -190,9 +220,12 @@ def render_monitor(aba_nome):
     if aba_nome == "Acompanhamentos":
         final_rows = []
         for setor, ticks in SETORES_ACOMPANHAMENTO.items():
-            final_rows.append({"Ticker": f"--- {setor.upper()} ---", "is_h": True})
+            final_rows.append({"Ticker": setor.upper(), "is_h": True})
             final_rows.extend([r for r in rows if r["Ticker"] in ticks])
         df_raw = pd.DataFrame(final_rows)
+
+    if not df_raw.empty:
+        df_raw = df_raw.set_index("Ticker")
 
     df_v = df_raw.copy()
     pct_cols = ["Peso %", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %", "Upside"]
@@ -203,7 +236,10 @@ def render_monitor(aba_nome):
 
     def style_r(row):
         orig = df_raw.loc[row.name]
-        if orig["is_h"]: return ['background-color: #262730; color: #FFA500; font-weight: bold'] * len(row)
+        
+        if orig["is_h"]: 
+            return ['background-color: #1A1A1A; color: #FFA500'] * len(row)
+        
         styles = [''] * len(row)
         for i, col in enumerate(row.index):
             if col in pct_cols and col != "Peso %":
@@ -212,26 +248,32 @@ def render_monitor(aba_nome):
         return styles
 
     cols_map = {
-        "Cobertura": ["Ticker", "Preço", "Rec", "Alvo", "Upside", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
-        "Carteira pessoal": ["Ticker", "Peso %", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
-        "Acompanhamentos": ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
-        "Índices": ["Ticker", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
+        "Cobertura": ["Preço", "Rec", "Alvo", "Upside", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
+        "Carteira pessoal": ["Peso %", "Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
+        "Acompanhamentos": ["Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"],
+        "Índices": ["Preço", "Hoje %", "30D %", "6M %", "12M %", "YTD %", "5A %"]
     }
 
     sel_mode = "rerun" if aba_nome != "Índices" else "ignore"
-
+    cols_to_show = [c for c in cols_map[aba_nome] if c in df_v.columns]
+    
+    height_val = min((len(df_v) * 35) + 38, 800) 
+    
     event = st.dataframe(
-        df_v[cols_map[aba_nome]].style.apply(style_r, axis=1),
-        use_container_width=True, hide_index=True, 
+        df_v[cols_to_show].style.apply(style_r, axis=1),
+        use_container_width=True, 
+        hide_index=False,
         on_select=sel_mode,
         selection_mode="single-row", 
-        height=(len(df_v) * 35) + 38,
-        column_config={"Ticker": st.column_config.TextColumn(width=200)}
+        height=height_val,
+        column_config={
+            "Ticker": st.column_config.TextColumn("Ticker", width="medium")
+        }
     )
 
     if aba_nome != "Índices" and len(event.selection.rows) > 0:
         idx = event.selection.rows[0]
-        ticker = df_raw.iloc[idx]["Ticker"]
+        ticker = df_raw.index[idx]
         if not df_raw.iloc[idx]["is_h"] and ticker != st.session_state.ticker_selecionado:
             st.session_state.ticker_selecionado = ticker
             st.rerun()
