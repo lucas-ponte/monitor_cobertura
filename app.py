@@ -125,6 +125,20 @@ st.markdown(f"""
     div.stButton > button {{ background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; }}
     [data-testid="stBaseButton-pills"] {{ background-color: #000 !important; border: 1px solid #FFFFFF !important; color: #fff !important; border-radius: 4px !important; }}
     [data-testid="stBaseButton-pillsActive"] {{ background-color: #FFFFFF !important; color: #000 !important; border: 1px solid #FFFFFF !important; }}
+    
+    /* Ajuste Minimalista para o Popover */
+    div[data-testid="stPopover"] > button {{ 
+        height: 28px !important; 
+        min-height: 28px !important; 
+        padding: 0px 12px !important; 
+        background-color: #000 !important; 
+        border: 1px solid #333 !important; 
+        font-size: 0.65rem !important;
+        letter-spacing: 0.5px;
+        width: auto !important;
+    }}
+    div[data-testid="stPopoverBody"] {{ background-color: #0A0A0A !important; border: 1px solid #333 !important; }}
+
     header {{ visibility: hidden; }}
     .block-container {{ padding-top: 1.5rem !important; }}
     </style>
@@ -205,7 +219,6 @@ with c1:
 with c2:
     if st.button("ATUALIZAR"):
         st.cache_data.clear()
-        # Removido st.rerun() para evitar a perda de contexto do session_state antes da gravação do widget
 
 all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()) + INDICES_LIST)))
 master_data = get_all_data(all_tickers_master)
@@ -215,6 +228,7 @@ st.write("---")
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
 aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
+# BOTAO DE GRAFICOS LOGO ABAIXO DAS ABAS
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
 if aba_selecionada == "Cobertura":
     headers, t_list = ["Ticker", "Preço", "Rec.", "Alvo", "Upside"] + cols_base, sorted(list(COBERTURA.keys()))
@@ -231,8 +245,14 @@ else:
     for s, ticks in SETORES_ACOMPANHAMENTO.items(): t_list.append({"setor": s}); t_list.extend(ticks)
 
 tickers_da_aba = [tk for tk in t_list if not isinstance(tk, dict)]
-sel = st.selectbox("", ["GRÁFICOS"] + tickers_da_aba, label_visibility="collapsed")
-if sel != "GRÁFICOS": exibir_grafico_popup(sel, master_data)
+
+# Menu minimalista em Popover abaixo das abas
+with st.popover("📊 GRÁFICOS", use_container_width=False):
+    col_pop1, col_pop2 = st.columns(2)
+    for i, tk in enumerate(tickers_da_aba):
+        target_col = col_pop1 if i % 2 == 0 else col_pop2
+        if target_col.button(tk, key=f"btn_{tk}", use_container_width=True):
+            exibir_grafico_popup(tk, master_data)
 
 # --- RENDERIZAÇÃO ---
 html_desktop = f'<div class="desktop-view"><table class="list-container"><tr class="list-header">'
