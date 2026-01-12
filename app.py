@@ -7,10 +7,13 @@ from datetime import datetime
 # 1. CONFIGURAÇÃO E CSS
 st.set_page_config(page_title="DASHBOARD", layout="wide")
 
+# Inicialização do session_state
 if "ticker_selecionado" not in st.session_state:
     st.session_state.ticker_selecionado = None
 if "periodo_grafico" not in st.session_state:
     st.session_state.periodo_grafico = "12M"
+if "aba_ativa" not in st.session_state:
+    st.session_state.aba_ativa = "Cobertura"
 
 hora_atual = datetime.now().strftime("%H:%M")
 
@@ -68,7 +71,6 @@ st.markdown(f"""
     
     .stApp {{ background-color: #000000; font-family: 'Tinos', 'Inter', sans-serif; }}
     
-    /* === ESTILOS GERAIS === */
     .main-title {{ font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; color: #FFFFFF; margin: 0; line-height: 1; font-family: 'Tinos', sans-serif; }}
     .sub-title {{ font-size: 0.7rem; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-top: 5px; font-family: 'Tinos', sans-serif; }}
     
@@ -77,7 +79,6 @@ st.markdown(f"""
     .neg-val {{ color: #FF4B4B; }}
     .white-val {{ color: #FFFFFF !important; }}
     
-    /* === ESTILOS DESKTOP (TABELA) === */
     .list-container {{ width: 100%; border-collapse: collapse; margin-top: 1rem; font-family: 'Tinos', sans-serif; border: 1px solid #222; }}
     .list-header {{ background-color: #0A0A0A; color: #FFA500; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }}
     .list-header th {{ padding: 12px 8px; text-align: left; font-weight: 700; border: 1px solid #222; color: #FFA500; }}
@@ -86,24 +87,9 @@ st.markdown(f"""
     .sector-row {{ background-color: #111; color: #FFA500; font-weight: 700; font-size: 0.75rem; letter-spacing: 1px; }}
     .sector-row td {{ padding: 15px 8px; border: 1px solid #222; }}
 
-    /* === ESTILOS MOBILE (ACCORDION) === */
-    details {{
-        background-color: #000;
-        border-bottom: 1px solid #222;
-        margin-bottom: 0px;
-        font-family: 'Inter', sans-serif;
-    }}
-    summary {{
-        list-style: none;
-        padding: 12px 10px;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #050505;
-    }}
+    details {{ background-color: #000; border-bottom: 1px solid #222; margin-bottom: 0px; font-family: 'Inter', sans-serif; }}
+    summary {{ list-style: none; padding: 12px 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-color: #050505; }}
     summary:hover {{ background-color: #111; }}
-    summary::-webkit-details-marker {{ display: none; }}
     
     .mob-header-left {{ display: flex; align-items: center; }}
     .mob-header-right {{ display: flex; flex-direction: column; align-items: flex-end; }}
@@ -117,18 +103,8 @@ st.markdown(f"""
     .mob-label {{ color: #666; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }}
     .mob-val {{ color: #FFF; font-size: 0.85rem; font-weight: 500; }}
     
-    .mob-sector {{
-        background-color: #1a1a1a;
-        color: #FFA500;
-        padding: 10px 10px;
-        font-weight: 700;
-        font-size: 0.8rem;
-        letter-spacing: 1px;
-        border-bottom: 1px solid #333;
-        margin-top: 10px;
-    }}
+    .mob-sector {{ background-color: #1a1a1a; color: #FFA500; padding: 10px 10px; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #333; margin-top: 10px; }}
 
-    /* === CONTROLE DE EXIBIÇÃO E ESTILO MOBILE ESPECÍFICO === */
     @media (min-width: 769px) {{
         .mobile-view {{ display: none !important; }}
         .desktop-view {{ display: block !important; }}
@@ -138,76 +114,24 @@ st.markdown(f"""
         .mobile-view {{ display: block !important; }}
         .desktop-view {{ display: none !important; }}
         .main-title {{ font-size: 1.8rem; }}
-        
-        /* POSICIONAMENTO DO BOTÃO ATUALIZAR ABAIXO DO SUBTITLE NO MOBILE */
-        div[data-testid="column"]:nth-child(2) {{
-            margin-top: 15px !important;
-            width: 100% !important;
-        }}
-        
-        div[data-testid="column"]:nth-child(2) button {{
-            padding: 8px 15px !important;
-            font-size: 0.7rem !important;
-            min-height: 0px !important;
-            width: auto !important;
-        }}
-        
-        /* GRADE DE BOTÕES (ABAS) EM 2 COLUNAS NO MOBILE */
-        div[data-testid="stBaseButton-pills"] {{
-            font-size: 0.8rem !important;
-            padding: 10px 2px !important;
-            border: 1px solid #222 !important;
-            background-color: #0A0A0A !important;
-            color: #888 !important;
-            text-transform: uppercase;
-            width: 100%;
-        }}
-
-        div[data-testid="stHorizontalBlock"] > div {{
-            flex: 1 1 calc(50% - 10px) !important;
-            min-width: calc(50% - 10px) !important;
-        }}
-
-        div[data-testid="stHorizontalBlock"] {{
-            flex-wrap: wrap !important;
-            gap: 10px 10px !important;
-        }}
-
-        [data-testid="stBaseButton-pillsActive"] {{ 
-            background-color: #1A1A1A !important; 
-            color: #FFA500 !important; 
-            border: 1px solid #FFA500 !important;
-        }}
+        div[data-testid="column"]:nth-child(2) {{ margin-top: 15px !important; width: 100% !important; }}
+        div[data-testid="column"]:nth-child(2) button {{ padding: 8px 15px !important; font-size: 0.7rem !important; min-height: 0px !important; width: auto !important; }}
+        div[data-testid="stBaseButton-pills"] {{ font-size: 0.8rem !important; padding: 10px 2px !important; border: 1px solid #222 !important; background-color: #0A0A0A !important; color: #888 !important; text-transform: uppercase; width: 100%; }}
+        div[data-testid="stHorizontalBlock"] > div {{ flex: 1 1 calc(50% - 10px) !important; min-width: calc(50% - 10px) !important; }}
+        div[data-testid="stHorizontalBlock"] {{ flex-wrap: wrap !important; gap: 10px 10px !important; }}
+        [data-testid="stBaseButton-pillsActive"] {{ background-color: #1A1A1A !important; color: #FFA500 !important; border: 1px solid #FFA500 !important; }}
     }}
 
-    /* UI ELEMENTS WEB (DEFAULT) */
-    div.stButton > button {{
-        background-color: #000000 !important;
-        color: #FFFFFF !important;
-        border: 1px solid #FFFFFF !important;
-    }}
-    div.stButton > button:hover {{ border-color: #FFA500 !important; background-color: #111 !important; }}
-
-    [data-testid="stBaseButton-pills"] {{ 
-        background-color: #000 !important; 
-        border: 1px solid #FFFFFF !important; 
-        color: #fff !important; 
-        border-radius: 4px !important;
-    }}
-    [data-testid="stBaseButton-pillsActive"] {{ 
-        background-color: #FFFFFF !important; 
-        color: #000 !important; 
-        border: 1px solid #FFFFFF !important;
-    }}
-    
+    div.stButton > button {{ background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; }}
+    [data-testid="stBaseButton-pills"] {{ background-color: #000 !important; border: 1px solid #FFFFFF !important; color: #fff !important; border-radius: 4px !important; }}
+    [data-testid="stBaseButton-pillsActive"] {{ background-color: #FFFFFF !important; color: #000 !important; border: 1px solid #FFFFFF !important; }}
     header {{ visibility: hidden; }}
     .block-container {{ padding-top: 1.5rem !important; }}
     </style>
 """, unsafe_allow_html=True)
 
-# 1. DICIONÁRIOS MESTRE
+# 2. DICIONÁRIOS MESTRE
 INDICES_LIST = ["^BVSP", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225", "^HSI", "000001.SS", "^GDAXI", "^FTSE", "^FCHI", "^STOXX50E", "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
-
 COBERTURA = {
     "AZZA3.SA": {"Rec": "Compra", "Alvo": 50.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 23.00},
     "MGLU3.SA": {"Rec": "Neutro", "Alvo": 10.00}, "MELI": {"Rec": "Compra", "Alvo": 2810.00},
@@ -220,7 +144,6 @@ COBERTURA = {
     "BEEF3.SA": {"Rec": "Neutro", "Alvo": 7.00}, "EZTC3.SA": {"Rec": "Compra", "Alvo": 24.00},
     "MRVE3.SA": {"Rec": "Neutro", "Alvo": 9.50}
 }
-
 SETORES_ACOMPANHAMENTO = {
     "IBOV": ["^BVSP"],
     "Varejo e Bens de Consumo": ["AZZA3.SA", "LREN3.SA", "CEAB3.SA", "GUAR3.SA", "TFCO4.SA", "VIVA3.SA", "SBFG3.SA", "MELI", "MGLU3.SA", "BHIA3.SA", "ASAI3.SA", "GMAT3.SA", "PCAR3.SA", "SMFT3.SA", "NATU3.SA", "AUAU3.SA", "VULC3.SA", "ALPA4.SA"],
@@ -242,7 +165,6 @@ SETORES_ACOMPANHAMENTO = {
     "Mineração e Siderurgia": ["VALE3.SA", "CSNA3.SA", "USIM5.SA", "GGBR4.SA", "GOAU4.SA", "CMIN3.SA", "BRAP4.SA"],
     "Papel, Celulose e Químicos": ["SUZB3.SA", "KLBN11.SA", "RANI3.SA", "UNIP6.SA", "DEXP3.SA"]
 }
-
 CARTEIRA_PESSOAL_QTD = {
     "ITUB3.SA": 8, "WEGE3.SA": 5, "EGIE3.SA": 9, "EQTL3.SA": 9, "MULT3.SA": 7,
     "RENT3.SA": 3, "RADL3.SA": 5, "SMFT3.SA": 6, "MDIA3.SA": 5, "BBSE3.SA": 3,
@@ -250,7 +172,7 @@ CARTEIRA_PESSOAL_QTD = {
     "UNIP3.SA": 2, "PRIO3.SA": 5, "VULC3.SA": 5, "PSSA3.SA": 5
 }
 
-# 2. FUNÇÕES
+# 3. FUNÇÕES
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
     return yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False)
@@ -272,22 +194,18 @@ def calc_variation(h, days=None, ytd=False):
 
 def format_val_html(val, is_pct=False, sym="", force_white=False):
     if pd.isna(val) or val == 0: return "-"
-    if force_white:
-        color_class = "white-val"
-    else:
-        color_class = "pos-val" if is_pct and val > 0 else ("neg-val" if is_pct and val < 0 else "")
+    color_class = "white-val" if force_white else ("pos-val" if is_pct and val > 0 else ("neg-val" if is_pct and val < 0 else ""))
     f = "{:,.2f}".format(val).replace(",", "X").replace(".", ",").replace("X", ".")
-    res = f"{f}%" if is_pct else f"{sym}{f}"
-    return f'<span class="{color_class}">{res}</span>'
+    return f'<span class="{color_class}">{f + "%" if is_pct else sym + f}</span>'
 
-# 3. INTERFACE
+# 4. INTERFACE
 c1, c2 = st.columns([0.85, 0.15])
 with c1:
     st.markdown(f'<div class="main-title">DASHBOARD</div><div class="sub-title">ÚLTIMA ATUALIZAÇÃO: {hora_atual}</div>', unsafe_allow_html=True)
 with c2:
     if st.button("ATUALIZAR"):
         st.cache_data.clear()
-        st.rerun()
+        # Removido st.rerun() para evitar a perda de contexto do session_state antes da gravação do widget
 
 all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()) + INDICES_LIST)))
 master_data = get_all_data(all_tickers_master)
@@ -295,7 +213,7 @@ master_data = get_all_data(all_tickers_master)
 st.write("---")
 
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
-aba_selecionada = st.pills("", options=opcoes_nav, default="Cobertura", label_visibility="collapsed")
+aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
 if aba_selecionada == "Cobertura":
@@ -308,14 +226,13 @@ elif aba_selecionada == "Carteira pessoal":
     t_list = df_p.sort_values("peso", ascending=False)["ticker"].tolist()
 elif aba_selecionada == "Índices":
     headers, t_list = ["Ticker", "Preço"] + cols_base, INDICES_LIST
-else: # Acompanhamentos
+else:
     headers, t_list = ["Ticker", "Preço"] + cols_base, []
     for s, ticks in SETORES_ACOMPANHAMENTO.items(): t_list.append({"setor": s}); t_list.extend(ticks)
 
 tickers_da_aba = [tk for tk in t_list if not isinstance(tk, dict)]
 sel = st.selectbox("", ["GRÁFICOS"] + tickers_da_aba, label_visibility="collapsed")
-if sel != "GRÁFICOS":
-    exibir_grafico_popup(sel, master_data)
+if sel != "GRÁFICOS": exibir_grafico_popup(sel, master_data)
 
 # --- RENDERIZAÇÃO ---
 html_desktop = f'<div class="desktop-view"><table class="list-container"><tr class="list-header">'
@@ -330,13 +247,10 @@ for t in t_list:
         html_desktop += f'<tr class="sector-row"><td colspan="{len(headers)}">{sector_name}</td></tr>'
         html_mobile += f'<div class="mob-sector">{sector_name}</div>'
         continue
-    
     try:
         h = master_data[t]; cl = h['Close'].dropna(); p = float(cl.iloc[-1])
         sym = "R$ " if (t == "^BVSP" or ".SA" in t) else ("" if aba_selecionada == "Índices" else "US$ ")
         var_hoje = calc_variation(h, 1)
-        
-        # Desktop
         html_desktop += f'<tr class="list-row"><td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td>'
         if aba_selecionada == "Cobertura":
             alv = COBERTURA[t]["Alvo"]; html_desktop += f'<td>{COBERTURA[t]["Rec"]}</td><td>{format_val_html(alv, sym=sym)}</td><td>{format_val_html((alv/p-1)*100, is_pct=True)}</td>'
@@ -345,7 +259,6 @@ for t in t_list:
         for d in [1, 21, 126, 252]: html_desktop += f'<td>{format_val_html(calc_variation(h, d), is_pct=True)}</td>'
         html_desktop += f'<td>{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</td><td>{format_val_html(calc_variation(h, 1260), is_pct=True)}</td></tr>'
         
-        # Mobile
         formatted_price = "{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")
         html_mobile += f"""<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span></div><div class="mob-header-right"><span class="mob-price">{sym}{formatted_price}</span><span class="mob-today">{format_val_html(var_hoje, is_pct=True)}</span></div></summary><div class="mob-content"><div class="mob-grid">"""
         if aba_selecionada == "Cobertura":
