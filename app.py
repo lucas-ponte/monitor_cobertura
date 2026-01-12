@@ -107,8 +107,8 @@ st.markdown(f"""
     
     .mob-header-left {{ display: flex; align-items: center; }}
     .mob-header-right {{ display: flex; flex-direction: column; align-items: flex-end; }}
-    .mob-ticker {{ font-weight: 800; color: #FFF; font-size: 1rem; letter-spacing: -0.5px; }}
-    .mob-price {{ color: #DDD; font-size: 0.9rem; font-weight: 600; margin-bottom: 1px; }}
+    .mob-ticker {{ font-weight: 800; color: #FFF; font-size: 0.8rem; letter-spacing: -0.2px; }}
+    .mob-price {{ color: #DDD; font-size: 0.8rem; font-weight: 600; margin-bottom: 1px; }}
     .mob-today {{ font-weight: 700; font-size: 0.75rem; }}
     
     .mob-content {{ padding: 12px; background-color: #111; border-top: 1px solid #222; }}
@@ -139,17 +139,27 @@ st.markdown(f"""
         .desktop-view {{ display: none !important; }}
         .main-title {{ font-size: 1.8rem; }}
         
-        /* ESTILIZAÇÃO DAS PILLS (ABAS) APENAS NO MOBILE */
-        [data-testid="stBaseButton-pills"] {{ 
-            flex: 1;
-            font-size: 0.65rem !important;
-            padding: 8px 4px !important;
+        /* GRADE DE BOTÕES (ABAS) EM 2 COLUNAS NO MOBILE */
+        div[data-testid="stBaseButton-pills"] {{
+            font-size: 0.8rem !important;
+            padding: 10px 2px !important;
             border: 1px solid #222 !important;
             background-color: #0A0A0A !important;
             color: #888 !important;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            width: 100%;
         }}
+
+        div[data-testid="stHorizontalBlock"] > div {{
+            flex: 1 1 calc(50% - 10px) !important;
+            min-width: calc(50% - 10px) !important;
+        }}
+
+        div[data-testid="stHorizontalBlock"] {{
+            flex-wrap: wrap !important;
+            gap: 10px 10px !important;
+        }}
+
         [data-testid="stBaseButton-pillsActive"] {{ 
             background-color: #1A1A1A !important; 
             color: #FFA500 !important; 
@@ -273,7 +283,6 @@ master_data = get_all_data(all_tickers_master)
 st.write("---")
 
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
-# O uso de st.pills será estilizado dinamicamente pelo CSS acima
 aba_selecionada = st.pills("", options=opcoes_nav, default="Cobertura", label_visibility="collapsed")
 
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
@@ -296,16 +305,11 @@ sel = st.selectbox("", ["GRÁFICOS"] + tickers_da_aba, label_visibility="collaps
 if sel != "GRÁFICOS":
     exibir_grafico_popup(sel, master_data)
 
-# =========================================================
-# GERAÇÃO DO HTML (DESKTOP E MOBILE SEPARADOS)
-# =========================================================
-
-# --- 1. HTML DESKTOP ---
+# --- RENDERIZAÇÃO ---
 html_desktop = f'<div class="desktop-view"><table class="list-container"><tr class="list-header">'
 for h in headers: html_desktop += f'<th>{h}</th>'
 html_desktop += '</tr>'
 
-# --- 2. HTML MOBILE ---
 html_mobile = '<div class="mobile-view">'
 
 for t in t_list:
@@ -320,27 +324,22 @@ for t in t_list:
         sym = "R$ " if (t == "^BVSP" or ".SA" in t) else ("" if aba_selecionada == "Índices" else "US$ ")
         var_hoje = calc_variation(h, 1)
         
-        # --- DESKTOP ---
-        html_desktop += f'<tr class="list-row">'
-        html_desktop += f'<td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td>'
+        # Desktop
+        html_desktop += f'<tr class="list-row"><td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td>'
         if aba_selecionada == "Cobertura":
             alv = COBERTURA[t]["Alvo"]; html_desktop += f'<td>{COBERTURA[t]["Rec"]}</td><td>{format_val_html(alv, sym=sym)}</td><td>{format_val_html((alv/p-1)*100, is_pct=True)}</td>'
         if aba_selecionada == "Carteira pessoal":
             peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]; html_desktop += f'<td>{format_val_html(peso_val, is_pct=True, force_white=True)}</td>'
         for d in [1, 21, 126, 252]: html_desktop += f'<td>{format_val_html(calc_variation(h, d), is_pct=True)}</td>'
-        html_desktop += f'<td>{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</td>'
-        html_desktop += f'<td>{format_val_html(calc_variation(h, 1260), is_pct=True)}</td></tr>'
+        html_desktop += f'<td>{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</td><td>{format_val_html(calc_variation(h, 1260), is_pct=True)}</td></tr>'
         
-        # --- MOBILE ---
+        # Mobile
         formatted_price = "{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")
-        formatted_var = format_val_html(var_hoje, is_pct=True)
-        html_mobile += f"""<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span></div><div class="mob-header-right"><span class="mob-price">{sym}{formatted_price}</span><span class="mob-today">{formatted_var}</span></div></summary><div class="mob-content"><div class="mob-grid">"""
+        html_mobile += f"""<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span></div><div class="mob-header-right"><span class="mob-price">{sym}{formatted_price}</span><span class="mob-today">{format_val_html(var_hoje, is_pct=True)}</span></div></summary><div class="mob-content"><div class="mob-grid">"""
         if aba_selecionada == "Cobertura":
-            alv = COBERTURA[t]["Alvo"]; upside = (alv/p-1)*100
-            html_mobile += f'<div class="mob-item"><span class="mob-label">REC</span><span class="mob-val">{COBERTURA[t]["Rec"]}</span></div><div class="mob-item"><span class="mob-label">ALVO</span><span class="mob-val">{format_val_html(alv, sym=sym)}</span></div><div class="mob-item"><span class="mob-label">UPSIDE</span><span class="mob-val">{format_val_html(upside, is_pct=True)}</span></div>'
+            alv = COBERTURA[t]["Alvo"]; html_mobile += f'<div class="mob-item"><span class="mob-label">REC</span><span class="mob-val">{COBERTURA[t]["Rec"]}</span></div><div class="mob-item"><span class="mob-label">ALVO</span><span class="mob-val">{format_val_html(alv, sym=sym)}</span></div><div class="mob-item"><span class="mob-label">UPSIDE</span><span class="mob-val">{format_val_html((alv/p-1)*100, is_pct=True)}</span></div>'
         if aba_selecionada == "Carteira pessoal":
-            peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]
-            html_mobile += f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(peso_val, is_pct=True, force_white=True)}</span></div>'
+            peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]; html_mobile += f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(peso_val, is_pct=True, force_white=True)}</span></div>'
         html_mobile += f'<div class="mob-item"><span class="mob-label">30D</span><span class="mob-val">{format_val_html(calc_variation(h, 21), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">6M</span><span class="mob-val">{format_val_html(calc_variation(h, 126), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">12M</span><span class="mob-val">{format_val_html(calc_variation(h, 252), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">YTD</span><span class="mob-val">{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">5A</span><span class="mob-val">{format_val_html(calc_variation(h, 1260), is_pct=True)}</span></div>'
         html_mobile += """</div></div></details>"""
     except: continue
