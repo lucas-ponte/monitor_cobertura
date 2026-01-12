@@ -95,7 +95,7 @@ st.markdown(f"""
     }}
     summary {{
         list-style: none;
-        padding: 15px 10px;
+        padding: 12px 10px; /* Reduzi levemente o padding vertical */
         cursor: pointer;
         display: flex;
         justify-content: space-between;
@@ -105,13 +105,35 @@ st.markdown(f"""
     summary:hover {{ background-color: #111; }}
     summary::-webkit-details-marker {{ display: none; }}
     
-    .mob-header-left {{ display: flex; flex-direction: column; }}
+    /* Layout Header Mobile: Ticker Esq | Preço/Var Dir */
+    .mob-header-left {{ 
+        display: flex; 
+        align-items: center; 
+    }}
+    .mob-header-right {{ 
+        display: flex; 
+        flex-direction: column; 
+        align-items: flex-end; /* Alinha tudo à direita */
+    }}
+    
     .mob-ticker {{ font-weight: 800; color: #FFF; font-size: 1rem; letter-spacing: -0.5px; }}
-    .mob-price {{ color: #CCC; font-size: 0.85rem; margin-top: 2px; }}
-    .mob-today {{ font-weight: 700; font-size: 0.9rem; text-align: right; }}
+    
+    /* Preço em cima */
+    .mob-price {{ 
+        color: #DDD; 
+        font-size: 0.9rem; 
+        font-weight: 600;
+        margin-bottom: 1px; 
+    }}
+    
+    /* Hoje em baixo */
+    .mob-today {{ 
+        font-weight: 700; 
+        font-size: 0.75rem; 
+    }}
     
     .mob-content {{
-        padding: 15px;
+        padding: 12px;
         background-color: #111;
         border-top: 1px solid #222;
     }}
@@ -119,17 +141,19 @@ st.markdown(f"""
     .mob-grid {{
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 15px 10px;
+        gap: 12px 8px; /* Gap reduzido */
     }}
     
     .mob-item {{ display: flex; flex-direction: column; }}
-    .mob-label {{ color: #666; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }}
-    .mob-val {{ color: #FFF; font-size: 0.9rem; font-weight: 500; }}
+    
+    /* Fontes reduzidas para o conteúdo expandido */
+    .mob-label {{ color: #666; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }}
+    .mob-val {{ color: #FFF; font-size: 0.85rem; font-weight: 500; }}
     
     .mob-sector {{
         background-color: #1a1a1a;
         color: #FFA500;
-        padding: 12px 10px;
+        padding: 10px 10px;
         font-weight: 700;
         font-size: 0.8rem;
         letter-spacing: 1px;
@@ -145,7 +169,7 @@ st.markdown(f"""
     @media (max-width: 768px) {{
         .mobile-view {{ display: block !important; }}
         .desktop-view {{ display: none !important; }}
-        .main-title {{ font-size: 1.8rem; }} /* Ajuste título no mobile */
+        .main-title {{ font-size: 1.8rem; }}
     }}
 
     /* UI ELEMENTS */
@@ -258,7 +282,6 @@ with c2:
         st.cache_data.clear()
         st.rerun()
 
-# CORREÇÃO DA SINTAXE QUEBRA NA VERSÃO ANTERIOR
 all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()) + INDICES_LIST)))
 master_data = get_all_data(all_tickers_master)
 
@@ -330,12 +353,15 @@ for t in t_list:
         html_desktop += f'<td>{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</td>'
         html_desktop += f'<td>{format_val_html(calc_variation(h, 1260), is_pct=True)}</td></tr>'
         
-        # --- PREENCHIMENTO MOBILE (ACCORDION) - SEM INDENTAÇÃO NA STRING PARA CORRIGIR BUG DO STREAMLIT ---
-        html_mobile += f"""<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span><span class="mob-price">{sym}{"{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")}</span></div><div class="mob-today">{format_val_html(var_hoje, is_pct=True)}</div></summary><div class="mob-content"><div class="mob-grid">"""
+        # --- PREENCHIMENTO MOBILE (ACCORDION) ---
+        # Strings formatadas para o cabeçalho
+        formatted_price = "{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")
+        # Precisamos da variação formatada com cor, mas como string HTML
+        formatted_var = format_val_html(var_hoje, is_pct=True)
+
+        html_mobile += f"""<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span></div><div class="mob-header-right"><span class="mob-price">{sym}{formatted_price}</span><span class="mob-today">{formatted_var}</span></div></summary><div class="mob-content"><div class="mob-grid">"""
         
         # Corpo do Card (Grid com Infos Específicas)
-        
-        # Infos Extras dependendo da Aba
         if aba_selecionada == "Cobertura":
             alv = COBERTURA[t]["Alvo"]
             upside = (alv/p-1)*100
@@ -347,7 +373,7 @@ for t in t_list:
             peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]
             html_mobile += f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(peso_val, is_pct=True, force_white=True)}</span></div>'
 
-        # Timeframes (Comum a todos)
+        # Timeframes
         html_mobile += f'<div class="mob-item"><span class="mob-label">30 DIAS</span><span class="mob-val">{format_val_html(calc_variation(h, 21), is_pct=True)}</span></div>'
         html_mobile += f'<div class="mob-item"><span class="mob-label">6 MESES</span><span class="mob-val">{format_val_html(calc_variation(h, 126), is_pct=True)}</span></div>'
         html_mobile += f'<div class="mob-item"><span class="mob-label">12 MESES</span><span class="mob-val">{format_val_html(calc_variation(h, 252), is_pct=True)}</span></div>'
@@ -361,5 +387,5 @@ for t in t_list:
 html_desktop += '</table></div>'
 html_mobile += '</div>'
 
-# Renderiza ambos (CSS controla qual aparece)
+# Renderiza ambos
 st.markdown(html_desktop + html_mobile, unsafe_allow_html=True)
