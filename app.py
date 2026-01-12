@@ -105,64 +105,59 @@ st.markdown(f"""
     
     .mob-sector {{ background-color: #1a1a1a; color: #FFA500; padding: 10px 10px; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #333; margin-top: 10px; }}
 
-    @media (min-width: 769px) {{
-        .mobile-view {{ display: none !important; }}
-        .desktop-view {{ display: block !important; }}
-        
-        /* ABAS DESKTOP */
-        [data-testid="stBaseButton-pills"] {{ 
-            background-color: transparent !important; 
-            border: none !important; 
-            color: #888 !important; 
-            border-radius: 0px !important;
-            font-family: 'Tinos', sans-serif !important;
-            padding: 4px 12px !important;
-        }}
-        [data-testid="stBaseButton-pillsActive"] {{ 
-            background-color: transparent !important; 
-            color: #FFFFFF !important; 
-            border: none !important; 
-            border-bottom: 1px solid #FFFFFF !important;
-            border-radius: 0px !important;
-            font-weight: 700 !important;
-        }}
+    /* ESTILO DESKTOP PADRÃO */
+    [data-testid="stBaseButton-pills"] {{ 
+        background-color: transparent !important; 
+        border: none !important; 
+        color: #888 !important; 
+        border-radius: 0px !important;
+        font-family: 'Tinos', sans-serif !important;
+        padding: 4px 12px !important;
     }}
-    
+    [data-testid="stBaseButton-pillsActive"] {{ 
+        background-color: transparent !important; 
+        color: #FFFFFF !important; 
+        border: none !important; 
+        border-bottom: 1px solid #FFFFFF !important;
+        border-radius: 0px !important;
+        font-weight: 700 !important;
+    }}
+
     @media (max-width: 768px) {{
         .mobile-view {{ display: block !important; }}
         .desktop-view {{ display: none !important; }}
-        .main-title {{ font-size: 1.8rem; }}
         
-        /* ABAS MOBILE - LISTA DE SELETORES */
+        /* TRANSFORMAÇÃO PARA LISTA MOBILE */
+        div[data-testid="stPills"] {{
+            display: block !important;
+        }}
         div[data-testid="stPills"] > div {{
+            display: flex !important;
             flex-direction: column !important;
-            gap: 4px !important;
-        }}
-        [data-testid="stBaseButton-pills"] {{ 
-            background-color: #000000 !important; 
-            color: #FFFFFF !important; 
-            border: 1px solid #222 !important; 
-            border-radius: 0px !important;
             width: 100% !important;
+        }}
+        div[data-testid="stPills"] button {{
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 2px 0px !important;
+            background-color: #000000 !important;
+            color: #FFFFFF !important;
+            border: 1px solid #333 !important;
+            border-radius: 0px !important;
             justify-content: flex-start !important;
-            padding: 10px 15px !important;
             text-align: left !important;
+            padding: 12px !important;
         }}
-        [data-testid="stBaseButton-pillsActive"] {{ 
-            background-color: #111111 !important; 
-            color: #FFFFFF !important; 
+        /* ABA ATIVA NO MOBILE */
+        div[data-testid="stPills"] button[aria-checked="true"] {{
+            background-color: #111 !important;
             border: 1px solid #FFFFFF !important;
-            font-weight: 700 !important;
+            border-bottom: 1px solid #FFFFFF !important;
         }}
-
-        div[data-testid="column"]:nth-child(2) {{ margin-top: 15px !important; width: 100% !important; }}
-        div[data-testid="column"]:nth-child(2) button {{ padding: 8px 15px !important; font-size: 0.7rem !important; min-height: 0px !important; width: auto !important; }}
     }}
 
-    /* Botões Padrão */
     div.stButton > button {{ background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; }}
     
-    /* Popover (GRÁFICOS) */
     div[data-testid="stPopover"] > button {{ 
         height: auto !important; 
         min-height: 0px !important; 
