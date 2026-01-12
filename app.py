@@ -30,8 +30,19 @@ def exibir_grafico_popup(t_sel, data):
     if not df_plot.empty:
         perf = ((df_plot.iloc[-1] / df_plot.iloc[0]) - 1) * 100
         color = "#00FF00" if perf >= 0 else "#FF4B4B"
+        
+        y_min = df_plot.min()
+        y_max = df_plot.max()
+        padding = (y_max - y_min) * 0.05 if y_max != y_min else y_min * 0.05
+        
         st.markdown(f"### {t_sel} | {perf:+.2f}%")
-        fig = go.Figure(go.Scatter(x=df_plot.index, y=df_plot.values, line=dict(color=color, width=2), fill='tozeroy', fillcolor=f"rgba({ '0,255,0' if perf >=0 else '255,75,75' }, 0.02)"))
+        fig = go.Figure(go.Scatter(
+            x=df_plot.index, 
+            y=df_plot.values, 
+            line=dict(color=color, width=2), 
+            fill='tozeroy', 
+            fillcolor=f"rgba({ '0,255,0' if perf >=0 else '255,75,75' }, 0.02)"
+        ))
         
         fig.update_layout(
             template="plotly_dark", 
@@ -40,7 +51,13 @@ def exibir_grafico_popup(t_sel, data):
             height=400, 
             margin=dict(l=0, r=0, t=10, b=0), 
             xaxis=dict(showgrid=False), 
-            yaxis=dict(showgrid=True, gridcolor="#111", side="right", autorange=True, fixedrange=False), 
+            yaxis=dict(
+                showgrid=True, 
+                gridcolor="#111", 
+                side="right", 
+                range=[y_min - padding, y_max + padding],
+                fixedrange=False
+            ), 
             dragmode=False
         )
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
@@ -50,40 +67,105 @@ st.markdown(f"""
     @import url('https://fonts.cdnfonts.com/css/tinos');
     
     .stApp {{ background-color: #000000; font-family: 'Tinos', 'Inter', sans-serif; }}
-    .main-title {{ font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; color: white; margin: 0; line-height: 1; font-family: 'Tinos', sans-serif; }}
+    
+    /* === ESTILOS GERAIS === */
+    .main-title {{ font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; color: #FFFFFF; margin: 0; line-height: 1; font-family: 'Tinos', sans-serif; }}
     .sub-title {{ font-size: 0.7rem; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-top: 5px; font-family: 'Tinos', sans-serif; }}
-
-    .list-container {{ width: 100%; border-collapse: collapse; margin-top: 1rem; font-family: 'Tinos', sans-serif; border: 1px solid #222; }}
-    .list-header {{ background-color: #0A0A0A; color: #FFFFFF; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }}
-    .list-header th {{ padding: 12px 8px; text-align: left; font-weight: 700; border: 1px solid #222; }}
-    .list-row td {{ padding: 10px 8px; color: white; font-size: 0.8rem; border: 1px solid #222; }}
-    .list-row:hover {{ background-color: #0F0F0F; }}
     
     .ticker-link {{ color: #FFFFFF !important; font-weight: 600; text-decoration: none !important; }}
     .pos-val {{ color: #00FF00; }}
     .neg-val {{ color: #FF4B4B; }}
     .white-val {{ color: #FFFFFF !important; }}
     
+    /* === ESTILOS DESKTOP (TABELA) === */
+    .list-container {{ width: 100%; border-collapse: collapse; margin-top: 1rem; font-family: 'Tinos', sans-serif; border: 1px solid #222; }}
+    .list-header {{ background-color: #0A0A0A; color: #FFA500; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }}
+    .list-header th {{ padding: 12px 8px; text-align: left; font-weight: 700; border: 1px solid #222; color: #FFA500; }}
+    .list-row td {{ padding: 10px 8px; color: white; font-size: 0.8rem; border: 1px solid #222; }}
+    .list-row:hover {{ background-color: #0F0F0F; }}
     .sector-row {{ background-color: #111; color: #FFA500; font-weight: 700; font-size: 0.75rem; letter-spacing: 1px; }}
     .sector-row td {{ padding: 15px 8px; border: 1px solid #222; }}
 
+    /* === ESTILOS MOBILE (ACCORDION) === */
+    details {{
+        background-color: #000;
+        border-bottom: 1px solid #222;
+        margin-bottom: 0px;
+        font-family: 'Inter', sans-serif;
+    }}
+    summary {{
+        list-style: none;
+        padding: 15px 10px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #050505;
+    }}
+    summary:hover {{ background-color: #111; }}
+    summary::-webkit-details-marker {{ display: none; }}
+    
+    .mob-header-left {{ display: flex; flex-direction: column; }}
+    .mob-ticker {{ font-weight: 800; color: #FFF; font-size: 1rem; letter-spacing: -0.5px; }}
+    .mob-price {{ color: #CCC; font-size: 0.85rem; margin-top: 2px; }}
+    .mob-today {{ font-weight: 700; font-size: 0.9rem; text-align: right; }}
+    
+    .mob-content {{
+        padding: 15px;
+        background-color: #111;
+        border-top: 1px solid #222;
+    }}
+    
+    .mob-grid {{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px 10px;
+    }}
+    
+    .mob-item {{ display: flex; flex-direction: column; }}
+    .mob-label {{ color: #666; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }}
+    .mob-val {{ color: #FFF; font-size: 0.9rem; font-weight: 500; }}
+    
+    .mob-sector {{
+        background-color: #1a1a1a;
+        color: #FFA500;
+        padding: 12px 10px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #333;
+        margin-top: 10px;
+    }}
+
+    /* === CONTROLE DE EXIBIÇÃO (MEDIA QUERIES) === */
+    @media (min-width: 769px) {{
+        .mobile-view {{ display: none !important; }}
+        .desktop-view {{ display: block !important; }}
+    }}
+    @media (max-width: 768px) {{
+        .mobile-view {{ display: block !important; }}
+        .desktop-view {{ display: none !important; }}
+        .main-title {{ font-size: 1.8rem; }} /* Ajuste título no mobile */
+    }}
+
+    /* UI ELEMENTS */
     div.stButton > button {{
         background-color: #000000 !important;
         color: #FFFFFF !important;
-        border: 1px solid #333 !important;
+        border: 1px solid #FFFFFF !important;
     }}
-    div.stButton > button:hover {{ border-color: #555 !important; background-color: #111 !important; }}
+    div.stButton > button:hover {{ border-color: #FFA500 !important; background-color: #111 !important; }}
 
     [data-testid="stBaseButton-pills"] {{ 
         background-color: #000 !important; 
-        border: 1px solid #333 !important; 
+        border: 1px solid #FFFFFF !important; 
         color: #fff !important; 
         border-radius: 4px !important;
     }}
     [data-testid="stBaseButton-pillsActive"] {{ 
-        background-color: #FFF !important; 
+        background-color: #FFFFFF !important; 
         color: #000 !important; 
-        border: 1px solid #FFF !important;
+        border: 1px solid #FFFFFF !important;
     }}
     
     header {{ visibility: hidden; }}
@@ -91,10 +173,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# =========================================================
 # 1. DICIONÁRIOS MESTRE
-# =========================================================
-
 INDICES_LIST = ["^BVSP", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225", "^HSI", "000001.SS", "^GDAXI", "^FTSE", "^FCHI", "^STOXX50E", "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
 
 COBERTURA = {
@@ -139,10 +218,7 @@ CARTEIRA_PESSOAL_QTD = {
     "UNIP3.SA": 2, "PRIO3.SA": 5, "VULC3.SA": 5, "PSSA3.SA": 5
 }
 
-# =========================================================
 # 2. FUNÇÕES
-# =========================================================
-
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
     return yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False)
@@ -172,10 +248,7 @@ def format_val_html(val, is_pct=False, sym="", force_white=False):
     res = f"{f}%" if is_pct else f"{sym}{f}"
     return f'<span class="{color_class}">{res}</span>'
 
-# =========================================================
 # 3. INTERFACE
-# =========================================================
-
 c1, c2 = st.columns([0.85, 0.15])
 with c1:
     st.markdown(f'<div class="main-title">DASHBOARD</div><div class="sub-title">ÚLTIMA ATUALIZAÇÃO: {hora_atual}</div>', unsafe_allow_html=True)
@@ -193,7 +266,6 @@ st.write("---")
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
 aba_selecionada = st.pills("", options=opcoes_nav, default="Cobertura", label_visibility="collapsed")
 
-# DEFINIÇÃO DA LISTA DE ATIVOS POR ABA
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
 if aba_selecionada == "Cobertura":
     headers, t_list = ["Ticker", "Preço", "Rec.", "Alvo", "Upside"] + cols_base, sorted(list(COBERTURA.keys()))
@@ -209,37 +281,103 @@ else: # Acompanhamentos
     headers, t_list = ["Ticker", "Preço"] + cols_base, []
     for s, ticks in SETORES_ACOMPANHAMENTO.items(): t_list.append({"setor": s}); t_list.extend(ticks)
 
-# SELETOR DE GRÁFICO FILTRADO POR ABA
 tickers_da_aba = [tk for tk in t_list if not isinstance(tk, dict)]
 sel = st.selectbox("", ["GRÁFICOS"] + tickers_da_aba, label_visibility="collapsed")
 if sel != "GRÁFICOS":
     exibir_grafico_popup(sel, master_data)
 
-# TABELA HTML
-html_out = f'<table class="list-container"><tr class="list-header">'
-for h in headers: html_out += f'<th>{h}</th>'
-html_out += '</tr>'
+# =========================================================
+# GERAÇÃO DO HTML (DESKTOP E MOBILE SEPARADOS)
+# =========================================================
+
+# --- 1. HTML DESKTOP ---
+html_desktop = f'<div class="desktop-view"><table class="list-container"><tr class="list-header">'
+for h in headers: html_desktop += f'<th>{h}</th>'
+html_desktop += '</tr>'
+
+# --- 2. HTML MOBILE ---
+html_mobile = '<div class="mobile-view">'
 
 for t in t_list:
+    # LÓGICA DE SETOR (CABEÇALHO)
     if isinstance(t, dict):
-        html_out += f'<tr class="sector-row"><td colspan="{len(headers)}">{t["setor"].upper()}</td></tr>'
+        sector_name = t["setor"].upper()
+        # Desktop Row
+        html_desktop += f'<tr class="sector-row"><td colspan="{len(headers)}">{sector_name}</td></tr>'
+        # Mobile Row
+        html_mobile += f'<div class="mob-sector">{sector_name}</div>'
         continue
+    
     try:
+        # DADOS BÁSICOS
         h = master_data[t]; cl = h['Close'].dropna(); p = float(cl.iloc[-1])
         sym = "R$ " if (t == "^BVSP" or ".SA" in t) else ("" if aba_selecionada == "Índices" else "US$ ")
+        var_hoje = calc_variation(h, 1)
         
-        html_out += f'<tr class="list-row">'
-        html_out += f'<td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td>'
+        # --- PREENCHIMENTO DESKTOP ---
+        html_desktop += f'<tr class="list-row">'
+        html_desktop += f'<td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td>'
         
         if aba_selecionada == "Cobertura":
-            alv = COBERTURA[t]["Alvo"]; html_out += f'<td>{COBERTURA[t]["Rec"]}</td><td>{format_val_html(alv, sym=sym)}</td><td>{format_val_html((alv/p-1)*100, is_pct=True)}</td>'
+            alv = COBERTURA[t]["Alvo"]
+            html_desktop += f'<td>{COBERTURA[t]["Rec"]}</td><td>{format_val_html(alv, sym=sym)}</td><td>{format_val_html((alv/p-1)*100, is_pct=True)}</td>'
         if aba_selecionada == "Carteira pessoal":
             peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]
-            html_out += f'<td>{format_val_html(peso_val, is_pct=True, force_white=True)}</td>'
+            html_desktop += f'<td>{format_val_html(peso_val, is_pct=True, force_white=True)}</td>'
 
-        for d in [1, 21, 126, 252]: html_out += f'<td>{format_val_html(calc_variation(h, d), is_pct=True)}</td>'
-        html_out += f'<td>{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</td>'
-        html_out += f'<td>{format_val_html(calc_variation(h, 1260), is_pct=True)}</td></tr>'
+        for d in [1, 21, 126, 252]: html_desktop += f'<td>{format_val_html(calc_variation(h, d), is_pct=True)}</td>'
+        html_desktop += f'<td>{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</td>'
+        html_desktop += f'<td>{format_val_html(calc_variation(h, 1260), is_pct=True)}</td></tr>'
+        
+        # --- PREENCHIMENTO MOBILE (ACCORDION) ---
+        # Cabeçalho do Card (Ticker | Preço | Variação Hoje)
+        html_mobile += f"""
+        <details>
+            <summary>
+                <div class="mob-header-left">
+                    <span class="mob-ticker">{t}</span>
+                    <span class="mob-price">{sym}{"{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")}</span>
+                </div>
+                <div class="mob-today">
+                    {format_val_html(var_hoje, is_pct=True)}
+                </div>
+            </summary>
+            <div class="mob-content">
+                <div class="mob-grid">
+        """
+        
+        # Corpo do Card (Grid com Infos Específicas)
+        
+        # Infos Extras dependendo da Aba
+        if aba_selecionada == "Cobertura":
+            alv = COBERTURA[t]["Alvo"]
+            upside = (alv/p-1)*100
+            html_mobile += f'<div class="mob-item"><span class="mob-label">RECOMENDAÇÃO</span><span class="mob-val">{COBERTURA[t]["Rec"]}</span></div>'
+            html_mobile += f'<div class="mob-item"><span class="mob-label">ALVO</span><span class="mob-val">{format_val_html(alv, sym=sym)}</span></div>'
+            html_mobile += f'<div class="mob-item"><span class="mob-label">UPSIDE</span><span class="mob-val">{format_val_html(upside, is_pct=True)}</span></div>'
+        
+        if aba_selecionada == "Carteira pessoal":
+            peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]
+            html_mobile += f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(peso_val, is_pct=True, force_white=True)}</span></div>'
+
+        # Timeframes (Comum a todos)
+        # Note que pulamos o "1D" (hoje) pois já está no cabeçalho
+        html_mobile += f'<div class="mob-item"><span class="mob-label">30 DIAS</span><span class="mob-val">{format_val_html(calc_variation(h, 21), is_pct=True)}</span></div>'
+        html_mobile += f'<div class="mob-item"><span class="mob-label">6 MESES</span><span class="mob-val">{format_val_html(calc_variation(h, 126), is_pct=True)}</span></div>'
+        html_mobile += f'<div class="mob-item"><span class="mob-label">12 MESES</span><span class="mob-val">{format_val_html(calc_variation(h, 252), is_pct=True)}</span></div>'
+        html_mobile += f'<div class="mob-item"><span class="mob-label">YTD</span><span class="mob-val">{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</span></div>'
+        html_mobile += f'<div class="mob-item"><span class="mob-label">5 ANOS</span><span class="mob-val">{format_val_html(calc_variation(h, 1260), is_pct=True)}</span></div>'
+        
+        html_mobile += """
+                </div>
+            </div>
+        </details>
+        """
+        
     except: continue
 
-st.markdown(html_out + '</table>', unsafe_allow_html=True)
+html_desktop += '</table></div>'
+html_mobile += '</div>'
+
+# Renderiza ambos (CSS controla qual aparece)
+st.markdown(html_desktop + html_mobile, unsafe_allow_html=True)
