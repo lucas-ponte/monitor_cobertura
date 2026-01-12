@@ -108,33 +108,70 @@ st.markdown(f"""
     @media (min-width: 769px) {{
         .mobile-view {{ display: none !important; }}
         .desktop-view {{ display: block !important; }}
+        
+        /* ABAS DESKTOP */
+        [data-testid="stBaseButton-pills"] {{ 
+            background-color: transparent !important; 
+            border: none !important; 
+            color: #888 !important; 
+            border-radius: 0px !important;
+            font-family: 'Tinos', sans-serif !important;
+            padding: 4px 12px !important;
+        }}
+        [data-testid="stBaseButton-pillsActive"] {{ 
+            background-color: transparent !important; 
+            color: #FFFFFF !important; 
+            border: none !important; 
+            border-bottom: 1px solid #FFFFFF !important;
+            border-radius: 0px !important;
+            font-weight: 700 !important;
+        }}
     }}
     
     @media (max-width: 768px) {{
         .mobile-view {{ display: block !important; }}
         .desktop-view {{ display: none !important; }}
         .main-title {{ font-size: 1.8rem; }}
+        
+        /* ABAS MOBILE - LISTA DE SELETORES */
+        div[data-testid="stPills"] > div {{
+            flex-direction: column !important;
+            gap: 4px !important;
+        }}
+        [data-testid="stBaseButton-pills"] {{ 
+            background-color: #000000 !important; 
+            color: #FFFFFF !important; 
+            border: 1px solid #222 !important; 
+            border-radius: 0px !important;
+            width: 100% !important;
+            justify-content: flex-start !important;
+            padding: 10px 15px !important;
+            text-align: left !important;
+        }}
+        [data-testid="stBaseButton-pillsActive"] {{ 
+            background-color: #111111 !important; 
+            color: #FFFFFF !important; 
+            border: 1px solid #FFFFFF !important;
+            font-weight: 700 !important;
+        }}
+
         div[data-testid="column"]:nth-child(2) {{ margin-top: 15px !important; width: 100% !important; }}
         div[data-testid="column"]:nth-child(2) button {{ padding: 8px 15px !important; font-size: 0.7rem !important; min-height: 0px !important; width: auto !important; }}
-        div[data-testid="stBaseButton-pills"] {{ font-size: 0.8rem !important; padding: 10px 2px !important; border: 1px solid #222 !important; background-color: #0A0A0A !important; color: #888 !important; text-transform: uppercase; width: 100%; }}
-        div[data-testid="stHorizontalBlock"] > div {{ flex: 1 1 calc(50% - 10px) !important; min-width: calc(50% - 10px) !important; }}
-        div[data-testid="stHorizontalBlock"] {{ flex-wrap: wrap !important; gap: 10px 10px !important; }}
-        [data-testid="stBaseButton-pillsActive"] {{ background-color: #1A1A1A !important; color: #FFA500 !important; border: 1px solid #FFA500 !important; }}
     }}
 
+    /* Botões Padrão */
     div.stButton > button {{ background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; }}
-    [data-testid="stBaseButton-pills"] {{ background-color: #000 !important; border: 1px solid #FFFFFF !important; color: #fff !important; border-radius: 4px !important; }}
-    [data-testid="stBaseButton-pillsActive"] {{ background-color: #FFFFFF !important; color: #000 !important; border: 1px solid #FFFFFF !important; }}
     
-    /* Ajuste Minimalista para o Popover */
+    /* Popover (GRÁFICOS) */
     div[data-testid="stPopover"] > button {{ 
-        height: 28px !important; 
-        min-height: 28px !important; 
-        padding: 0px 12px !important; 
-        background-color: #000 !important; 
-        border: 1px solid #333 !important; 
-        font-size: 0.65rem !important;
-        letter-spacing: 0.5px;
+        height: auto !important; 
+        min-height: 0px !important; 
+        padding: 4px 16px !important; 
+        background-color: transparent !important; 
+        color: #FFFFFF !important; 
+        border: 1px solid #FFFFFF !important; 
+        font-size: 0.8rem !important;
+        font-weight: 400 !important;
         width: auto !important;
     }}
     div[data-testid="stPopoverBody"] {{ background-color: #0A0A0A !important; border: 1px solid #333 !important; }}
