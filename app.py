@@ -155,7 +155,7 @@ st.markdown(f"""
         
         /* CENTRALIZAR MENU DO POPOVER NO MOBILE */
         div[data-testid="stPopoverBody"] > div {{
-            display: flex !important;
+            display: center !important;
             flex-direction: column !important;
             align-items: center !important;
             text-align: center !important;
