@@ -105,27 +105,6 @@ st.markdown(f"""
     
     .mob-sector {{ background-color: #1a1a1a; color: #FFA500; padding: 10px 10px; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #333; margin-top: 10px; }}
 
-    /* Customização das Abas (Pills) */
-    div[data-testid="stPills"] {{ 
-        margin-bottom: 1rem;
-    }}
-    div[data-testid="stBaseButton-pills"] {{ 
-        background-color: transparent !important; 
-        border: none !important; 
-        color: #666 !important; 
-        font-family: 'Tinos', sans-serif !important;
-        font-size: 0.85rem !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        padding: 4px 12px !important;
-        border-radius: 0px !important;
-    }}
-    div[data-testid="stBaseButton-pillsActive"] {{ 
-        color: #FFFFFF !important; 
-        border-bottom: 2px solid #FFFFFF !important;
-        background-color: transparent !important;
-    }}
-
     @media (min-width: 769px) {{
         .mobile-view {{ display: none !important; }}
         .desktop-view {{ display: block !important; }}
@@ -141,6 +120,25 @@ st.markdown(f"""
 
     div.stButton > button {{ background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; }}
     
+    /* ESTILO ABAS (PILLS) CLEAN */
+    [data-testid="stBaseButton-pills"] {{ 
+        background-color: transparent !important; 
+        border: none !important; 
+        color: #888 !important; 
+        border-radius: 0px !important;
+        font-family: 'Tinos', sans-serif !important;
+        font-size: 0.85rem !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 5px 15px !important;
+    }}
+    [data-testid="stBaseButton-pillsActive"] {{ 
+        background-color: transparent !important; 
+        color: #FFFFFF !important; 
+        border-bottom: 2px solid #FFFFFF !important; 
+    }}
+    [data-testid="stBaseButton-pills"]:hover {{ color: #FFF !important; }}
+    
     /* Ajuste Minimalista para o Popover */
     div[data-testid="stPopover"] > button {{ 
         height: 28px !important; 
@@ -155,7 +153,7 @@ st.markdown(f"""
     div[data-testid="stPopoverBody"] {{ background-color: #0A0A0A !important; border: 1px solid #333 !important; }}
 
     header {{ visibility: hidden; }}
-    .block-container {{ padding-top: 1rem !important; }}
+    .block-container {{ padding-top: 0.5rem !important; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -228,7 +226,7 @@ def format_val_html(val, is_pct=False, sym="", force_white=False):
     return f'<span class="{color_class}">{f + "%" if is_pct else sym + f}</span>'
 
 # 4. INTERFACE
-# NAVEGAÇÃO NO TOPO
+# ABAS NO TOPO
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
 aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
@@ -244,7 +242,6 @@ master_data = get_all_data(all_tickers_master)
 
 st.write("---")
 
-# CONFIGURAÇÃO DE COLUNAS POR ABA
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
 if aba_selecionada == "Cobertura":
     headers, t_list = ["Ticker", "Preço", "Rec.", "Alvo", "Upside"] + cols_base, sorted(list(COBERTURA.keys()))
