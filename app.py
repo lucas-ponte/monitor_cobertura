@@ -105,6 +105,28 @@ st.markdown(f"""
     
     .mob-sector {{ background-color: #1a1a1a; color: #FFA500; padding: 10px 10px; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #333; margin-top: 10px; }}
 
+    /* Estilização Minimalista das Abas (Pills) */
+    div[data-testid="stPills"] {{
+        background-color: transparent !important;
+        padding-bottom: 20px;
+    }}
+    div[data-testid="stBaseButton-pills"] {{
+        background-color: transparent !important;
+        border: none !important;
+        color: #555 !important;
+        font-family: 'Tinos', sans-serif !important;
+        font-size: 0.9rem !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 0px !important;
+        padding: 4px 12px !important;
+    }}
+    div[data-testid="stBaseButton-pillsActive"] {{
+        color: #FFFFFF !important;
+        border-bottom: 2px solid #FFFFFF !important;
+        background-color: transparent !important;
+    }}
+
     @media (min-width: 769px) {{
         .mobile-view {{ display: none !important; }}
         .desktop-view {{ display: block !important; }}
@@ -116,15 +138,10 @@ st.markdown(f"""
         .main-title {{ font-size: 1.8rem; }}
         div[data-testid="column"]:nth-child(2) {{ margin-top: 15px !important; width: 100% !important; }}
         div[data-testid="column"]:nth-child(2) button {{ padding: 8px 15px !important; font-size: 0.7rem !important; min-height: 0px !important; width: auto !important; }}
-        div[data-testid="stBaseButton-pills"] {{ font-size: 0.8rem !important; padding: 10px 2px !important; border: 1px solid #222 !important; background-color: #0A0A0A !important; color: #888 !important; text-transform: uppercase; width: 100%; }}
-        div[data-testid="stHorizontalBlock"] > div {{ flex: 1 1 calc(50% - 10px) !important; min-width: calc(50% - 10px) !important; }}
-        div[data-testid="stHorizontalBlock"] {{ flex-wrap: wrap !important; gap: 10px 10px !important; }}
-        [data-testid="stBaseButton-pillsActive"] {{ background-color: #1A1A1A !important; color: #FFA500 !important; border: 1px solid #FFA500 !important; }}
+        div[data-testid="stBaseButton-pills"] {{ width: auto !important; }}
     }}
 
     div.stButton > button {{ background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; }}
-    [data-testid="stBaseButton-pills"] {{ background-color: #000 !important; border: 1px solid #FFFFFF !important; color: #fff !important; border-radius: 4px !important; }}
-    [data-testid="stBaseButton-pillsActive"] {{ background-color: #FFFFFF !important; color: #000 !important; border: 1px solid #FFFFFF !important; }}
     
     /* Ajuste Minimalista para o Popover */
     div[data-testid="stPopover"] > button {{ 
@@ -140,7 +157,7 @@ st.markdown(f"""
     div[data-testid="stPopoverBody"] {{ background-color: #0A0A0A !important; border: 1px solid #333 !important; }}
 
     header {{ visibility: hidden; }}
-    .block-container {{ padding-top: 1.5rem !important; }}
+    .block-container {{ padding-top: 0.5rem !important; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -213,6 +230,10 @@ def format_val_html(val, is_pct=False, sym="", force_white=False):
     return f'<span class="{color_class}">{f + "%" if is_pct else sym + f}</span>'
 
 # 4. INTERFACE
+# ABAS NO TOPO
+opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
+aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
+
 c1, c2 = st.columns([0.85, 0.15])
 with c1:
     st.markdown(f'<div class="main-title">DASHBOARD</div><div class="sub-title">ÚLTIMA ATUALIZAÇÃO: {hora_atual}</div>', unsafe_allow_html=True)
@@ -225,10 +246,7 @@ master_data = get_all_data(all_tickers_master)
 
 st.write("---")
 
-opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
-aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
-
-# BOTAO DE GRAFICOS LOGO ABAIXO DAS ABAS
+# CONFIGURAÇÃO DE DADOS POR ABA
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
 if aba_selecionada == "Cobertura":
     headers, t_list = ["Ticker", "Preço", "Rec.", "Alvo", "Upside"] + cols_base, sorted(list(COBERTURA.keys()))
