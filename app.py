@@ -72,111 +72,76 @@ st.markdown(f"""
     .main-title {{ font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; color: #FFFFFF; margin: 0; line-height: 1; font-family: 'Tinos', sans-serif; }}
     .sub-title {{ font-size: 0.7rem; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-top: 5px; font-family: 'Tinos', sans-serif; }}
     
-    .ticker-link {{ color: #FFFFFF !important; font-weight: 600; text-decoration: none !important; }}
     .pos-val {{ color: #00FF00; }}
     .neg-val {{ color: #FF4B4B; }}
     .white-val {{ color: #FFFFFF !important; }}
     
     /* === ESTILOS DESKTOP (TABELA) === */
-    .list-container {{ width: 100%; border-collapse: collapse; margin-top: 1rem; font-family: 'Tinos', sans-serif; border: 1px solid #222; }}
+    .list-container {{ width: 100%; border-collapse: collapse; margin-top: 1rem; border: 1px solid #222; }}
     .list-header {{ background-color: #0A0A0A; color: #FFA500; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }}
     .list-header th {{ padding: 12px 8px; text-align: left; font-weight: 700; border: 1px solid #222; color: #FFA500; }}
     .list-row td {{ padding: 10px 8px; color: white; font-size: 0.8rem; border: 1px solid #222; }}
-    .list-row:hover {{ background-color: #0F0F0F; }}
     .sector-row {{ background-color: #111; color: #FFA500; font-weight: 700; font-size: 0.75rem; letter-spacing: 1px; }}
-    .sector-row td {{ padding: 15px 8px; border: 1px solid #222; }}
 
-    /* === ESTILOS MOBILE (ACCORDION) === */
-    details {{
-        background-color: #000;
-        border-bottom: 1px solid #222;
-        margin-bottom: 0px;
-        font-family: 'Inter', sans-serif;
-    }}
-    summary {{
-        list-style: none;
-        padding: 12px 10px;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #050505;
-    }}
-    summary:hover {{ background-color: #111; }}
-    summary::-webkit-details-marker {{ display: none; }}
-    
-    .mob-header-left {{ display: flex; align-items: center; }}
-    .mob-header-right {{ display: flex; flex-direction: column; align-items: flex-end; }}
-    .mob-ticker {{ font-weight: 800; color: #FFF; font-size: 1rem; letter-spacing: -0.5px; }}
-    .mob-price {{ color: #DDD; font-size: 0.9rem; font-weight: 600; margin-bottom: 1px; }}
-    .mob-today {{ font-weight: 700; font-size: 0.75rem; }}
-    
-    .mob-content {{ padding: 12px; background-color: #111; border-top: 1px solid #222; }}
-    .mob-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px 8px; }}
-    .mob-item {{ display: flex; flex-direction: column; }}
-    .mob-label {{ color: #666; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }}
-    .mob-val {{ color: #FFF; font-size: 0.85rem; font-weight: 500; }}
-    
-    .mob-sector {{
-        background-color: #1a1a1a;
-        color: #FFA500;
-        padding: 10px 10px;
-        font-weight: 700;
-        font-size: 0.8rem;
-        letter-spacing: 1px;
-        border-bottom: 1px solid #333;
-        margin-top: 10px;
-    }}
-
-    /* === CONTROLE DE EXIBIÇÃO E ESTILO MOBILE ESPECÍFICO === */
-    @media (min-width: 769px) {{
-        .mobile-view {{ display: none !important; }}
-        .desktop-view {{ display: block !important; }}
-    }}
-    
+    /* === ESTILOS MOBILE === */
     @media (max-width: 768px) {{
         .mobile-view {{ display: block !important; }}
         .desktop-view {{ display: none !important; }}
-        .main-title {{ font-size: 1.8rem; }}
         
-        /* ESTILIZAÇÃO DAS PILLS (ABAS) APENAS NO MOBILE */
+        /* Ajuste de fontes para igualar aos subtítulos de setor */
+        .mob-ticker {{ font-weight: 800; color: #FFF; font-size: 0.8rem !important; letter-spacing: -0.2px; }}
+        .mob-price {{ color: #DDD; font-size: 0.8rem !important; font-weight: 600; }}
+        .mob-today {{ font-weight: 700; font-size: 0.7rem !important; }}
+        
+        /* Ajuste do container de Abas (Pills) para não cortar texto */
+        [data-testid="stHorizontalBlock"] {{
+            overflow-x: auto !important;
+            white-space: nowrap !important;
+            display: flex !important;
+            flex-wrap: nowrap !important;
+        }}
+        
         [data-testid="stBaseButton-pills"] {{ 
-            flex: 1;
-            font-size: 0.65rem !important;
-            padding: 8px 4px !important;
+            flex: 0 0 auto !important; /* Impede que o botão encolha e corte o texto */
+            font-size: 0.6rem !important;
+            padding: 6px 12px !important;
             border: 1px solid #222 !important;
             background-color: #0A0A0A !important;
             color: #888 !important;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }}
+        
         [data-testid="stBaseButton-pillsActive"] {{ 
             background-color: #1A1A1A !important; 
             color: #FFA500 !important; 
             border: 1px solid #FFA500 !important;
         }}
+        
+        .mob-sector {{
+            background-color: #1a1a1a;
+            color: #FFA500;
+            padding: 8px 10px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #333;
+            margin-top: 5px;
+        }}
     }}
 
-    /* UI ELEMENTS WEB (DEFAULT) */
-    div.stButton > button {{
-        background-color: #000000 !important;
-        color: #FFFFFF !important;
-        border: 1px solid #FFFFFF !important;
-    }}
-    div.stButton > button:hover {{ border-color: #FFA500 !important; background-color: #111 !important; }}
+    /* CSS GERAL PARA MOBILE ACCORDIONS */
+    details {{ background-color: #000; border-bottom: 1px solid #222; font-family: 'Inter', sans-serif; }}
+    summary {{ list-style: none; padding: 10px 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-color: #050505; }}
+    summary::-webkit-details-marker {{ display: none; }}
+    .mob-header-right {{ display: flex; flex-direction: column; align-items: flex-end; }}
+    .mob-content {{ padding: 10px; background-color: #111; border-top: 1px solid #222; }}
+    .mob-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px 8px; }}
+    .mob-label {{ color: #666; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }}
+    .mob-val {{ color: #FFF; font-size: 0.8rem; font-weight: 500; }}
 
-    [data-testid="stBaseButton-pills"] {{ 
-        background-color: #000 !important; 
-        border: 1px solid #FFFFFF !important; 
-        color: #fff !important; 
-        border-radius: 4px !important;
-    }}
-    [data-testid="stBaseButton-pillsActive"] {{ 
-        background-color: #FFFFFF !important; 
-        color: #000 !important; 
-        border: 1px solid #FFFFFF !important;
-    }}
-    
+    /* UI ELEMENTS PADRÃO */
+    div.stButton > button {{ background-color: #000 !important; color: #FFF !important; border: 1px solid #FFF !important; }}
+    [data-testid="stBaseButton-pills"] {{ border-radius: 4px !important; }}
     header {{ visibility: hidden; }}
     .block-container {{ padding-top: 1.5rem !important; }}
     </style>
@@ -249,10 +214,7 @@ def calc_variation(h, days=None, ytd=False):
 
 def format_val_html(val, is_pct=False, sym="", force_white=False):
     if pd.isna(val) or val == 0: return "-"
-    if force_white:
-        color_class = "white-val"
-    else:
-        color_class = "pos-val" if is_pct and val > 0 else ("neg-val" if is_pct and val < 0 else "")
+    color_class = "white-val" if force_white else ("pos-val" if is_pct and val > 0 else ("neg-val" if is_pct and val < 0 else ""))
     f = "{:,.2f}".format(val).replace(",", "X").replace(".", ",").replace("X", ".")
     res = f"{f}%" if is_pct else f"{sym}{f}"
     return f'<span class="{color_class}">{res}</span>'
@@ -273,7 +235,6 @@ master_data = get_all_data(all_tickers_master)
 st.write("---")
 
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
-# O uso de st.pills será estilizado dinamicamente pelo CSS acima
 aba_selecionada = st.pills("", options=opcoes_nav, default="Cobertura", label_visibility="collapsed")
 
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
@@ -293,19 +254,13 @@ else: # Acompanhamentos
 
 tickers_da_aba = [tk for tk in t_list if not isinstance(tk, dict)]
 sel = st.selectbox("", ["GRÁFICOS"] + tickers_da_aba, label_visibility="collapsed")
-if sel != "GRÁFICOS":
-    exibir_grafico_popup(sel, master_data)
+if sel != "GRÁFICOS": exibir_grafico_popup(sel, master_data)
 
-# =========================================================
-# GERAÇÃO DO HTML (DESKTOP E MOBILE SEPARADOS)
-# =========================================================
-
-# --- 1. HTML DESKTOP ---
+# --- RENDERIZAÇÃO ---
 html_desktop = f'<div class="desktop-view"><table class="list-container"><tr class="list-header">'
 for h in headers: html_desktop += f'<th>{h}</th>'
 html_desktop += '</tr>'
 
-# --- 2. HTML MOBILE ---
 html_mobile = '<div class="mobile-view">'
 
 for t in t_list:
@@ -314,33 +269,27 @@ for t in t_list:
         html_desktop += f'<tr class="sector-row"><td colspan="{len(headers)}">{sector_name}</td></tr>'
         html_mobile += f'<div class="mob-sector">{sector_name}</div>'
         continue
-    
     try:
         h = master_data[t]; cl = h['Close'].dropna(); p = float(cl.iloc[-1])
         sym = "R$ " if (t == "^BVSP" or ".SA" in t) else ("" if aba_selecionada == "Índices" else "US$ ")
         var_hoje = calc_variation(h, 1)
         
-        # --- DESKTOP ---
-        html_desktop += f'<tr class="list-row">'
-        html_desktop += f'<td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td>'
+        # Desktop
+        html_desktop += f'<tr class="list-row"><td>{t}</td><td>{format_val_html(p, sym=sym)}</td>'
         if aba_selecionada == "Cobertura":
             alv = COBERTURA[t]["Alvo"]; html_desktop += f'<td>{COBERTURA[t]["Rec"]}</td><td>{format_val_html(alv, sym=sym)}</td><td>{format_val_html((alv/p-1)*100, is_pct=True)}</td>'
         if aba_selecionada == "Carteira pessoal":
             peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]; html_desktop += f'<td>{format_val_html(peso_val, is_pct=True, force_white=True)}</td>'
         for d in [1, 21, 126, 252]: html_desktop += f'<td>{format_val_html(calc_variation(h, d), is_pct=True)}</td>'
-        html_desktop += f'<td>{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</td>'
-        html_desktop += f'<td>{format_val_html(calc_variation(h, 1260), is_pct=True)}</td></tr>'
+        html_desktop += f'<td>{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</td><td>{format_val_html(calc_variation(h, 1260), is_pct=True)}</td></tr>'
         
-        # --- MOBILE ---
+        # Mobile
         formatted_price = "{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")
-        formatted_var = format_val_html(var_hoje, is_pct=True)
-        html_mobile += f"""<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span></div><div class="mob-header-right"><span class="mob-price">{sym}{formatted_price}</span><span class="mob-today">{formatted_var}</span></div></summary><div class="mob-content"><div class="mob-grid">"""
+        html_mobile += f"""<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span></div><div class="mob-header-right"><span class="mob-price">{sym}{formatted_price}</span><span class="mob-today">{format_val_html(var_hoje, is_pct=True)}</span></div></summary><div class="mob-content"><div class="mob-grid">"""
         if aba_selecionada == "Cobertura":
-            alv = COBERTURA[t]["Alvo"]; upside = (alv/p-1)*100
-            html_mobile += f'<div class="mob-item"><span class="mob-label">REC</span><span class="mob-val">{COBERTURA[t]["Rec"]}</span></div><div class="mob-item"><span class="mob-label">ALVO</span><span class="mob-val">{format_val_html(alv, sym=sym)}</span></div><div class="mob-item"><span class="mob-label">UPSIDE</span><span class="mob-val">{format_val_html(upside, is_pct=True)}</span></div>'
+            alv = COBERTURA[t]["Alvo"]; html_mobile += f'<div class="mob-item"><span class="mob-label">REC</span><span class="mob-val">{COBERTURA[t]["Rec"]}</span></div><div class="mob-item"><span class="mob-label">ALVO</span><span class="mob-val">{format_val_html(alv, sym=sym)}</span></div><div class="mob-item"><span class="mob-label">UPSIDE</span><span class="mob-val">{format_val_html((alv/p-1)*100, is_pct=True)}</span></div>'
         if aba_selecionada == "Carteira pessoal":
-            peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]
-            html_mobile += f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(peso_val, is_pct=True, force_white=True)}</span></div>'
+            peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]; html_mobile += f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(peso_val, is_pct=True, force_white=True)}</span></div>'
         html_mobile += f'<div class="mob-item"><span class="mob-label">30D</span><span class="mob-val">{format_val_html(calc_variation(h, 21), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">6M</span><span class="mob-val">{format_val_html(calc_variation(h, 126), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">12M</span><span class="mob-val">{format_val_html(calc_variation(h, 252), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">YTD</span><span class="mob-val">{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">5A</span><span class="mob-val">{format_val_html(calc_variation(h, 1260), is_pct=True)}</span></div>'
         html_mobile += """</div></div></details>"""
     except: continue
