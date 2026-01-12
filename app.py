@@ -139,19 +139,17 @@ st.markdown(f"""
         .desktop-view {{ display: none !important; }}
         .main-title {{ font-size: 1.8rem; }}
         
-        /* POSICIONAMENTO DO BOTÃO ATUALIZAR NO MOBILE */
+        /* POSICIONAMENTO DO BOTÃO ATUALIZAR ABAIXO DO SUBTITLE NO MOBILE */
         div[data-testid="column"]:nth-child(2) {{
-            position: absolute !important;
-            top: 25px !important;
-            right: 15px !important;
-            width: auto !important;
-            z-index: 1000;
+            margin-top: 15px !important;
+            width: 100% !important;
         }}
         
         div[data-testid="column"]:nth-child(2) button {{
-            padding: 5px 10px !important;
-            font-size: 0.6rem !important;
+            padding: 8px 15px !important;
+            font-size: 0.7rem !important;
             min-height: 0px !important;
+            width: auto !important;
         }}
         
         /* GRADE DE BOTÕES (ABAS) EM 2 COLUNAS NO MOBILE */
@@ -287,7 +285,6 @@ c1, c2 = st.columns([0.85, 0.15])
 with c1:
     st.markdown(f'<div class="main-title">DASHBOARD</div><div class="sub-title">ÚLTIMA ATUALIZAÇÃO: {hora_atual}</div>', unsafe_allow_html=True)
 with c2:
-    st.write(" ")
     if st.button("ATUALIZAR"):
         st.cache_data.clear()
         st.rerun()
