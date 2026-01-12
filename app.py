@@ -71,6 +71,10 @@ st.markdown(f"""
     
     .stApp {{ background-color: #000000; font-family: 'Tinos', 'Inter', sans-serif; }}
     
+    /* REGRAS DE VISIBILIDADE */
+    .mobile-view {{ display: none; }}
+    .desktop-view {{ display: block; }}
+
     .main-title {{ font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; color: #FFFFFF; margin: 0; line-height: 1; font-family: 'Tinos', sans-serif; }}
     .sub-title {{ font-size: 0.7rem; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-top: 5px; font-family: 'Tinos', sans-serif; }}
     
@@ -145,7 +149,6 @@ st.markdown(f"""
             border: 1px solid #FFFFFF !important;
         }}
 
-        /* AJUSTE BOTÃO ATUALIZAR MOBILE */
         div[data-testid="column"]:nth-child(2) {{ 
             margin-top: 15px !important; 
             width: 100% !important; 
@@ -153,7 +156,6 @@ st.markdown(f"""
             justify-content: flex-end !important;
         }}
         
-        /* CENTRALIZAR MENU DO POPOVER NO MOBILE */
         div[data-testid="stPopoverBody"] > div {{
             display: flex !important;
             flex-direction: column !important;
@@ -266,7 +268,6 @@ st.write("---")
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
 aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
-# BOTAO DE GRAFICOS LOGO ABAIXO DAS ABAS
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
 if aba_selecionada == "Cobertura":
     headers, t_list = ["Ticker", "Preço", "Rec.", "Alvo", "Upside"] + cols_base, sorted(list(COBERTURA.keys()))
@@ -284,7 +285,6 @@ else:
 
 tickers_da_aba = [tk for tk in t_list if not isinstance(tk, dict)]
 
-# Menu minimalista em Popover abaixo das abas
 with st.popover("GRÁFICOS", use_container_width=False):
     col_pop1, col_pop2 = st.columns(2)
     for i, tk in enumerate(tickers_da_aba):
