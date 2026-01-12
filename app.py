@@ -139,6 +139,21 @@ st.markdown(f"""
         .desktop-view {{ display: none !important; }}
         .main-title {{ font-size: 1.8rem; }}
         
+        /* POSICIONAMENTO DO BOTÃO ATUALIZAR NO MOBILE */
+        div[data-testid="column"]:nth-child(2) {{
+            position: absolute !important;
+            top: 25px !important;
+            right: 15px !important;
+            width: auto !important;
+            z-index: 1000;
+        }}
+        
+        div[data-testid="column"]:nth-child(2) button {{
+            padding: 5px 10px !important;
+            font-size: 0.6rem !important;
+            min-height: 0px !important;
+        }}
+        
         /* GRADE DE BOTÕES (ABAS) EM 2 COLUNAS NO MOBILE */
         div[data-testid="stBaseButton-pills"] {{
             font-size: 0.8rem !important;
