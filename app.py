@@ -229,7 +229,8 @@ CARTEIRA_PESSOAL_QTD = {
 # 3. FUNÇÕES
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
-    return yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False)
+    # threads=False desativa o multitasking do yfinance que causava o erro RuntimeError no Streamlit
+    return yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False, threads=False)
 
 def calc_variation(h, days=None, ytd=False):
     try:
@@ -261,7 +262,16 @@ with c2:
         st.cache_data.clear()
 
 all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()) + INDICES_LIST)))
-master_data = get_all_data(all_tickers_master)
+
+# Bloco de segurança para captura de dados
+try:
+    master_data = get_all_data(all_tickers_master)
+    if master_data.empty:
+        st.error("Dados não disponíveis no momento.")
+        st.stop()
+except Exception as e:
+    st.error(f"Erro ao carregar dados: {e}")
+    st.stop()
 
 st.write("---")
 
