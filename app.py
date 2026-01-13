@@ -238,7 +238,7 @@ CARTEIRA_PESSOAL_QTD = {
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
     try:
-        data = yf.download(tickers, period="5y", group_by='ticker', auto_adjust=True, progress=False)
+        data = yf.download(tickers, period="5y", group_by='ticker', auto_adjust=True, progress=False, threads=True)
         if data.empty:
             return pd.DataFrame()
         return data
