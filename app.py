@@ -94,23 +94,22 @@ st.markdown(f"""
     .mob-label {{ color: #666; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }}
     .mob-val {{ color: #FFF; font-size: 0.85rem; font-weight: 500; }}
     .mob-sector {{ background-color: #1a1a1a; color: #FFA500; padding: 10px 10px; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #333; margin-top: 10px; }}
+    
     [data-testid="stBaseButton-pills"] {{ background-color: transparent !important; border: none !important; color: #888 !important; border-radius: 0px !important; font-family: 'Tinos', sans-serif !important; padding: 4px 12px !important; }}
     [data-testid="stBaseButton-pillsActive"] {{ background-color: transparent !important; color: #FFFFFF !important; border: none !important; border-bottom: 1px solid #FFFFFF !important; border-radius: 0px !important; font-weight: 700 !important; }}
-    @media (max-width: 768px) {{
-        .mobile-view {{ display: block !important; }}
-        .desktop-view {{ display: none !important; }}
-        div[data-testid="stPills"] {{ display: block !important; }}
-        div[data-testid="stPills"] > div {{ display: flex !important; flex-direction: column !important; width: 100% !important; }}
-        div[data-testid="stPills"] button {{ width: 100% !important; max-width: 100% !important; margin: 2px 0px !important; background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #333 !important; border-radius: 0px !important; justify-content: flex-start !important; text-align: left !important; padding: 12px !important; }}
-        div[data-testid="stPills"] button[aria-checked="true"] {{ background-color: #111 !important; border: 1px solid #FFFFFF !important; }}
-        div[data-testid="column"]:nth-child(2) {{ margin-top: 15px !important; width: 100% !important; display: flex !important; justify-content: flex-end !important; }}
-        div[data-testid="stPopoverBody"] > div {{ display: flex !important; flex-direction: column !important; align-items: center !important; text-align: center !important; }}
-    }}
-    div.stButton > button {{ background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; }}
-    div[data-testid="stPopover"] > button {{ height: auto !important; min-height: 0px !important; padding: 4px 16px !important; background-color: transparent !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; font-size: 0.8rem !important; font-weight: 400 !important; width: auto !important; }}
-    div[data-testid="stPopoverBody"] {{ background-color: #0A0A0A !important; border: 1px solid #333 !important; }}
+    
+    /* REMOVER WIDGETS DE STATUS E MENSAGENS NATIVAS */
+    [data-testid="stStatusWidget"], [data-testid="stNotification"] {{ visibility: hidden !important; display: none !important; }}
+    
     header {{ visibility: hidden; }}
     .block-container {{ padding-top: 1.5rem !important; }}
+
+    div.stButton > button {{ background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; border-radius: 0px !important; }}
+    div[data-testid="stPopover"] > button {{ height: auto !important; min-height: 0px !important; padding: 4px 16px !important; background-color: transparent !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; font-size: 0.8rem !important; font-weight: 400 !important; width: auto !important; border-radius: 0px !important; }}
+    div[data-testid="stPopoverBody"] {{ background-color: #0A0A0A !important; border: 1px solid #333 !important; }}
+    
+    /* Estilização Inputs Backtest */
+    .stTextInput input, .stDateInput input {{ background-color: #0A0A0A !important; color: white !important; border: 1px solid #222 !important; border-radius: 0px !important; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -160,7 +159,8 @@ CARTEIRA_PESSOAL_QTD = {
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
     try:
-        data = yf.download(tickers, period="5y", group_by='ticker', auto_adjust=True, progress=False, threads=True)
+        with st.spinner(""):
+            data = yf.download(tickers, period="5y", group_by='ticker', auto_adjust=True, progress=False, threads=True)
         return data if not data.empty else pd.DataFrame()
     except:
         return pd.DataFrame()
@@ -186,7 +186,6 @@ def format_val_html(val, is_pct=False, sym="", force_white=False):
     return f'<span class="{color_class}">{f + "%" if is_pct else sym + f}</span>'
 
 # 4. INTERFACE
-# Otimização: Aumentamos a coluna do título para empurrar o botão para a direita
 c1, c2 = st.columns([0.92, 0.08]) 
 with c1:
     st.markdown(f'<div class="main-title">DASHBOARD</div><div class="sub-title">ÚLTIMA ATUALIZAÇÃO: {hora_atual}</div>', unsafe_allow_html=True)
@@ -204,9 +203,39 @@ if master_data.empty:
 
 st.write("---")
 
-opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
+opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "Backtest"]
 aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
+if aba_selecionada == "Backtest":
+    col_bt1, col_bt2, col_bt3, col_bt4 = st.columns([2,2,2,1])
+    with col_bt1: t_bt = st.text_input("Ticker", value="PETR4.SA").upper()
+    with col_bt2: d_ini = st.date_input("Início", datetime(2023,1,1))
+    with col_bt3: d_fim = st.date_input("Fim", datetime.now())
+    with col_bt4: 
+        st.write("##")
+        btn_bt = st.button("Simular", use_container_width=True)
+
+    if btn_bt:
+        try:
+            with st.spinner(""):
+                df_bt = yf.download([t_bt, "^BVSP"], start=d_ini, end=d_fim, auto_adjust=True)['Close']
+            
+            if not df_bt.empty:
+                df_norm = (df_bt / df_bt.iloc[0] - 1) * 100
+                fig_bt = go.Figure()
+                fig_bt.add_trace(go.Scatter(x=df_norm.index, y=df_norm[t_bt], name=t_bt, line=dict(color="#00FF00", width=2)))
+                fig_bt.add_trace(go.Scatter(x=df_norm.index, y=df_norm["^BVSP"], name="IBOV", line=dict(color="#555", width=1.5, dash='dot')))
+                
+                fig_bt.update_layout(
+                    template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                    height=450, margin=dict(l=0, r=0, t=20, b=0), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                )
+                st.plotly_chart(fig_bt, use_container_width=True, config={'displayModeBar': False})
+            else: st.error("Ativo não encontrado para o período.")
+        except: st.error("Erro na simulação.")
+    st.stop()
+
+# LOGICA DAS ABAS PADRÃO (MANTIDA)
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
 df_p = pd.DataFrame()
 
@@ -280,22 +309,7 @@ for t in t_list:
         for val in [v_h, v_30, v_6m, v_12, v_ytd, v_5a]:
             html_d_list.append(f'<td>{format_val_html(val, is_pct=True)}</td>')
         html_d_list.append('</tr>')
-
-        f_p = "{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")
-        html_m_list.append(f'<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span></div><div class="mob-header-right"><span class="mob-price">{sym}{f_p}</span><span class="mob-today">{format_val_html(v_h, is_pct=True)}</span></div></summary><div class="mob-content"><div class="mob-grid">')
-        if aba_selecionada == "Cobertura":
-            alv = COBERTURA[t]["Alvo"]
-            html_m_list.append(f'<div class="mob-item"><span class="mob-label">REC</span><span class="mob-val">{COBERTURA[t]["Rec"]}</span></div><div class="mob-item"><span class="mob-label">ALVO</span><span class="mob-val">{format_val_html(alv, sym=sym)}</span></div><div class="mob-item"><span class="mob-label">UPSIDE</span><span class="mob-val">{format_val_html((alv/p-1)*100, is_pct=True)}</span></div>')
-        if aba_selecionada == "Carteira pessoal" and not df_p.empty:
-            p_v = df_p[df_p["ticker"] == t]["peso"].values[0]
-            html_m_list.append(f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(p_v, is_pct=True, force_white=True)}</span></div>')
-        
-        periods = [("30D", v_30), ("6M", v_6m), ("12M", v_12), ("YTD", v_ytd), ("5A", v_5a)]
-        for lab, val in periods:
-            html_m_list.append(f'<div class="mob-item"><span class="mob-label">{lab}</span><span class="mob-val">{format_val_html(val, is_pct=True)}</span></div>')
-        html_m_list.append('</div></div></details>')
     except: continue
 
 html_d_list.append('</table></div>')
-html_m_list.append('</div>')
-st.markdown("".join(html_d_list) + "".join(html_m_list), unsafe_allow_html=True)
+st.markdown("".join(html_d_list), unsafe_allow_html=True)
