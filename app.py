@@ -24,7 +24,6 @@ def exibir_grafico_popup(t_sel, data):
         st.session_state.periodo_grafico = nova_selecao
     
     try:
-        # Acesso otimizado à coluna
         h_raw = data[t_sel]['Close'].dropna()
     except:
         st.error("Dados insuficientes para gerar o gráfico.")
@@ -115,7 +114,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. DICIONÁRIOS MESTRE (Inalterados conforme instrução)
+# 2. DICIONÁRIOS MESTRE
 INDICES_LIST = ["^BVSP", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225", "^HSI", "000001.SS", "^GDAXI", "^FTSE", "^FCHI", "^STOXX50E", "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
 COBERTURA = {
     "AZZA3.SA": {"Rec": "Compra", "Alvo": 50.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 23.00},
@@ -157,18 +156,16 @@ CARTEIRA_PESSOAL_QTD = {
     "UNIP3.SA": 2, "PRIO3.SA": 5, "VULC3.SA": 5, "PSSA3.SA": 5
 }
 
-# 3. FUNÇÕES (Refatoradas para Performance)
+# 3. FUNÇÕES
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
     try:
-        # Puxamos apenas o Close para otimizar memória e tráfego
         data = yf.download(tickers, period="5y", group_by='ticker', auto_adjust=True, progress=False, threads=True)
         return data if not data.empty else pd.DataFrame()
     except:
         return pd.DataFrame()
 
 def calc_variation(cl, days=None, ytd=False):
-    """Versão simplificada que recebe apenas a série Close já limpa"""
     if cl.empty: return 0.0
     try:
         curr = float(cl.iloc[-1])
@@ -189,7 +186,8 @@ def format_val_html(val, is_pct=False, sym="", force_white=False):
     return f'<span class="{color_class}">{f + "%" if is_pct else sym + f}</span>'
 
 # 4. INTERFACE
-c1, c2 = st.columns([0.85, 0.15])
+# Otimização: Aumentamos a coluna do título para empurrar o botão para a direita
+c1, c2 = st.columns([0.92, 0.08]) 
 with c1:
     st.markdown(f'<div class="main-title">DASHBOARD</div><div class="sub-title">ÚLTIMA ATUALIZAÇÃO: {hora_atual}</div>', unsafe_allow_html=True)
 with c2:
@@ -245,11 +243,9 @@ with st.popover("GRÁFICOS"):
         if target_col.button(tk, key=f"btn_{tk}", use_container_width=True):
             exibir_grafico_popup(tk, master_data)
 
-# --- RENDERIZAÇÃO (Otimizada com List Joining) ---
 html_d_list = [f'<div class="desktop-view"><table class="list-container"><tr class="list-header">']
 for h in headers: html_d_list.append(f'<th>{h}</th>')
 html_d_list.append('</tr>')
-
 html_m_list = ['<div class="mobile-view">']
 
 for t in t_list:
@@ -267,14 +263,12 @@ for t in t_list:
         p = float(cl.iloc[-1])
         sym = "R$ " if (t == "^BVSP" or ".SA" in t) else ("" if aba_selecionada == "Índices" else "US$ ")
         
-        # Pre-calculo de variações para evitar chamadas redundantes
         v_h, v_30, v_6m, v_12, v_ytd, v_5a = (
             calc_variation(cl, 1), calc_variation(cl, 21), 
             calc_variation(cl, 126), calc_variation(cl, 252), 
             calc_variation(cl, ytd=True), calc_variation(cl, 1260)
         )
 
-        # Desktop Row
         html_d_list.append(f'<tr class="list-row"><td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td>')
         if aba_selecionada == "Cobertura":
             alv = COBERTURA[t]["Alvo"]
@@ -287,7 +281,6 @@ for t in t_list:
             html_d_list.append(f'<td>{format_val_html(val, is_pct=True)}</td>')
         html_d_list.append('</tr>')
 
-        # Mobile Details
         f_p = "{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")
         html_m_list.append(f'<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span></div><div class="mob-header-right"><span class="mob-price">{sym}{f_p}</span><span class="mob-today">{format_val_html(v_h, is_pct=True)}</span></div></summary><div class="mob-content"><div class="mob-grid">')
         if aba_selecionada == "Cobertura":
