@@ -26,7 +26,10 @@ def exibir_grafico_popup(t_sel, data):
         st.session_state.periodo_grafico = nova_selecao
     
     try:
-        h_raw = data[t_sel]['Close'].dropna()
+        if isinstance(data.columns, pd.MultiIndex):
+            h_raw = data[t_sel]['Close'].dropna()
+        else:
+            h_raw = data['Close'].dropna()
     except:
         st.error("Dados insuficientes para gerar o gráfico.")
         return
@@ -236,14 +239,15 @@ CARTEIRA_PESSOAL_QTD = {
 def get_all_data(tickers):
     try:
         data = yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False)
+        if data.empty:
+            return pd.DataFrame()
         return data
-    except:
+    except Exception:
         return pd.DataFrame()
 
 def calc_variation(h, days=None, ytd=False):
     try:
-        # Lógica para lidar com DataFrames MultiIndex ou SingleIndex
-        cl = h['Close'].dropna() if 'Close' in h else h.dropna()
+        cl = h['Close'].dropna() if isinstance(h, pd.DataFrame) and 'Close' in h else h.dropna()
         if cl.empty: return 0.0
         curr = float(cl.iloc[-1])
         if ytd:
@@ -274,23 +278,31 @@ with c2:
 all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()) + INDICES_LIST)))
 master_data = get_all_data(all_tickers_master)
 
+if master_data.empty:
+    st.error("Dados não disponíveis no momento. Verifique a conexão ou os tickers.")
+    st.stop()
+
 st.write("---")
 
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
 aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
+df_p = pd.DataFrame() # Inicializa vazio
+
 if aba_selecionada == "Cobertura":
     headers, t_list = ["Ticker", "Preço", "Rec.", "Alvo", "Upside"] + cols_base, sorted(list(COBERTURA.keys()))
 elif aba_selecionada == "Carteira pessoal":
     headers = ["Ticker", "Preço", "Peso %"] + cols_base
     pesos_calc = []
     for tk in CARTEIRA_PESSOAL_QTD:
-        if tk in master_data:
-            try:
-                p_atual = float(master_data[tk]['Close'].dropna().iloc[-1])
+        try:
+            # Tratamento para garantir acesso correto ao dado independente da estrutura do yfinance
+            target = master_data[tk] if tk in master_data.columns.levels[0] else None
+            if target is not None:
+                p_atual = float(target['Close'].dropna().iloc[-1])
                 pesos_calc.append({"ticker": tk, "val": p_atual * CARTEIRA_PESSOAL_QTD[tk]})
-            except: continue
+        except: continue
     df_p = pd.DataFrame(pesos_calc)
     if not df_p.empty:
         total_val = df_p["val"].sum()
@@ -331,10 +343,13 @@ for t in t_list:
         sym = "R$ " if (t == "^BVSP" or ".SA" in t) else ("" if aba_selecionada == "Índices" else "US$ ")
         var_hoje = calc_variation(h, 1)
         html_desktop += f'<tr class="list-row"><td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td>'
+        
         if aba_selecionada == "Cobertura":
             alv = COBERTURA[t]["Alvo"]; html_desktop += f'<td>{COBERTURA[t]["Rec"]}</td><td>{format_val_html(alv, sym=sym)}</td><td>{format_val_html((alv/p-1)*100, is_pct=True)}</td>'
-        if aba_selecionada == "Carteira pessoal":
+        
+        if aba_selecionada == "Carteira pessoal" and not df_p.empty:
             peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]; html_desktop += f'<td>{format_val_html(peso_val, is_pct=True, force_white=True)}</td>'
+            
         for d in [1, 21, 126, 252]: html_desktop += f'<td>{format_val_html(calc_variation(h, d), is_pct=True)}</td>'
         html_desktop += f'<td>{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</td><td>{format_val_html(calc_variation(h, 1260), is_pct=True)}</td></tr>'
         
@@ -342,7 +357,7 @@ for t in t_list:
         html_mobile += f"""<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span></div><div class="mob-header-right"><span class="mob-price">{sym}{formatted_price}</span><span class="mob-today">{format_val_html(var_hoje, is_pct=True)}</span></div></summary><div class="mob-content"><div class="mob-grid">"""
         if aba_selecionada == "Cobertura":
             alv = COBERTURA[t]["Alvo"]; html_mobile += f'<div class="mob-item"><span class="mob-label">REC</span><span class="mob-val">{COBERTURA[t]["Rec"]}</span></div><div class="mob-item"><span class="mob-label">ALVO</span><span class="mob-val">{format_val_html(alv, sym=sym)}</span></div><div class="mob-item"><span class="mob-label">UPSIDE</span><span class="mob-val">{format_val_html((alv/p-1)*100, is_pct=True)}</span></div>'
-        if aba_selecionada == "Carteira pessoal":
+        if aba_selecionada == "Carteira pessoal" and not df_p.empty:
             peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]; html_mobile += f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(peso_val, is_pct=True, force_white=True)}</span></div>'
         html_mobile += f'<div class="mob-item"><span class="mob-label">30D</span><span class="mob-val">{format_val_html(calc_variation(h, 21), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">6M</span><span class="mob-val">{format_val_html(calc_variation(h, 126), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">12M</span><span class="mob-val">{format_val_html(calc_variation(h, 252), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">YTD</span><span class="mob-val">{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">5A</span><span class="mob-val">{format_val_html(calc_variation(h, 1260), is_pct=True)}</span></div>'
         html_mobile += """</div></div></details>"""
