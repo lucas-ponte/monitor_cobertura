@@ -184,7 +184,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. DICIONÁRIOS MESTRE (Mantidos conforme sua instrução)
+# 2. DICIONÁRIOS MESTRE
 INDICES_LIST = ["^BVSP", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225", "^HSI", "000001.SS", "^GDAXI", "^FTSE", "^FCHI", "^STOXX50E", "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
 COBERTURA = {
     "AZZA3.SA": {"Rec": "Compra", "Alvo": 50.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 23.00},
@@ -229,8 +229,11 @@ CARTEIRA_PESSOAL_QTD = {
 # 3. FUNÇÕES
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
-    # threads=False resolve o conflito de RuntimeError no Streamlit
-    return yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False, threads=False)
+    try:
+        # threads=False desativa o uso de threads paralelas que causa RuntimeError no Streamlit
+        return yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False, threads=False)
+    except Exception:
+        return pd.DataFrame()
 
 def calc_variation(h, days=None, ytd=False):
     try:
@@ -263,14 +266,11 @@ with c2:
 
 all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()) + INDICES_LIST)))
 
-# Tratamento para evitar que o erro de dados pare o app
-try:
-    master_data = get_all_data(all_tickers_master)
-    if master_data.empty:
-        st.error("Dados não disponíveis no momento.")
-        st.stop()
-except Exception as e:
-    st.error(f"Erro ao carregar dados: {e}")
+# Download dos dados com verificação de segurança
+master_data = get_all_data(all_tickers_master)
+
+if master_data.empty:
+    st.error("Erro na conexão com o Yahoo Finance. Tente novamente em instantes.")
     st.stop()
 
 st.write("---")
@@ -283,10 +283,18 @@ if aba_selecionada == "Cobertura":
     headers, t_list = ["Ticker", "Preço", "Rec.", "Alvo", "Upside"] + cols_base, sorted(list(COBERTURA.keys()))
 elif aba_selecionada == "Carteira pessoal":
     headers = ["Ticker", "Preço", "Peso %"] + cols_base
-    pesos_calc = [{"ticker": tk, "val": float(master_data[tk]['Close'].dropna().iloc[-1]) * CARTEIRA_PESSOAL_QTD[tk]} for tk in CARTEIRA_PESSOAL_QTD if tk in master_data]
+    pesos_calc = []
+    for tk in CARTEIRA_PESSOAL_QTD:
+        if tk in master_data:
+            c = master_data[tk]['Close'].dropna()
+            if not c.empty:
+                pesos_calc.append({"ticker": tk, "val": float(c.iloc[-1]) * CARTEIRA_PESSOAL_QTD[tk]})
     df_p = pd.DataFrame(pesos_calc)
-    df_p["peso"] = (df_p["val"] / df_p["val"].sum()) * 100
-    t_list = df_p.sort_values("peso", ascending=False)["ticker"].tolist()
+    if not df_p.empty:
+        df_p["peso"] = (df_p["val"] / df_p["val"].sum()) * 100
+        t_list = df_p.sort_values("peso", ascending=False)["ticker"].tolist()
+    else:
+        t_list = []
 elif aba_selecionada == "Índices":
     headers, t_list = ["Ticker", "Preço"] + cols_base, INDICES_LIST
 else:
