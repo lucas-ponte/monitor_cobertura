@@ -7,7 +7,6 @@ from datetime import datetime
 # 1. CONFIGURAÇÃO E CSS
 st.set_page_config(page_title="DASHBOARD", layout="wide")
 
-# Inicialização do session_state
 if "ticker_selecionado" not in st.session_state:
     st.session_state.ticker_selecionado = None
 if "periodo_grafico" not in st.session_state:
@@ -17,7 +16,6 @@ if "aba_ativa" not in st.session_state:
 
 hora_atual = datetime.now().strftime("%H:%M")
 
-# FUNÇÃO DO POPUP CENTRALIZADO
 @st.dialog("Gráfico de Performance", width="large")
 def exibir_grafico_popup(t_sel, data):
     per_map = {"30D": 21, "6M": 126, "12M": 252, "5A": 1260, "YTD": "ytd"}
@@ -68,21 +66,15 @@ def exibir_grafico_popup(t_sel, data):
 st.markdown(f"""
     <style>
     @import url('https://fonts.cdnfonts.com/css/tinos');
-    
     .stApp {{ background-color: #000000; font-family: 'Tinos', 'Inter', sans-serif; }}
-    
-    /* REGRAS DE VISIBILIDADE */
     .mobile-view {{ display: none; }}
     .desktop-view {{ display: block; }}
-
     .main-title {{ font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; color: #FFFFFF; margin: 0; line-height: 1; font-family: 'Tinos', sans-serif; }}
     .sub-title {{ font-size: 0.7rem; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-top: 5px; font-family: 'Tinos', sans-serif; }}
-    
     .ticker-link {{ color: #FFFFFF !important; font-weight: 600; text-decoration: none !important; }}
     .pos-val {{ color: #00FF00; }}
     .neg-val {{ color: #FF4B4B; }}
     .white-val {{ color: #FFFFFF !important; }}
-    
     .list-container {{ width: 100%; border-collapse: collapse; margin-top: 1rem; font-family: 'Tinos', sans-serif; border: 1px solid #222; }}
     .list-header {{ background-color: #0A0A0A; color: #FFA500; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }}
     .list-header th {{ padding: 12px 8px; text-align: left; font-weight: 700; border: 1px solid #222; color: #FFA500; }}
@@ -90,95 +82,35 @@ st.markdown(f"""
     .list-row:hover {{ background-color: #0F0F0F; }}
     .sector-row {{ background-color: #111; color: #FFA500; font-weight: 700; font-size: 0.75rem; letter-spacing: 1px; }}
     .sector-row td {{ padding: 15px 8px; border: 1px solid #222; }}
-
     details {{ background-color: #000; border-bottom: 1px solid #222; margin-bottom: 0px; font-family: 'Inter', sans-serif; }}
     summary {{ list-style: none; padding: 12px 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-color: #050505; }}
     summary:hover {{ background-color: #111; }}
-    
     .mob-header-left {{ display: flex; align-items: center; }}
     .mob-header-right {{ display: flex; flex-direction: column; align-items: flex-end; }}
     .mob-ticker {{ font-weight: 800; color: #FFF; font-size: 0.8rem; letter-spacing: -0.2px; }}
     .mob-price {{ color: #DDD; font-size: 0.8rem; font-weight: 600; margin-bottom: 1px; }}
     .mob-today {{ font-weight: 700; font-size: 0.75rem; }}
-    
     .mob-content {{ padding: 12px; background-color: #111; border-top: 1px solid #222; }}
     .mob-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px 8px; }}
     .mob-item {{ display: flex; flex-direction: column; }}
     .mob-label {{ color: #666; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }}
     .mob-val {{ color: #FFF; font-size: 0.85rem; font-weight: 500; }}
-    
     .mob-sector {{ background-color: #1a1a1a; color: #FFA500; padding: 10px 10px; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #333; margin-top: 10px; }}
-
-    [data-testid="stBaseButton-pills"] {{ 
-        background-color: transparent !important; 
-        border: none !important; 
-        color: #888 !important; 
-        border-radius: 0px !important;
-        font-family: 'Tinos', sans-serif !important;
-        padding: 4px 12px !important;
-    }}
-    [data-testid="stBaseButton-pillsActive"] {{ 
-        background-color: transparent !important; 
-        color: #FFFFFF !important; 
-        border: none !important; 
-        border-bottom: 1px solid #FFFFFF !important;
-        border-radius: 0px !important;
-        font-weight: 700 !important;
-    }}
-
+    [data-testid="stBaseButton-pills"] {{ background-color: transparent !important; border: none !important; color: #888 !important; border-radius: 0px !important; font-family: 'Tinos', sans-serif !important; padding: 4px 12px !important; }}
+    [data-testid="stBaseButton-pillsActive"] {{ background-color: transparent !important; color: #FFFFFF !important; border: none !important; border-bottom: 1px solid #FFFFFF !important; border-radius: 0px !important; font-weight: 700 !important; }}
     @media (max-width: 768px) {{
         .mobile-view {{ display: block !important; }}
         .desktop-view {{ display: none !important; }}
-        
         div[data-testid="stPills"] {{ display: block !important; }}
         div[data-testid="stPills"] > div {{ display: flex !important; flex-direction: column !important; width: 100% !important; }}
-        div[data-testid="stPills"] button {{
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 2px 0px !important;
-            background-color: #000000 !important;
-            color: #FFFFFF !important;
-            border: 1px solid #333 !important;
-            border-radius: 0px !important;
-            justify-content: flex-start !important;
-            text-align: left !important;
-            padding: 12px !important;
-        }}
-        div[data-testid="stPills"] button[aria-checked="true"] {{
-            background-color: #111 !important;
-            border: 1px solid #FFFFFF !important;
-        }}
-
-        div[data-testid="column"]:nth-child(2) {{ 
-            margin-top: 15px !important; 
-            width: 100% !important; 
-            display: flex !important;
-            justify-content: flex-end !important;
-        }}
-        
-        div[data-testid="stPopoverBody"] > div {{
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            text-align: center !important;
-        }}
+        div[data-testid="stPills"] button {{ width: 100% !important; max-width: 100% !important; margin: 2px 0px !important; background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #333 !important; border-radius: 0px !important; justify-content: flex-start !important; text-align: left !important; padding: 12px !important; }}
+        div[data-testid="stPills"] button[aria-checked="true"] {{ background-color: #111 !important; border: 1px solid #FFFFFF !important; }}
+        div[data-testid="column"]:nth-child(2) {{ margin-top: 15px !important; width: 100% !important; display: flex !important; justify-content: flex-end !important; }}
+        div[data-testid="stPopoverBody"] > div {{ display: flex !important; flex-direction: column !important; align-items: center !important; text-align: center !important; }}
     }}
-
     div.stButton > button {{ background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; }}
-    
-    div[data-testid="stPopover"] > button {{ 
-        height: auto !important; 
-        min-height: 0px !important; 
-        padding: 4px 16px !important; 
-        background-color: transparent !important; 
-        color: #FFFFFF !important; 
-        border: 1px solid #FFFFFF !important; 
-        font-size: 0.8rem !important;
-        font-weight: 400 !important;
-        width: auto !important;
-    }}
+    div[data-testid="stPopover"] > button {{ height: auto !important; min-height: 0px !important; padding: 4px 16px !important; background-color: transparent !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; font-size: 0.8rem !important; font-weight: 400 !important; width: auto !important; }}
     div[data-testid="stPopoverBody"] {{ background-color: #0A0A0A !important; border: 1px solid #333 !important; }}
-
     header {{ visibility: hidden; }}
     .block-container {{ padding-top: 1.5rem !important; }}
     </style>
@@ -226,14 +158,26 @@ CARTEIRA_PESSOAL_QTD = {
     "UNIP3.SA": 2, "PRIO3.SA": 5, "VULC3.SA": 5, "PSSA3.SA": 5
 }
 
-# 3. FUNÇÕES
+# 3. FUNÇÕES (RESOLUÇÃO DO ERRO)
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
-    try:
-        # threads=False desativa o uso de threads paralelas que causa RuntimeError no Streamlit
-        return yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False, threads=False)
-    except Exception:
-        return pd.DataFrame()
+    # Tentativa 1: Download em massa (Mais rápido)
+    df = yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False, threads=False)
+    
+    # Tentativa 2: Fallback individual se o download em massa falhar ou vier vazio (Resolve o erro do Streamlit)
+    if df.empty:
+        individual_dfs = {}
+        for t in tickers:
+            try:
+                # Baixa um por um para evitar bloqueio de IP/Thread
+                single = yf.download(t, period="6y", auto_adjust=True, progress=False, threads=False)
+                if not single.empty:
+                    individual_dfs[t] = single
+            except:
+                continue
+        if individual_dfs:
+            return pd.concat(individual_dfs, axis=1)
+    return df
 
 def calc_variation(h, days=None, ytd=False):
     try:
@@ -263,14 +207,15 @@ with c1:
 with c2:
     if st.button("ATUALIZAR"):
         st.cache_data.clear()
+        st.rerun()
 
 all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()) + INDICES_LIST)))
 
-# Download dos dados com verificação de segurança
 master_data = get_all_data(all_tickers_master)
 
+# Verificação final para garantir que o app não quebre se absolutamente nada for baixado
 if master_data.empty:
-    st.error("Erro na conexão com o Yahoo Finance. Tente novamente em instantes.")
+    st.error("Dados não disponíveis no momento. Tente atualizar a página.")
     st.stop()
 
 st.write("---")
