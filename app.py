@@ -19,7 +19,7 @@ hora_atual = datetime.now().strftime("%H:%M")
 @st.dialog("Gráfico de Performance", width="large")
 def exibir_grafico_popup(t_sel, data):
     per_map = {"30D": 21, "6M": 126, "12M": 252, "5A": 1260, "YTD": "ytd"}
-    nova_selecao = st.pills("Período", options=list(per_map.keys()), key="pills_popup", default=st.session_state.periodo_grafico)
+    nova_selecao = st.pills("Periodo", options=list(per_map.keys()), key="pills_popup", default=st.session_state.periodo_grafico)
     if nova_selecao:
         st.session_state.periodo_grafico = nova_selecao
     
@@ -55,8 +55,9 @@ def exibir_grafico_popup(t_sel, data):
         
         fig.update_layout(
             template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', 
-            height=400, margin=dict(l=0, r=0, t=10, b=0), xaxis=dict(showgrid=False), 
-            yaxis=dict(showgrid=True, gridcolor="#111", side="right", range=[y_min - padding, y_max + padding], fixedrange=False), 
+            height=400, margin=dict(l=0, r=0, t=10, b=0), 
+            xaxis=dict(showgrid=False, fixedrange=True), 
+            yaxis=dict(showgrid=True, gridcolor="#111", side="right", range=[y_min - padding, y_max + padding], fixedrange=True), 
             dragmode=False
         )
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
@@ -112,7 +113,6 @@ st.markdown(f"""
     header {{ visibility: hidden; }}
     .block-container {{ padding-top: 1.5rem !important; }}
     
-    /* REMOVER WIDGET DE STATUS PADRÃO */
     [data-testid="stStatusWidget"] {{ visibility: hidden !important; }}
     </style>
 """, unsafe_allow_html=True)
@@ -163,7 +163,6 @@ CARTEIRA_PESSOAL_QTD = {
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
     try:
-        # Símbolo de carregamento discreto
         with st.spinner(""):
             data = yf.download(tickers, period="5y", group_by='ticker', auto_adjust=True, progress=False, threads=True)
         return data if not data.empty else pd.DataFrame()
@@ -212,31 +211,55 @@ opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "B
 aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
 if aba_selecionada == "Backtest":
-    col1, col2, col3, col4 = st.columns([2, 1.5, 1.5, 1])
+    col1, col2, col3, col4 = st.columns([2, 1.5, 1.5, 1.2])
     with col1:
-        ticker_bt = st.text_input("Ticker", placeholder="ex: PETR4.SA").upper()
+        ticker_raw = st.text_input("Ticker", placeholder="ex: PETR4").upper().strip()
     with col2:
         data_ini = st.date_input("Início", value=datetime(2023, 1, 1))
     with col3:
         data_fim = st.date_input("Fim", value=datetime.now())
     with col4:
-        benchmark = st.selectbox("Benchmark", options=["^BVSP", "^GSPC"], index=0)
+        bench_map = {"Ibovespa": "^BVSP", "S&P 500": "^GSPC"}
+        bench_label = st.selectbox("Benchmark", options=list(bench_map.keys()), index=0)
+        benchmark = bench_map[bench_label]
     
     if st.button("Gerar Backtest"):
-        if ticker_bt:
+        if ticker_raw:
+            ticker_bt = f"{ticker_raw}.SA" if (len(ticker_raw) >= 5 and "." not in ticker_raw) else ticker_raw
+            
             try:
                 bt_data = yf.download([ticker_bt, benchmark], start=data_ini, end=data_fim, auto_adjust=True)['Close']
                 if not bt_data.empty:
+                    # Normalização Base 100
                     df_norm = (bt_data / bt_data.iloc[0]) * 100
                     
+                    # Cálculo de variação para a legenda
+                    var_ticker = ((bt_data[ticker_bt].iloc[-1] / bt_data[ticker_bt].iloc[0]) - 1) * 100
+                    var_bench = ((bt_data[benchmark].iloc[-1] / bt_data[benchmark].iloc[0]) - 1) * 100
+                    
                     fig_bt = go.Figure()
-                    fig_bt.add_trace(go.Scatter(x=df_norm.index, y=df_norm[ticker_bt], name=ticker_bt, line=dict(color="#00FF00", width=2)))
-                    fig_bt.add_trace(go.Scatter(x=df_norm.index, y=df_norm[benchmark], name=benchmark, line=dict(color="#888", width=1.5, dash='dot')))
+                    
+                    # Ativo Principal
+                    fig_bt.add_trace(go.Scatter(
+                        x=df_norm.index, 
+                        y=df_norm[ticker_bt], 
+                        name=f"{ticker_bt} ({var_ticker:+.2f}%)", 
+                        line=dict(color="#FFFFFF", width=2)
+                    ))
+                    
+                    # Benchmark
+                    fig_bt.add_trace(go.Scatter(
+                        x=df_norm.index, 
+                        y=df_norm[benchmark], 
+                        name=f"{bench_label} ({var_bench:+.2f}%)", 
+                        line=dict(color="#FF9900", width=1.5)
+                    ))
                     
                     fig_bt.update_layout(
                         template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                        height=500, margin=dict(l=0, r=0, t=30, b=0), xaxis=dict(showgrid=False),
-                        yaxis=dict(showgrid=True, gridcolor="#222", side="right", title="Base 100"),
+                        height=500, margin=dict(l=0, r=0, t=30, b=0), 
+                        xaxis=dict(showgrid=False, fixedrange=True),
+                        yaxis=dict(showgrid=True, gridcolor="#222", side="right", title="Base 100", fixedrange=True),
                         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
                     )
                     st.plotly_chart(fig_bt, use_container_width=True, config={'displayModeBar': False})
