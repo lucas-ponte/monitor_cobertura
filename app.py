@@ -184,7 +184,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. DICIONÁRIOS MESTRE
+# 2. DICIONÁRIOS MESTRE (Mantidos conforme sua instrução)
 INDICES_LIST = ["^BVSP", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225", "^HSI", "000001.SS", "^GDAXI", "^FTSE", "^FCHI", "^STOXX50E", "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
 COBERTURA = {
     "AZZA3.SA": {"Rec": "Compra", "Alvo": 50.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 23.00},
@@ -229,7 +229,7 @@ CARTEIRA_PESSOAL_QTD = {
 # 3. FUNÇÕES
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
-    # threads=False desativa o multitasking do yfinance que causava o erro RuntimeError no Streamlit
+    # threads=False resolve o conflito de RuntimeError no Streamlit
     return yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False, threads=False)
 
 def calc_variation(h, days=None, ytd=False):
@@ -263,7 +263,7 @@ with c2:
 
 all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()) + INDICES_LIST)))
 
-# Bloco de segurança para captura de dados
+# Tratamento para evitar que o erro de dados pare o app
 try:
     master_data = get_all_data(all_tickers_master)
     if master_data.empty:
