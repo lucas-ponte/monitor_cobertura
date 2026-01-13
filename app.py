@@ -230,16 +230,14 @@ if aba_selecionada == "Backtest":
             try:
                 bt_data = yf.download([ticker_bt, benchmark], start=data_ini, end=data_fim, auto_adjust=True)['Close']
                 if not bt_data.empty:
-                    # Normalização Base 100
+                    # 1. Gráfico de Performance (Base 100)
                     df_norm = (bt_data / bt_data.iloc[0]) * 100
                     
-                    # Cálculo de variação para a legenda
                     var_ticker = ((bt_data[ticker_bt].iloc[-1] / bt_data[ticker_bt].iloc[0]) - 1) * 100
                     var_bench = ((bt_data[benchmark].iloc[-1] / bt_data[benchmark].iloc[0]) - 1) * 100
                     
                     fig_bt = go.Figure()
                     
-                    # Ativo Principal
                     fig_bt.add_trace(go.Scatter(
                         x=df_norm.index, 
                         y=df_norm[ticker_bt], 
@@ -247,7 +245,6 @@ if aba_selecionada == "Backtest":
                         line=dict(color="#FFFFFF", width=2)
                     ))
                     
-                    # Benchmark
                     fig_bt.add_trace(go.Scatter(
                         x=df_norm.index, 
                         y=df_norm[benchmark], 
@@ -256,13 +253,83 @@ if aba_selecionada == "Backtest":
                     ))
                     
                     fig_bt.update_layout(
+                        title=dict(text="Performance Base 100", font=dict(color="#FFF", size=14)),
                         template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                        height=500, margin=dict(l=0, r=0, t=30, b=0), 
+                        height=450, margin=dict(l=0, r=0, t=40, b=0), 
                         xaxis=dict(showgrid=False, fixedrange=True),
-                        yaxis=dict(showgrid=True, gridcolor="#222", side="right", title="Base 100", fixedrange=True),
+                        yaxis=dict(showgrid=True, gridcolor="#222", side="right", fixedrange=True),
                         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
                     )
                     st.plotly_chart(fig_bt, use_container_width=True, config={'displayModeBar': False})
+
+                    # 2. Gráfico de Volatilidade Anualizada (Janela 21 dias)
+                    returns = bt_data.pct_change()
+                    vol_ticker = returns[ticker_bt].rolling(window=21).std() * (252 ** 0.5) * 100
+                    vol_bench = returns[benchmark].rolling(window=21).std() * (252 ** 0.5) * 100
+                    
+                    vol_ticker = vol_ticker.dropna()
+                    vol_bench = vol_bench.dropna()
+                    
+                    fig_vol = go.Figure()
+                    
+                    fig_vol.add_trace(go.Scatter(
+                        x=vol_ticker.index, 
+                        y=vol_ticker, 
+                        name=f"Vol. {ticker_bt}", 
+                        line=dict(color="#FFFFFF", width=1.5)
+                    ))
+                    
+                    fig_vol.add_trace(go.Scatter(
+                        x=vol_bench.index, 
+                        y=vol_bench, 
+                        name=f"Vol. {bench_label}", 
+                        line=dict(color="#FF9900", width=1.5)
+                    ))
+                    
+                    fig_vol.update_layout(
+                        title=dict(text="Volatilidade Anualizada (21 dias úteis)", font=dict(color="#FFF", size=14)),
+                        template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=350, margin=dict(l=0, r=0, t=40, b=0), 
+                        xaxis=dict(showgrid=False, fixedrange=True),
+                        yaxis=dict(showgrid=True, gridcolor="#222", side="right", title="%", fixedrange=True),
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                    )
+                    st.plotly_chart(fig_vol, use_container_width=True, config={'displayModeBar': False})
+
+                    # 3. Gráfico de Drawdown
+                    dd_ticker = (bt_data[ticker_bt] / bt_data[ticker_bt].cummax() - 1) * 100
+                    dd_bench = (bt_data[benchmark] / bt_data[benchmark].cummax() - 1) * 100
+
+                    fig_dd = go.Figure()
+
+                    fig_dd.add_trace(go.Scatter(
+                        x=dd_ticker.index,
+                        y=dd_ticker,
+                        name=f"DD {ticker_bt}",
+                        line=dict(color="#FFFFFF", width=1),
+                        fill='tozeroy',
+                        fillcolor='rgba(255, 255, 255, 0.1)'
+                    ))
+
+                    fig_dd.add_trace(go.Scatter(
+                        x=dd_bench.index,
+                        y=dd_bench,
+                        name=f"DD {bench_label}",
+                        line=dict(color="#FF9900", width=1),
+                        fill='tozeroy',
+                        fillcolor='rgba(255, 153, 0, 0.1)'
+                    ))
+
+                    fig_dd.update_layout(
+                        title=dict(text="Drawdown (%)", font=dict(color="#FFF", size=14)),
+                        template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=350, margin=dict(l=0, r=0, t=40, b=0),
+                        xaxis=dict(showgrid=False, fixedrange=True),
+                        yaxis=dict(showgrid=True, gridcolor="#222", side="right", fixedrange=True),
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                    )
+                    st.plotly_chart(fig_dd, use_container_width=True, config={'displayModeBar': False})
+
                 else:
                     st.warning("Nenhum dado encontrado para os parâmetros selecionados.")
             except Exception as e:
