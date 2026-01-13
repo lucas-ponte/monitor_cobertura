@@ -3,6 +3,7 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
+import time
 
 # 1. CONFIGURAÇÃO E CSS
 st.set_page_config(page_title="DASHBOARD", layout="wide")
@@ -23,7 +24,16 @@ def exibir_grafico_popup(t_sel, data):
     if nova_selecao:
         st.session_state.periodo_grafico = nova_selecao
     
-    h_raw = data[t_sel]['Close'].dropna()
+    # Verificação de segurança para acesso aos dados
+    try:
+        if isinstance(data.columns, pd.MultiIndex):
+            h_raw = data[t_sel]['Close'].dropna()
+        else:
+            h_raw = data['Close'].dropna()
+    except:
+        st.error("Dados históricos indisponíveis para este ativo.")
+        return
+
     p_sel = st.session_state.periodo_grafico
     days = per_map.get(p_sel, 252)
     df_plot = h_raw.loc[f"{datetime.now().year}-01-01":] if days == "ytd" else (h_raw.iloc[-days:] if len(h_raw) >= days else h_raw)
@@ -158,30 +168,35 @@ CARTEIRA_PESSOAL_QTD = {
     "UNIP3.SA": 2, "PRIO3.SA": 5, "VULC3.SA": 5, "PSSA3.SA": 5
 }
 
-# 3. FUNÇÕES (RESOLUÇÃO DO ERRO)
-@st.cache_data(ttl=300)
+# 3. FUNÇÕES (LOGICA DE RESILIÊNCIA APRIMORADA)
+@st.cache_data(ttl=600)
 def get_all_data(tickers):
-    # Tentativa 1: Download em massa (Mais rápido)
-    df = yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False, threads=False)
+    # Tentativa de download em lote para performance (com threads desativadas para Streamlit)
+    try:
+        df = yf.download(tickers, period="6y", group_by='ticker', auto_adjust=True, progress=False, threads=False)
+        if not df.empty:
+            return df
+    except:
+        pass
     
-    # Tentativa 2: Fallback individual se o download em massa falhar ou vier vazio (Resolve o erro do Streamlit)
-    if df.empty:
-        individual_dfs = {}
-        for t in tickers:
-            try:
-                # Baixa um por um para evitar bloqueio de IP/Thread
-                single = yf.download(t, period="6y", auto_adjust=True, progress=False, threads=False)
-                if not single.empty:
-                    individual_dfs[t] = single
-            except:
-                continue
-        if individual_dfs:
-            return pd.concat(individual_dfs, axis=1)
-    return df
+    # Se falhar ou vier vazio, entra no modo de recuperação individual (Fallback)
+    individual_data = {}
+    for t in tickers:
+        try:
+            # Pequeno delay para evitar bloqueio de IP no loop
+            time.sleep(0.05)
+            single = yf.download(t, period="6y", auto_adjust=True, progress=False, threads=False)
+            if not single.empty:
+                individual_data[t] = single
+        except:
+            continue
+    
+    return pd.concat(individual_data, axis=1) if individual_data else pd.DataFrame()
 
 def calc_variation(h, days=None, ytd=False):
     try:
-        cl = h['Close'].dropna()
+        # Garante acesso correto se h for Series ou DataFrame
+        cl = h['Close'].dropna() if 'Close' in h else h.dropna()
         if cl.empty: return 0.0
         curr = float(cl.iloc[-1])
         if ytd:
@@ -213,9 +228,9 @@ all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORE
 
 master_data = get_all_data(all_tickers_master)
 
-# Verificação final para garantir que o app não quebre se absolutamente nada for baixado
+# Tratamento se falhar totalmente
 if master_data.empty:
-    st.error("Dados não disponíveis no momento. Tente atualizar a página.")
+    st.error("Conexão com Yahoo Finance instável. Tente atualizar o cache no botão acima.")
     st.stop()
 
 st.write("---")
@@ -231,15 +246,14 @@ elif aba_selecionada == "Carteira pessoal":
     pesos_calc = []
     for tk in CARTEIRA_PESSOAL_QTD:
         if tk in master_data:
-            c = master_data[tk]['Close'].dropna()
+            c = master_data[tk]['Close'].dropna() if 'Close' in master_data[tk] else pd.Series()
             if not c.empty:
                 pesos_calc.append({"ticker": tk, "val": float(c.iloc[-1]) * CARTEIRA_PESSOAL_QTD[tk]})
     df_p = pd.DataFrame(pesos_calc)
     if not df_p.empty:
         df_p["peso"] = (df_p["val"] / df_p["val"].sum()) * 100
         t_list = df_p.sort_values("peso", ascending=False)["ticker"].tolist()
-    else:
-        t_list = []
+    else: t_list = []
 elif aba_selecionada == "Índices":
     headers, t_list = ["Ticker", "Preço"] + cols_base, INDICES_LIST
 else:
@@ -269,9 +283,11 @@ for t in t_list:
         html_mobile += f'<div class="mob-sector">{sector_name}</div>'
         continue
     try:
-        h = master_data[t]; cl = h['Close'].dropna(); p = float(cl.iloc[-1])
+        h = master_data[t]; cl = h['Close'].dropna() if 'Close' in h else h.dropna()
+        p = float(cl.iloc[-1])
         sym = "R$ " if (t == "^BVSP" or ".SA" in t) else ("" if aba_selecionada == "Índices" else "US$ ")
         var_hoje = calc_variation(h, 1)
+        
         html_desktop += f'<tr class="list-row"><td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td>'
         if aba_selecionada == "Cobertura":
             alv = COBERTURA[t]["Alvo"]; html_desktop += f'<td>{COBERTURA[t]["Rec"]}</td><td>{format_val_html(alv, sym=sym)}</td><td>{format_val_html((alv/p-1)*100, is_pct=True)}</td>'
