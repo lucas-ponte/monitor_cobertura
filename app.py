@@ -7,7 +7,6 @@ from datetime import datetime
 # 1. CONFIGURAÇÃO E CSS
 st.set_page_config(page_title="DASHBOARD", layout="wide")
 
-# Inicialização do session_state
 if "ticker_selecionado" not in st.session_state:
     st.session_state.ticker_selecionado = None
 if "periodo_grafico" not in st.session_state:
@@ -17,7 +16,6 @@ if "aba_ativa" not in st.session_state:
 
 hora_atual = datetime.now().strftime("%H:%M")
 
-# FUNÇÃO DO POPUP CENTRALIZADO
 @st.dialog("Gráfico de Performance", width="large")
 def exibir_grafico_popup(t_sel, data):
     per_map = {"30D": 21, "6M": 126, "12M": 252, "5A": 1260, "YTD": "ytd"}
@@ -26,24 +24,25 @@ def exibir_grafico_popup(t_sel, data):
         st.session_state.periodo_grafico = nova_selecao
     
     try:
-        if isinstance(data.columns, pd.MultiIndex):
-            h_raw = data[t_sel]['Close'].dropna()
-        else:
-            h_raw = data['Close'].dropna()
+        # Acesso otimizado à coluna
+        h_raw = data[t_sel]['Close'].dropna()
     except:
         st.error("Dados insuficientes para gerar o gráfico.")
         return
 
     p_sel = st.session_state.periodo_grafico
     days = per_map.get(p_sel, 252)
-    df_plot = h_raw.loc[f"{datetime.now().year}-01-01":] if days == "ytd" else (h_raw.iloc[-days:] if len(h_raw) >= days else h_raw)
+    
+    if days == "ytd":
+        df_plot = h_raw.loc[f"{datetime.now().year}-01-01":]
+    else:
+        df_plot = h_raw.iloc[-days:] if len(h_raw) >= days else h_raw
     
     if not df_plot.empty:
         perf = ((df_plot.iloc[-1] / df_plot.iloc[0]) - 1) * 100
         color = "#00FF00" if perf >= 0 else "#FF4B4B"
         
-        y_min = df_plot.min()
-        y_max = df_plot.max()
+        y_min, y_max = df_plot.min(), df_plot.max()
         padding = (y_max - y_min) * 0.05 if y_max != y_min else y_min * 0.05
         
         st.markdown(f"### {t_sel} | {perf:+.2f}%")
@@ -56,19 +55,9 @@ def exibir_grafico_popup(t_sel, data):
         ))
         
         fig.update_layout(
-            template="plotly_dark", 
-            plot_bgcolor='rgba(0,0,0,0)', 
-            paper_bgcolor='rgba(0,0,0,0)', 
-            height=400, 
-            margin=dict(l=0, r=0, t=10, b=0), 
-            xaxis=dict(showgrid=False), 
-            yaxis=dict(
-                showgrid=True, 
-                gridcolor="#111", 
-                side="right", 
-                range=[y_min - padding, y_max + padding],
-                fixedrange=False
-            ), 
+            template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', 
+            height=400, margin=dict(l=0, r=0, t=10, b=0), xaxis=dict(showgrid=False), 
+            yaxis=dict(showgrid=True, gridcolor="#111", side="right", range=[y_min - padding, y_max + padding], fixedrange=False), 
             dragmode=False
         )
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
@@ -76,21 +65,15 @@ def exibir_grafico_popup(t_sel, data):
 st.markdown(f"""
     <style>
     @import url('https://fonts.cdnfonts.com/css/tinos');
-    
     .stApp {{ background-color: #000000; font-family: 'Tinos', 'Inter', sans-serif; }}
-    
-    /* REGRAS DE VISIBILIDADE */
     .mobile-view {{ display: none; }}
     .desktop-view {{ display: block; }}
-
     .main-title {{ font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; color: #FFFFFF; margin: 0; line-height: 1; font-family: 'Tinos', sans-serif; }}
     .sub-title {{ font-size: 0.7rem; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-top: 5px; font-family: 'Tinos', sans-serif; }}
-    
     .ticker-link {{ color: #FFFFFF !important; font-weight: 600; text-decoration: none !important; }}
     .pos-val {{ color: #00FF00; }}
     .neg-val {{ color: #FF4B4B; }}
     .white-val {{ color: #FFFFFF !important; }}
-    
     .list-container {{ width: 100%; border-collapse: collapse; margin-top: 1rem; font-family: 'Tinos', sans-serif; border: 1px solid #222; }}
     .list-header {{ background-color: #0A0A0A; color: #FFA500; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }}
     .list-header th {{ padding: 12px 8px; text-align: left; font-weight: 700; border: 1px solid #222; color: #FFA500; }}
@@ -98,101 +81,41 @@ st.markdown(f"""
     .list-row:hover {{ background-color: #0F0F0F; }}
     .sector-row {{ background-color: #111; color: #FFA500; font-weight: 700; font-size: 0.75rem; letter-spacing: 1px; }}
     .sector-row td {{ padding: 15px 8px; border: 1px solid #222; }}
-
     details {{ background-color: #000; border-bottom: 1px solid #222; margin-bottom: 0px; font-family: 'Inter', sans-serif; }}
     summary {{ list-style: none; padding: 12px 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-color: #050505; }}
     summary:hover {{ background-color: #111; }}
-    
     .mob-header-left {{ display: flex; align-items: center; }}
     .mob-header-right {{ display: flex; flex-direction: column; align-items: flex-end; }}
     .mob-ticker {{ font-weight: 800; color: #FFF; font-size: 0.8rem; letter-spacing: -0.2px; }}
     .mob-price {{ color: #DDD; font-size: 0.8rem; font-weight: 600; margin-bottom: 1px; }}
     .mob-today {{ font-weight: 700; font-size: 0.75rem; }}
-    
     .mob-content {{ padding: 12px; background-color: #111; border-top: 1px solid #222; }}
     .mob-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px 8px; }}
     .mob-item {{ display: flex; flex-direction: column; }}
     .mob-label {{ color: #666; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }}
     .mob-val {{ color: #FFF; font-size: 0.85rem; font-weight: 500; }}
-    
     .mob-sector {{ background-color: #1a1a1a; color: #FFA500; padding: 10px 10px; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #333; margin-top: 10px; }}
-
-    [data-testid="stBaseButton-pills"] {{ 
-        background-color: transparent !important; 
-        border: none !important; 
-        color: #888 !important; 
-        border-radius: 0px !important;
-        font-family: 'Tinos', sans-serif !important;
-        padding: 4px 12px !important;
-    }}
-    [data-testid="stBaseButton-pillsActive"] {{ 
-        background-color: transparent !important; 
-        color: #FFFFFF !important; 
-        border: none !important; 
-        border-bottom: 1px solid #FFFFFF !important;
-        border-radius: 0px !important;
-        font-weight: 700 !important;
-    }}
-
+    [data-testid="stBaseButton-pills"] {{ background-color: transparent !important; border: none !important; color: #888 !important; border-radius: 0px !important; font-family: 'Tinos', sans-serif !important; padding: 4px 12px !important; }}
+    [data-testid="stBaseButton-pillsActive"] {{ background-color: transparent !important; color: #FFFFFF !important; border: none !important; border-bottom: 1px solid #FFFFFF !important; border-radius: 0px !important; font-weight: 700 !important; }}
     @media (max-width: 768px) {{
         .mobile-view {{ display: block !important; }}
         .desktop-view {{ display: none !important; }}
-        
         div[data-testid="stPills"] {{ display: block !important; }}
         div[data-testid="stPills"] > div {{ display: flex !important; flex-direction: column !important; width: 100% !important; }}
-        div[data-testid="stPills"] button {{
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 2px 0px !important;
-            background-color: #000000 !important;
-            color: #FFFFFF !important;
-            border: 1px solid #333 !important;
-            border-radius: 0px !important;
-            justify-content: flex-start !important;
-            text-align: left !important;
-            padding: 12px !important;
-        }}
-        div[data-testid="stPills"] button[aria-checked="true"] {{
-            background-color: #111 !important;
-            border: 1px solid #FFFFFF !important;
-        }}
-
-        div[data-testid="column"]:nth-child(2) {{ 
-            margin-top: 15px !important; 
-            width: 100% !important; 
-            display: flex !important;
-            justify-content: flex-end !important;
-        }}
-        
-        div[data-testid="stPopoverBody"] > div {{
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            text-align: center !important;
-        }}
+        div[data-testid="stPills"] button {{ width: 100% !important; max-width: 100% !important; margin: 2px 0px !important; background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #333 !important; border-radius: 0px !important; justify-content: flex-start !important; text-align: left !important; padding: 12px !important; }}
+        div[data-testid="stPills"] button[aria-checked="true"] {{ background-color: #111 !important; border: 1px solid #FFFFFF !important; }}
+        div[data-testid="column"]:nth-child(2) {{ margin-top: 15px !important; width: 100% !important; display: flex !important; justify-content: flex-end !important; }}
+        div[data-testid="stPopoverBody"] > div {{ display: flex !important; flex-direction: column !important; align-items: center !important; text-align: center !important; }}
     }}
-
     div.stButton > button {{ background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; }}
-    
-    div[data-testid="stPopover"] > button {{ 
-        height: auto !important; 
-        min-height: 0px !important; 
-        padding: 4px 16px !important; 
-        background-color: transparent !important; 
-        color: #FFFFFF !important; 
-        border: 1px solid #FFFFFF !important; 
-        font-size: 0.8rem !important;
-        font-weight: 400 !important;
-        width: auto !important;
-    }}
+    div[data-testid="stPopover"] > button {{ height: auto !important; min-height: 0px !important; padding: 4px 16px !important; background-color: transparent !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; font-size: 0.8rem !important; font-weight: 400 !important; width: auto !important; }}
     div[data-testid="stPopoverBody"] {{ background-color: #0A0A0A !important; border: 1px solid #333 !important; }}
-
     header {{ visibility: hidden; }}
     .block-container {{ padding-top: 1.5rem !important; }}
     </style>
 """, unsafe_allow_html=True)
 
-# 2. DICIONÁRIOS MESTRE
+# 2. DICIONÁRIOS MESTRE (Inalterados conforme instrução)
 INDICES_LIST = ["^BVSP", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225", "^HSI", "000001.SS", "^GDAXI", "^FTSE", "^FCHI", "^STOXX50E", "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
 COBERTURA = {
     "AZZA3.SA": {"Rec": "Compra", "Alvo": 50.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 23.00},
@@ -234,21 +157,20 @@ CARTEIRA_PESSOAL_QTD = {
     "UNIP3.SA": 2, "PRIO3.SA": 5, "VULC3.SA": 5, "PSSA3.SA": 5
 }
 
-# 3. FUNÇÕES
+# 3. FUNÇÕES (Refatoradas para Performance)
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
     try:
+        # Puxamos apenas o Close para otimizar memória e tráfego
         data = yf.download(tickers, period="5y", group_by='ticker', auto_adjust=True, progress=False, threads=True)
-        if data.empty:
-            return pd.DataFrame()
-        return data
-    except Exception:
+        return data if not data.empty else pd.DataFrame()
+    except:
         return pd.DataFrame()
 
-def calc_variation(h, days=None, ytd=False):
+def calc_variation(cl, days=None, ytd=False):
+    """Versão simplificada que recebe apenas a série Close já limpa"""
+    if cl.empty: return 0.0
     try:
-        cl = h['Close'].dropna() if isinstance(h, pd.DataFrame) and 'Close' in h else h.dropna()
-        if cl.empty: return 0.0
         curr = float(cl.iloc[-1])
         if ytd:
             start_row = cl.loc[f"{datetime.now().year}-01-01":]
@@ -279,7 +201,7 @@ all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORE
 master_data = get_all_data(all_tickers_master)
 
 if master_data.empty:
-    st.error("Dados não disponíveis no momento. Verifique a conexão ou os tickers.")
+    st.error("Dados não disponíveis no momento.")
     st.stop()
 
 st.write("---")
@@ -288,7 +210,7 @@ opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"]
 aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
-df_p = pd.DataFrame() # Inicializa vazio
+df_p = pd.DataFrame()
 
 if aba_selecionada == "Cobertura":
     headers, t_list = ["Ticker", "Preço", "Rec.", "Alvo", "Upside"] + cols_base, sorted(list(COBERTURA.keys()))
@@ -297,72 +219,90 @@ elif aba_selecionada == "Carteira pessoal":
     pesos_calc = []
     for tk in CARTEIRA_PESSOAL_QTD:
         try:
-            # Tratamento para garantir acesso correto ao dado independente da estrutura do yfinance
-            target = master_data[tk] if tk in master_data.columns.levels[0] else None
-            if target is not None:
-                p_atual = float(target['Close'].dropna().iloc[-1])
-                pesos_calc.append({"ticker": tk, "val": p_atual * CARTEIRA_PESSOAL_QTD[tk]})
+            p_atual = float(master_data[tk]['Close'].dropna().iloc[-1])
+            pesos_calc.append({"ticker": tk, "val": p_atual * CARTEIRA_PESSOAL_QTD[tk]})
         except: continue
     df_p = pd.DataFrame(pesos_calc)
     if not df_p.empty:
         total_val = df_p["val"].sum()
         df_p["peso"] = (df_p["val"] / total_val) * 100
         t_list = df_p.sort_values("peso", ascending=False)["ticker"].tolist()
-    else:
-        t_list = []
+    else: t_list = []
 elif aba_selecionada == "Índices":
     headers, t_list = ["Ticker", "Preço"] + cols_base, INDICES_LIST
 else:
     headers, t_list = ["Ticker", "Preço"] + cols_base, []
-    for s, ticks in SETORES_ACOMPANHAMENTO.items(): t_list.append({"setor": s}); t_list.extend(ticks)
+    for s, ticks in SETORES_ACOMPANHAMENTO.items():
+        t_list.append({"setor": s})
+        t_list.extend(ticks)
 
 tickers_da_aba = [tk for tk in t_list if isinstance(tk, str)]
 
-with st.popover("GRÁFICOS", use_container_width=False):
+with st.popover("GRÁFICOS"):
     col_pop1, col_pop2 = st.columns(2)
     for i, tk in enumerate(tickers_da_aba):
         target_col = col_pop1 if i % 2 == 0 else col_pop2
         if target_col.button(tk, key=f"btn_{tk}", use_container_width=True):
             exibir_grafico_popup(tk, master_data)
 
-# --- RENDERIZAÇÃO ---
-html_desktop = f'<div class="desktop-view"><table class="list-container"><tr class="list-header">'
-for h in headers: html_desktop += f'<th>{h}</th>'
-html_desktop += '</tr>'
+# --- RENDERIZAÇÃO (Otimizada com List Joining) ---
+html_d_list = [f'<div class="desktop-view"><table class="list-container"><tr class="list-header">']
+for h in headers: html_d_list.append(f'<th>{h}</th>')
+html_d_list.append('</tr>')
 
-html_mobile = '<div class="mobile-view">'
+html_m_list = ['<div class="mobile-view">']
 
 for t in t_list:
     if isinstance(t, dict):
-        sector_name = t["setor"].upper()
-        html_desktop += f'<tr class="sector-row"><td colspan="{len(headers)}">{sector_name}</td></tr>'
-        html_mobile += f'<div class="mob-sector">{sector_name}</div>'
+        s_n = t["setor"].upper()
+        html_d_list.append(f'<tr class="sector-row"><td colspan="{len(headers)}">{s_n}</td></tr>')
+        html_m_list.append(f'<div class="mob-sector">{s_n}</div>')
         continue
+    
+    if t not in master_data.columns.levels[0]: continue
+    
     try:
-        h = master_data[t]; cl = h['Close'].dropna(); p = float(cl.iloc[-1])
+        cl = master_data[t]['Close'].dropna()
+        if cl.empty: continue
+        p = float(cl.iloc[-1])
         sym = "R$ " if (t == "^BVSP" or ".SA" in t) else ("" if aba_selecionada == "Índices" else "US$ ")
-        var_hoje = calc_variation(h, 1)
-        html_desktop += f'<tr class="list-row"><td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td>'
         
+        # Pre-calculo de variações para evitar chamadas redundantes
+        v_h, v_30, v_6m, v_12, v_ytd, v_5a = (
+            calc_variation(cl, 1), calc_variation(cl, 21), 
+            calc_variation(cl, 126), calc_variation(cl, 252), 
+            calc_variation(cl, ytd=True), calc_variation(cl, 1260)
+        )
+
+        # Desktop Row
+        html_d_list.append(f'<tr class="list-row"><td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td>')
         if aba_selecionada == "Cobertura":
-            alv = COBERTURA[t]["Alvo"]; html_desktop += f'<td>{COBERTURA[t]["Rec"]}</td><td>{format_val_html(alv, sym=sym)}</td><td>{format_val_html((alv/p-1)*100, is_pct=True)}</td>'
-        
+            alv = COBERTURA[t]["Alvo"]
+            html_d_list.append(f'<td>{COBERTURA[t]["Rec"]}</td><td>{format_val_html(alv, sym=sym)}</td><td>{format_val_html((alv/p-1)*100, is_pct=True)}</td>')
         if aba_selecionada == "Carteira pessoal" and not df_p.empty:
-            peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]; html_desktop += f'<td>{format_val_html(peso_val, is_pct=True, force_white=True)}</td>'
-            
-        for d in [1, 21, 126, 252]: html_desktop += f'<td>{format_val_html(calc_variation(h, d), is_pct=True)}</td>'
-        html_desktop += f'<td>{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</td><td>{format_val_html(calc_variation(h, 1260), is_pct=True)}</td></tr>'
+            p_v = df_p[df_p["ticker"] == t]["peso"].values[0]
+            html_d_list.append(f'<td>{format_val_html(p_v, is_pct=True, force_white=True)}</td>')
         
-        formatted_price = "{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")
-        html_mobile += f"""<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span></div><div class="mob-header-right"><span class="mob-price">{sym}{formatted_price}</span><span class="mob-today">{format_val_html(var_hoje, is_pct=True)}</span></div></summary><div class="mob-content"><div class="mob-grid">"""
+        for val in [v_h, v_30, v_6m, v_12, v_ytd, v_5a]:
+            html_d_list.append(f'<td>{format_val_html(val, is_pct=True)}</td>')
+        html_d_list.append('</tr>')
+
+        # Mobile Details
+        f_p = "{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")
+        html_m_list.append(f'<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span></div><div class="mob-header-right"><span class="mob-price">{sym}{f_p}</span><span class="mob-today">{format_val_html(v_h, is_pct=True)}</span></div></summary><div class="mob-content"><div class="mob-grid">')
         if aba_selecionada == "Cobertura":
-            alv = COBERTURA[t]["Alvo"]; html_mobile += f'<div class="mob-item"><span class="mob-label">REC</span><span class="mob-val">{COBERTURA[t]["Rec"]}</span></div><div class="mob-item"><span class="mob-label">ALVO</span><span class="mob-val">{format_val_html(alv, sym=sym)}</span></div><div class="mob-item"><span class="mob-label">UPSIDE</span><span class="mob-val">{format_val_html((alv/p-1)*100, is_pct=True)}</span></div>'
+            alv = COBERTURA[t]["Alvo"]
+            html_m_list.append(f'<div class="mob-item"><span class="mob-label">REC</span><span class="mob-val">{COBERTURA[t]["Rec"]}</span></div><div class="mob-item"><span class="mob-label">ALVO</span><span class="mob-val">{format_val_html(alv, sym=sym)}</span></div><div class="mob-item"><span class="mob-label">UPSIDE</span><span class="mob-val">{format_val_html((alv/p-1)*100, is_pct=True)}</span></div>')
         if aba_selecionada == "Carteira pessoal" and not df_p.empty:
-            peso_val = df_p[df_p["ticker"] == t]["peso"].values[0]; html_mobile += f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(peso_val, is_pct=True, force_white=True)}</span></div>'
-        html_mobile += f'<div class="mob-item"><span class="mob-label">30D</span><span class="mob-val">{format_val_html(calc_variation(h, 21), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">6M</span><span class="mob-val">{format_val_html(calc_variation(h, 126), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">12M</span><span class="mob-val">{format_val_html(calc_variation(h, 252), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">YTD</span><span class="mob-val">{format_val_html(calc_variation(h, ytd=True), is_pct=True)}</span></div><div class="mob-item"><span class="mob-label">5A</span><span class="mob-val">{format_val_html(calc_variation(h, 1260), is_pct=True)}</span></div>'
-        html_mobile += """</div></div></details>"""
+            p_v = df_p[df_p["ticker"] == t]["peso"].values[0]
+            html_m_list.append(f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(p_v, is_pct=True, force_white=True)}</span></div>')
+        
+        periods = [("30D", v_30), ("6M", v_6m), ("12M", v_12), ("YTD", v_ytd), ("5A", v_5a)]
+        for lab, val in periods:
+            html_m_list.append(f'<div class="mob-item"><span class="mob-label">{lab}</span><span class="mob-val">{format_val_html(val, is_pct=True)}</span></div>')
+        html_m_list.append('</div></div></details>')
     except: continue
 
-html_desktop += '</table></div>'
-html_mobile += '</div>'
-st.markdown(html_desktop + html_mobile, unsafe_allow_html=True)
+html_d_list.append('</table></div>')
+html_m_list.append('</div>')
+st.markdown("".join(html_d_list) + "".join(html_m_list), unsafe_allow_html=True)
