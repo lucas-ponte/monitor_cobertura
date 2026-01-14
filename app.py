@@ -379,6 +379,29 @@ if aba_selecionada == "Banco de dados":
                     "Valor": st.column_config.NumberColumn(format="%.2f")
                 }
             )
+
+            # --- NOVO GRÁFICO SOLICITADO ---
+            fig_macro = go.Figure()
+            fig_macro.add_trace(go.Scatter(
+                x=df_macro['Data'],
+                y=df_macro['Valor'],
+                mode='lines',
+                line=dict(color='#FF9900', width=2),
+                name=indicador
+            ))
+            fig_macro.update_layout(
+                template="plotly_dark",
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                margin=dict(l=0, r=0, t=20, b=0),
+                height=300,
+                showlegend=False,
+                xaxis=dict(showgrid=False, fixedrange=True),
+                yaxis=dict(showgrid=True, gridcolor="#222", fixedrange=True)
+            )
+            st.plotly_chart(fig_macro, use_container_width=True, config={'displayModeBar': False})
+            # -------------------------------
+
         else:
             st.warning("Não foi possível carregar os dados para este indicador.")
     st.stop()
