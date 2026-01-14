@@ -3,6 +3,7 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
+import numpy as np
 
 # 1. CONFIGURAÇÃO E CSS
 st.set_page_config(page_title="DASHBOARD", layout="wide")
@@ -81,6 +82,14 @@ st.markdown(f"""
     .list-row:hover {{ background-color: #0F0F0F; }}
     .sector-row {{ background-color: #111; color: #FFA500; font-weight: 700; font-size: 0.75rem; letter-spacing: 1px; }}
     .sector-row td {{ padding: 15px 8px; border: 1px solid #222; }}
+    
+    /* Estilo Rentabilidade Mensal e Anual */
+    .rent-table {{ width: 100%; border-collapse: collapse; font-family: 'Tinos', sans-serif; font-size: 0.8rem; text-align: center; border: 1px solid #222; margin-top: 20px; }}
+    .rent-table th {{ background-color: #0A0A0A; color: #FFA500; padding: 10px 5px; border: 1px solid #222; text-transform: uppercase; font-size: 0.7rem; }}
+    .rent-table td {{ padding: 10px 5px; border: 1px solid #222; color: #FFF; }}
+    .rent-year {{ background-color: #0A0A0A; font-weight: 700; color: #FFF !important; }}
+    .rent-total {{ background-color: #0A0A0A; font-weight: 700; }}
+
     details {{ background-color: #000; border-bottom: 1px solid #222; margin-bottom: 0px; font-family: 'Inter', sans-serif; }}
     summary {{ list-style: none; padding: 12px 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-color: #050505; }}
     summary:hover {{ background-color: #111; }}
@@ -253,12 +262,12 @@ if aba_selecionada == "Backtest":
                     ))
                     
                     fig_bt.update_layout(
-                        title=dict(text="Performance Base 100", font=dict(color="#FFF", size=14)),
+                        title=dict(text="Performance Base 100", font=dict(color="#FFF", size=14), yanchor="top", y=1),
                         template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                         height=450, margin=dict(l=0, r=0, t=40, b=0), 
                         xaxis=dict(showgrid=False, fixedrange=True),
                         yaxis=dict(showgrid=True, gridcolor="#222", side="right", fixedrange=True),
-                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0)
                     )
                     st.plotly_chart(fig_bt, use_container_width=True, config={'displayModeBar': False})
 
@@ -287,12 +296,12 @@ if aba_selecionada == "Backtest":
                     ))
                     
                     fig_vol.update_layout(
-                        title=dict(text="Volatilidade Anualizada (21 dias úteis)", font=dict(color="#FFF", size=14)),
+                        title=dict(text="Volatilidade Anualizada (21 dias úteis)", font=dict(color="#FFF", size=14), yanchor="top", y=1),
                         template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                         height=350, margin=dict(l=0, r=0, t=40, b=0), 
                         xaxis=dict(showgrid=False, fixedrange=True),
                         yaxis=dict(showgrid=True, gridcolor="#222", side="right", title="%", fixedrange=True),
-                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0)
                     )
                     st.plotly_chart(fig_vol, use_container_width=True, config={'displayModeBar': False})
 
@@ -321,14 +330,84 @@ if aba_selecionada == "Backtest":
                     ))
 
                     fig_dd.update_layout(
-                        title=dict(text="Drawdown (%)", font=dict(color="#FFF", size=14)),
+                        title=dict(text="Drawdown (%)", font=dict(color="#FFF", size=14), yanchor="top", y=1),
                         template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                         height=350, margin=dict(l=0, r=0, t=40, b=0),
                         xaxis=dict(showgrid=False, fixedrange=True),
                         yaxis=dict(showgrid=True, gridcolor="#222", side="right", fixedrange=True),
-                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0)
                     )
                     st.plotly_chart(fig_dd, use_container_width=True, config={'displayModeBar': False})
+                    
+                    # 4. TABELA DE RENTABILIDADE MENSAL
+                    st.markdown(f"<div style='color:#FFF; font-size:14px; font-weight:700; margin-top:30px; margin-bottom:10px;'>Rentabilidade Mensal - {ticker_bt}</div>", unsafe_allow_html=True)
+                    
+                    monthly_prices = bt_data[ticker_bt].resample('ME').last()
+                    first_price = bt_data[ticker_bt].iloc[0]
+                    m_ret = monthly_prices.pct_change() * 100
+                    
+                    if not m_ret.empty:
+                        m_ret.iloc[0] = ((monthly_prices.iloc[0] / first_price) - 1) * 100
+
+                    df_m = m_ret.to_frame()
+                    df_m['ano'] = df_m.index.year
+                    df_m['mes'] = df_m.index.month
+                    
+                    month_names = {1: 'JAN', 2: 'FEV', 3: 'MAR', 4: 'ABR', 5: 'MAI', 6: 'JUN', 7: 'JUL', 8: 'AGO', 9: 'SET', 10: 'OUT', 11: 'NOV', 12: 'DEZ'}
+                    pivot_ret = df_m.pivot(index='ano', columns='mes', values=ticker_bt)
+                    pivot_ret = pivot_ret.rename(columns=month_names)
+                    
+                    cols_ordered = [month_names[i] for i in range(1, 13) if month_names[i] in pivot_ret.columns]
+                    pivot_ret = pivot_ret[cols_ordered]
+
+                    for year in pivot_ret.index:
+                        y_data = bt_data[ticker_bt][bt_data[ticker_bt].index.year == year]
+                        y_val = ((y_data.iloc[-1] / y_data.iloc[0]) - 1) * 100
+                        pivot_ret.loc[year, 'ANO'] = y_val
+
+                    html_rent = ['<table class="rent-table"><tr><th>ANO</th>']
+                    for m in pivot_ret.columns: html_rent.append(f'<th>{m}</th>')
+                    html_rent.append('</tr>')
+                    
+                    for year in pivot_ret.index[::-1]: 
+                        html_rent.append(f'<tr><td class="rent-year">{year}</td>')
+                        for col in pivot_ret.columns:
+                            val = pivot_ret.loc[year, col]
+                            if pd.isna(val):
+                                html_rent.append('<td>-</td>')
+                            else:
+                                color = "#00FF00" if val > 0 else ("#FF4B4B" if val < 0 else "#FFF")
+                                css_class = "rent-total" if col == "ANO" else ""
+                                html_rent.append(f'<td class="{css_class}" style="color:{color}">{val:.2f}%</td>')
+                        html_rent.append('</tr>')
+                    html_rent.append('</table>')
+                    st.markdown("".join(html_rent), unsafe_allow_html=True)
+
+                    # 5. TABELA DE RENTABILIDADE ANUAL VS BENCHMARK
+                    st.markdown(f"<div style='color:#FFF; font-size:14px; font-weight:700; margin-top:30px; margin-bottom:10px;'>Rentabilidade Anual - {ticker_bt}</div>", unsafe_allow_html=True)
+                    
+                    annual_comparison = []
+                    years_list = sorted(bt_data.index.year.unique(), reverse=True)
+                    
+                    for yr in years_list:
+                        yr_prices = bt_data[bt_data.index.year == yr]
+                        t_ret_yr = ((yr_prices[ticker_bt].iloc[-1] / yr_prices[ticker_bt].iloc[0]) - 1) * 100
+                        b_ret_yr = ((yr_prices[benchmark].iloc[-1] / yr_prices[benchmark].iloc[0]) - 1) * 100
+                        rel_yr = t_ret_yr - b_ret_yr
+                        annual_comparison.append({"ano": yr, "ticker": t_ret_yr, "bench": b_ret_yr, "rel": rel_yr})
+                    
+                    html_annual = ['<table class="rent-table"><tr><th>ANO</th>', f'<th>{ticker_bt}</th>', f'<th>{bench_label}</th>', '<th>RELATIVO</th></tr>']
+                    for row in annual_comparison:
+                        c_t = "#00FF00" if row["ticker"] > 0 else ("#FF4B4B" if row["ticker"] < 0 else "#FFF")
+                        c_b = "#00FF00" if row["bench"] > 0 else ("#FF4B4B" if row["bench"] < 0 else "#FFF")
+                        c_r = "#00FF00" if row["rel"] > 0 else ("#FF4B4B" if row["rel"] < 0 else "#FFF")
+                        
+                        html_annual.append(f'<tr><td class="rent-year">{row["ano"]}</td>')
+                        html_annual.append(f'<td style="color:{c_t}">{row["ticker"]:.2f}%</td>')
+                        html_annual.append(f'<td style="color:{c_b}">{row["bench"]:.2f}%</td>')
+                        html_annual.append(f'<td class="rent-total" style="color:{c_r}">{row["rel"]:.2f}%</td></tr>')
+                    html_annual.append('</table><br>')
+                    st.markdown("".join(html_annual), unsafe_allow_html=True)
 
                 else:
                     st.warning("Nenhum dado encontrado para os parâmetros selecionados.")
