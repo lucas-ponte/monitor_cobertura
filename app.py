@@ -168,6 +168,45 @@ CARTEIRA_PESSOAL_QTD = {
     "UNIP3.SA": 2, "PRIO3.SA": 5, "VULC3.SA": 5, "PSSA3.SA": 5
 }
 
+# --- DICIONÁRIO BANCO DE DADOS MACRO (BCB + IPEADATA) ---
+DB_MACRO = {
+    # === BCB ===
+    "Índice de confiança de serviços": {"fonte": "bcb", "codigo": 17660, "freq": "mensal"},
+    "CDI anualizado": {"fonte": "bcb", "codigo": 4389, "freq": "diario"},
+    "TJLP mensal": {"fonte": "bcb", "codigo": 256, "freq": "mensal"},
+    "Taxa Selic": {"fonte": "bcb", "codigo": 432, "freq": "diario"},
+    "PIB mensal - R$ MM": {"fonte": "bcb", "codigo": 4380, "freq": "mensal"},
+    "PIB acum. Ano - R$ MM": {"fonte": "bcb", "codigo": 4381, "freq": "mensal"},
+    "PIB acum. 12m - R$ MM": {"fonte": "bcb", "codigo": 4382, "freq": "mensal"},
+    "PIB anual - R$ MM": {"fonte": "bcb", "codigo": 1208, "freq": "anual"},
+    "Meta inflação": {"fonte": "bcb", "codigo": 13521, "freq": "anual"},
+    "IGP-M - Mensal": {"fonte": "bcb", "codigo": 189, "freq": "mensal"},
+    "IGP-DI - Mensal": {"fonte": "bcb", "codigo": 190, "freq": "mensal"},
+    "IPCA - Mensal": {"fonte": "bcb", "codigo": 433, "freq": "mensal"},
+    "IPCA alimentos e bebidas - Mensal": {"fonte": "bcb", "codigo": 1635, "freq": "mensal"},
+    "IPCA vestuário - Mensal": {"fonte": "bcb", "codigo": 1638, "freq": "mensal"},
+    "IPCA geral acum. 12m": {"fonte": "bcb", "codigo": 13522, "freq": "mensal"},
+    # === IPEADATA ===
+    "Intenção de consumo das famílias ajustado (ICF)": {"fonte": "ipea", "codigo": "CNC12_ICFAJ12", "freq": "mensal"},
+    "Famílias endividadas total": {"fonte": "ipea", "codigo": "CNC12_PEICT12", "freq": "mensal"},
+    "Taxa de desemprego": {"fonte": "ipea", "codigo": "PNADC12_TDESOC12", "freq": "mensal"},
+    "Massa salarial real": {"fonte": "ipea", "codigo": "PNADC12_MRRTH12", "freq": "mensal"},
+    "Renda real habitual": {"fonte": "ipea", "codigo": "PNADC12_RRTH12", "freq": "mensal"},
+    "Produção industrial - Bebidas": {"fonte": "ipea", "codigo": "PIMPFN12_QIIGNN212", "freq": "mensal"},
+    "Volume de vendas no varejo - Geral": {"fonte": "ipea", "codigo": "PMC12_IVVRN12", "freq": "mensal"},
+    "Volume de vendas no varejo - Artigos farmacêuticos": {"fonte": "ipea", "codigo": "PMC12_VRFARMN12", "freq": "mensal"},
+    "Volume de vendas no varejo - Hipermercados e supermercados": {"fonte": "ipea", "codigo": "PMC12_VRSUPTN12", "freq": "mensal"},
+    "Volume de vendas no varejo - Tecidos, vestuário e calçados": {"fonte": "ipea", "codigo": "PMC12_VRVESTN12", "freq": "mensal"},
+    "População no Brasil (projeção)": {"fonte": "ipea", "codigo": "DEPIS_POPP", "freq": "anual"},
+    "População no Brasil (estimativa)": {"fonte": "ipea", "codigo": "DEPIS_POP", "freq": "anual"},
+    "Salário mínimo vigente": {"fonte": "ipea", "codigo": "MTE12_SALMIN12", "freq": "mensal"},
+    "Salário mínimo real": {"fonte": "ipea", "codigo": "GAC12_SALMINRE12", "freq": "mensal"},
+    "Concessões de crédito PF": {"fonte": "ipea", "codigo": "BM12_CCAPF12", "freq": "mensal"},
+    "Concessões de crédito PJ": {"fonte": "ipea", "codigo": "BM12_CCAPJ12", "freq": "mensal"},
+    "Taxa média de juros PF": {"fonte": "ipea", "codigo": "BM12_CTJPF12", "freq": "mensal"},
+    "Saldo de crédito PF recursos livres": {"fonte": "ipea", "codigo": "BM12_CRLSPF12", "freq": "mensal"}
+}
+
 # 3. FUNÇÕES
 @st.cache_data(ttl=300)
 def get_all_data(tickers):
@@ -177,6 +216,89 @@ def get_all_data(tickers):
         return data if not data.empty else pd.DataFrame()
     except:
         return pd.DataFrame()
+
+@st.cache_data(ttl=3600) # Cache longo para dados macro
+def get_macro_data(item_name, item_info, start_date=None, end_date=None):
+    """
+    Busca dados macroeconômicos sob demanda e aplica limpeza universal.
+    Suporta: BCB (SGS) e IPEADATA (API).
+    """
+    df_final = pd.DataFrame()
+    try:
+        # ================== LÓGICA BCB ==================
+        if item_info["fonte"] == "bcb":
+            code = item_info["codigo"]
+            url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{code}/dados?formato=json"
+            
+            # Tratamento de limite de 10 anos para diários
+            if start_date:
+                url += f"&dataInicial={start_date.strftime('%d/%m/%Y')}"
+            if end_date:
+                url += f"&dataFinal={end_date.strftime('%d/%m/%Y')}"
+            
+            df = pd.read_json(url)
+            
+            # Tratamento de valores BCB
+            if 'valor' in df.columns:
+                df['valor'] = df['valor'].astype(str)
+                df['valor'] = df['valor'].str.replace(',', '.', regex=False)
+                df['valor'] = pd.to_numeric(df['valor'], errors='coerce')
+                df = df.dropna(subset=['valor'])
+            
+            df['data'] = pd.to_datetime(df['data'], dayfirst=True)
+
+        # ================== LÓGICA IPEADATA ==================
+        elif item_info["fonte"] == "ipea":
+            code = item_info["codigo"]
+            # Endpoint API OData v4 do Ipea
+            url = f"https://www.ipeadata.gov.br/api/odata4/Metadados('{code}')/Valores"
+            
+            df_raw = pd.read_json(url)
+            
+            # Ipeadata retorna lista dentro da chave 'value'
+            if 'value' in df_raw.columns:
+                df = pd.DataFrame(df_raw['value'].tolist())
+                # Padronizar nomes de coluna
+                if 'VALDATA' in df.columns and 'VALVALOR' in df.columns:
+                    df = df.rename(columns={'VALDATA': 'data', 'VALVALOR': 'valor'})
+                    
+                    # CORREÇÃO ROBUSTA: Garantir conversão para datetime antes de usar .dt
+                    # utc=True unifica o formato, errors='coerce' evita falha total
+                    df['data'] = pd.to_datetime(df['data'], errors='coerce', utc=True)
+                    df = df.dropna(subset=['data'])
+                    
+                    # Agora é seguro remover o timezone
+                    df['data'] = df['data'].dt.tz_localize(None)
+                else:
+                    return pd.DataFrame()
+            else:
+                return pd.DataFrame()
+        
+        # ================== FILTROS E FORMATACAO COMUM ==================
+        if not df.empty:
+            # Filtro de Datas (Universal)
+            if start_date:
+                df = df[df['data'] >= pd.to_datetime(start_date)]
+            if end_date:
+                df = df[df['data'] <= pd.to_datetime(end_date)]
+                
+            freq = item_info.get("freq", "diario")
+            
+            if freq == "mensal":
+                meses_map = {1:'jan', 2:'fev', 3:'mar', 4:'abr', 5:'mai', 6:'jun', 
+                             7:'jul', 8:'ago', 9:'set', 10:'out', 11:'nov', 12:'dez'}
+                df['Data'] = df['data'].apply(lambda x: f"{meses_map[x.month]}/{str(x.year)[2:]}")
+            elif freq == "anual":
+                df['Data'] = df['data'].dt.year.astype(str)
+            else: # diario
+                df['Data'] = df['data'].dt.strftime('%d/%m/%Y')
+            
+            df_final = df[['Data', 'valor']].rename(columns={'valor': 'Valor'})
+            
+    except Exception as e:
+        st.error(f"Erro ao buscar dados de {item_name}: {e}")
+        
+    return df_final
 
 def calc_variation(cl, days=None, ytd=False):
     if cl.empty: return 0.0
@@ -216,8 +338,50 @@ if master_data.empty:
 
 st.write("---")
 
-opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "Backtest"]
+opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "Backtest", "Banco de dados"]
 aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
+
+if aba_selecionada == "Banco de dados":
+    c_sel, c_d1, c_d2 = st.columns([2, 1, 1])
+    with c_sel:
+        indicador = st.selectbox("Indicador Econômico", options=sorted(list(DB_MACRO.keys())))
+    with c_d1:
+        d_ini = st.date_input("Data Início", value=datetime(2020, 1, 1))
+    with c_d2:
+        d_fim = st.date_input("Data Fim", value=datetime.now())
+    
+    if indicador:
+        info = DB_MACRO[indicador]
+        df_macro = get_macro_data(indicador, info, start_date=d_ini, end_date=d_fim)
+        
+        if not df_macro.empty:
+            st.markdown(f"#### {indicador}")
+            
+            # Converter para CSV para download
+            csv = df_macro.to_csv(index=False).encode('utf-8')
+            
+            c_down, c_view = st.columns([1, 4])
+            with c_down:
+                st.download_button(
+                    label="Baixar CSV",
+                    data=csv,
+                    file_name=f"{indicador.replace(' ', '_').lower()}.csv",
+                    mime='text/csv',
+                )
+            
+            # Exibição simples da tabela
+            st.dataframe(
+                df_macro, 
+                hide_index=True, 
+                use_container_width=False, 
+                width=400,
+                column_config={
+                    "Valor": st.column_config.NumberColumn(format="%.2f")
+                }
+            )
+        else:
+            st.warning("Não foi possível carregar os dados para este indicador.")
+    st.stop()
 
 if aba_selecionada == "Backtest":
     col1, col2, col3, col4 = st.columns([2, 1.5, 1.5, 1.2])
