@@ -6,7 +6,7 @@ from datetime import datetime
 import numpy as np
 
 # 1. CONFIGURAÇÃO E CSS
-# Alterado para string direta. Isso permite que o navegador indexe o arquivo para atalhos (PWA/Mobile).
+# Mantido como solicitado: string direta para indexação correta de ícones em atalhos.
 st.set_page_config(page_title="DASHBOARD", page_icon="favicon.png", layout="wide")
 
 if "ticker_selecionado" not in st.session_state:
@@ -345,7 +345,8 @@ aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibi
 if aba_selecionada == "Banco de dados":
     c_sel, c_d1, c_d2 = st.columns([2, 1, 1])
     with c_sel:
-        indicador = st.selectbox("Indicador Econômico", options=sorted(list(DB_MACRO.keys())))
+        # Alterado para index=None e placeholder
+        indicador = st.selectbox("Indicador Econômico", options=sorted(list(DB_MACRO.keys())), index=None, placeholder="Selecionar indicador")
     with c_d1:
         d_ini = st.date_input("Data Início", value=datetime(2020, 1, 1))
     with c_d2:
@@ -381,7 +382,7 @@ if aba_selecionada == "Banco de dados":
                 }
             )
 
-            # --- NOVO GRÁFICO SOLICITADO ---
+            # --- GRÁFICO ---
             fig_macro = go.Figure()
             fig_macro.add_trace(go.Scatter(
                 x=df_macro['Data'],
@@ -398,7 +399,8 @@ if aba_selecionada == "Banco de dados":
                 height=300,
                 showlegend=False,
                 xaxis=dict(showgrid=False, fixedrange=True),
-                yaxis=dict(showgrid=True, gridcolor="#222", fixedrange=True)
+                yaxis=dict(showgrid=True, gridcolor="#222", fixedrange=True),
+                dragmode=False # Permite scroll no mobile
             )
             st.plotly_chart(fig_macro, use_container_width=True, config={'displayModeBar': False})
             # -------------------------------
@@ -455,7 +457,8 @@ if aba_selecionada == "Backtest":
                         height=450, margin=dict(l=0, r=0, t=40, b=0), 
                         xaxis=dict(showgrid=False, fixedrange=True),
                         yaxis=dict(showgrid=True, gridcolor="#222", side="right", fixedrange=True),
-                        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0)
+                        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
+                        dragmode=False # Permite scroll no mobile
                     )
                     st.plotly_chart(fig_bt, use_container_width=True, config={'displayModeBar': False})
 
@@ -489,7 +492,8 @@ if aba_selecionada == "Backtest":
                         height=350, margin=dict(l=0, r=0, t=40, b=0), 
                         xaxis=dict(showgrid=False, fixedrange=True),
                         yaxis=dict(showgrid=True, gridcolor="#222", side="right", title="%", fixedrange=True),
-                        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0)
+                        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
+                        dragmode=False # Permite scroll no mobile
                     )
                     st.plotly_chart(fig_vol, use_container_width=True, config={'displayModeBar': False})
 
@@ -523,7 +527,8 @@ if aba_selecionada == "Backtest":
                         height=350, margin=dict(l=0, r=0, t=40, b=0),
                         xaxis=dict(showgrid=False, fixedrange=True),
                         yaxis=dict(showgrid=True, gridcolor="#222", side="right", fixedrange=True),
-                        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0)
+                        legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
+                        dragmode=False # Permite scroll no mobile
                     )
                     st.plotly_chart(fig_dd, use_container_width=True, config={'displayModeBar': False})
                     
