@@ -6,7 +6,8 @@ from datetime import datetime
 import numpy as np
 
 # 1. CONFIGURAÇÃO E CSS
-st.set_page_config(page_title="DASHBOARD", layout="wide")
+# Substitua 'favicon.png' pelo nome exato do seu arquivo no GitHub
+st.set_page_config(page_title="DASHBOARD", page_icon="favicon.png", layout="wide")
 
 if "ticker_selecionado" not in st.session_state:
     st.session_state.ticker_selecionado = None
