@@ -2,11 +2,11 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
+import streamlit.components.v1 as components
 from datetime import datetime
 import numpy as np
 
 # 1. CONFIGURAÇÃO E CSS
-# Mantido como solicitado: string direta para indexação correta de ícones em atalhos.
 st.set_page_config(page_title="DASHBOARD", page_icon="favicon.png", layout="wide")
 
 if "ticker_selecionado" not in st.session_state:
@@ -339,7 +339,7 @@ if master_data.empty:
 
 st.write("---")
 
-opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "Backtest", "Banco de dados"]
+opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "Backtest", "Banco de dados", "Calendário Econômico"]
 aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
 if aba_selecionada == "Banco de dados":
@@ -531,7 +531,7 @@ if aba_selecionada == "Backtest":
                         dragmode=False # Permite scroll no mobile
                     )
                     st.plotly_chart(fig_dd, use_container_width=True, config={'displayModeBar': False})
-                    
+
                     # 4. TABELA DE RENTABILIDADE MENSAL
                     st.markdown(f"<div style='color:#FFF; font-size:14px; font-weight:700; margin-top:30px; margin-bottom:10px;'>Rentabilidade Mensal - {ticker_bt}</div>", unsafe_allow_html=True)
                     
@@ -608,6 +608,16 @@ if aba_selecionada == "Backtest":
                 st.error(f"Erro ao processar backtest: {e}")
         else:
             st.error("Por favor, digite um ticker.")
+    st.stop()
+
+if aba_selecionada == "Calendário Econômico":
+    html_calendar = """
+    <iframe src="https://sslecal2.investing.com?ecoDayBackground=%23000000&defaultFont=%23000000&innerBorderColor=%23ffffff&borderColor=%23ffffff&ecoDayFontColor=%23ffffff&columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timeselector,filters&countries=17,32,37,5,35,4,72&calType=week&timeZone=12&lang=12" width="45%" height="600" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
+    <div class="poweredBy" style="font-family: Arial, Helvetica, sans-serif;">
+        <span style="font-size: 11px;color: #333333;text-decoration: none;">Calendário Econômico fornecido por <a href="https://br.investing.com/" rel="nofollow" target="_blank" style="font-size: 11px;color: #06529D; font-weight: bold;" class="underline_link">Investing.com Brasil</a>, o portal líder financeiro.</span>
+    </div>
+    """
+    components.html(html_calendar, height=700, scrolling=True)
     st.stop()
 
 cols_base = ["HOJE", "30D", "6M", "12M", "YTD", "5A"]
