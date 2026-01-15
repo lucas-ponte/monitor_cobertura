@@ -612,7 +612,7 @@ if aba_selecionada == "Backtest":
 
 if aba_selecionada == "Calendário Econômico":
     html_calendar = """
-    <iframe src="https://sslecal2.investing.com?ecoDayBackground=%23000000&defaultFont=%23000000&innerBorderColor=%23ffffff&borderColor=%23ffffff&ecoDayFontColor=%23ffffff&columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timeselector,filters&countries=17,32,37,5,35,4,72&calType=week&timeZone=12&lang=12" width="70%" height="600" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
+    <iframe src="https://sslecal2.investing.com?ecoDayBackground=%23000000&defaultFont=%23000000&innerBorderColor=%23ffffff&borderColor=%23ffffff&ecoDayFontColor=%23ffffff&columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timeselector,filters&countries=17,32,37,5,35,4,72&calType=week&timeZone=12&lang=12" width="100%" height="600" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
     <div class="poweredBy" style="font-family: Arial, Helvetica, sans-serif;">
         <span style="font-size: 11px;color: #333333;text-decoration: none;">Calendário Econômico fornecido por <a href="https://br.investing.com/" rel="nofollow" target="_blank" style="font-size: 11px;color: #06529D; font-weight: bold;" class="underline_link">Investing.com Brasil</a>, o portal líder financeiro.</span>
     </div>
