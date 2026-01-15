@@ -3,7 +3,7 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit.components.v1 as components
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
 
 # 1. CONFIGURAÇÃO E CSS
@@ -128,6 +128,54 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # 2. DICIONÁRIOS MESTRE
+
+# ==============================================================================
+# EDITAR AQUI SEUS APORTES (TICKER, DATA da COMPRA no formato AAAA-MM-DD, QTD)
+# ==============================================================================
+APORTES_USUARIO = [
+    {"ticker": "WEGE3.SA", "data": "2025-08-26", "qtd": 3},
+    {"ticker": "EQTL3.SA", "data": "2025-08-26", "qtd": 2},
+    {"ticker": "MULT3.SA", "data": "2025-08-26", "qtd": 2},
+    {"ticker": "RENT3.SA", "data": "2025-08-26", "qtd": 1},
+    {"ticker": "LEVE3.SA", "data": "2025-08-26", "qtd": 1},
+
+    {"ticker": "ITUB3.SA", "data": "2025-09-16", "qtd": 8},
+    {"ticker": "EQTL3.SA", "data": "2025-09-16", "qtd": 2},
+    {"ticker": "EGIE3.SA", "data": "2025-09-16", "qtd": 3},
+    {"ticker": "MULT3.SA", "data": "2025-09-16", "qtd": 2},
+    {"ticker": "RADL3.SA", "data": "2025-09-16", "qtd": 5},
+    {"ticker": "SMFT3.SA", "data": "2025-09-16", "qtd": 1},
+    {"ticker": "MDIA3.SA", "data": "2025-09-16", "qtd": 1},
+    {"ticker": "BBSE3.SA", "data": "2025-09-16", "qtd": 3},
+    {"ticker": "LREN3.SA", "data": "2025-09-16", "qtd": 3},
+    {"ticker": "BPAC3.SA", "data": "2025-09-16", "qtd": 2},
+    {"ticker": "VIVT3.SA", "data": "2025-09-16", "qtd": 3},
+    {"ticker": "ASAI3.SA", "data": "2025-09-16", "qtd": 4},
+    {"ticker": "UNIP3.SA", "data": "2025-09-16", "qtd": 1},
+    {"ticker": "PSSA3.SA", "data": "2025-09-16", "qtd": 2},
+    {"ticker": "PRIO3.SA", "data": "2025-09-16", "qtd": 1},
+
+    {"ticker": "WEGE3.SA", "data": "2025-11-14", "qtd": 2},
+    {"ticker": "MULT3.SA", "data": "2025-11-14", "qtd": 3},
+    {"ticker": "LEVE3.SA", "data": "2025-11-14", "qtd": 4},
+    {"ticker": "UNIP3.SA", "data": "2025-11-14", "qtd": 1},
+    {"ticker": "PSSA3.SA", "data": "2025-11-14", "qtd": 3},
+
+    {"ticker": "EGIE3.SA", "data": "2025-11-28", "qtd": 1},
+
+    {"ticker": "EGIE3.SA", "data": "2025-12-05", "qtd": 5},
+    {"ticker": "EQTL3.SA", "data": "2025-12-05", "qtd": 1},
+    {"ticker": "RENT3.SA", "data": "2025-12-05", "qtd": 2},
+    {"ticker": "VULC3.SA", "data": "2025-12-05", "qtd": 5},
+
+    {"ticker": "EQTL3.SA", "data": "2025-12-19", "qtd": 4},
+    {"ticker": "SMFT3.SA", "data": "2025-12-19", "qtd": 5},
+    {"ticker": "MDIA3.SA", "data": "2025-12-19", "qtd": 4},
+    {"ticker": "ASAI3.SA", "data": "2025-12-19", "qtd": 10},
+    {"ticker": "PRIO3.SA", "data": "2025-12-19", "qtd": 4},
+    # Adicione novos aportes abaixo copiando a estrutura acima
+]
+
 INDICES_LIST = ["^BVSP", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225", "^HSI", "000001.SS", "^GDAXI", "^FTSE", "^FCHI", "^STOXX50E", "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
 COBERTURA = {
     "AZZA3.SA": {"Rec": "Compra", "Alvo": 50.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 23.00},
@@ -161,12 +209,6 @@ SETORES_ACOMPANHAMENTO = {
     "Petróleo, Gás e Distribuição": ["PETR4.SA", "PRIO3.SA", "BRAV3.SA", "RECV3.SA", "CSAN3.SA", "VBBR3.SA", "UGPA3.SA"],
     "Mineração e Siderurgia": ["VALE3.SA", "CSNA3.SA", "USIM5.SA", "GGBR4.SA", "GOAU4.SA", "CMIN3.SA", "BRAP4.SA"],
     "Papel, Celulose e Químicos": ["SUZB3.SA", "KLBN11.SA", "RANI3.SA", "UNIP6.SA", "DEXP3.SA"]
-}
-CARTEIRA_PESSOAL_QTD = {
-    "ITUB3.SA": 8, "WEGE3.SA": 5, "EGIE3.SA": 9, "EQTL3.SA": 9, "MULT3.SA": 7,
-    "RENT3.SA": 3, "RADL3.SA": 5, "SMFT3.SA": 6, "MDIA3.SA": 5, "BBSE3.SA": 3,
-    "LEVE3.SA": 5, "LREN3.SA": 3, "ASAI3.SA": 14, "BPAC3.SA": 2, "VIVT3.SA": 3,
-    "UNIP3.SA": 2, "PRIO3.SA": 5, "VULC3.SA": 5, "PSSA3.SA": 5
 }
 
 # --- DICIONÁRIO BANCO DE DADOS MACRO (BCB + IPEADATA) ---
@@ -330,7 +372,10 @@ with c2:
         st.cache_data.clear()
         st.rerun()
 
-all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + list(CARTEIRA_PESSOAL_QTD.keys()) + INDICES_LIST)))
+# Lista de tickers para download (inclui cobertura, setores, carteira e indices)
+# Extrai tickers únicos da lista de aportes
+tickers_carteira_usuario = list(set([item['ticker'] for item in APORTES_USUARIO]))
+all_tickers_master = sorted(list(set(list(COBERTURA.keys()) + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] + tickers_carteira_usuario + INDICES_LIST)))
 master_data = get_all_data(all_tickers_master)
 
 if master_data.empty:
@@ -626,19 +671,239 @@ df_p = pd.DataFrame()
 if aba_selecionada == "Cobertura":
     headers, t_list = ["Ticker", "Preço", "Rec.", "Alvo", "Upside"] + cols_base, sorted(list(COBERTURA.keys()))
 elif aba_selecionada == "Carteira pessoal":
-    headers = ["Ticker", "Preço", "Peso %"] + cols_base
-    pesos_calc = []
-    for tk in CARTEIRA_PESSOAL_QTD:
+    if not APORTES_USUARIO:
+        st.info("Adicione ativos na lista 'APORTES_USUARIO' no código para ver sua carteira.")
+        st.stop()
+
+    # Processar Aportes
+    df_aportes = pd.DataFrame(APORTES_USUARIO)
+    df_aportes['data'] = pd.to_datetime(df_aportes['data'])
+    start_date = df_aportes['data'].min()
+    
+    # Lista de ativos da carteira + Ibovespa
+    tickers_carteira = df_aportes['ticker'].unique().tolist()
+    if "^BVSP" not in tickers_carteira: tickers_carteira.append("^BVSP")
+    
+    # Garantir que temos dados no master_data suficientes
+    try:
+        valid_tickers = [t for t in tickers_carteira if t in master_data.columns.levels[0]]
+        prices = pd.DataFrame({t: master_data[t]['Close'] for t in valid_tickers})
+        
+        # Ajuste de timezone e filtro de data
+        prices.index = prices.index.tz_localize(None)
+        prices = prices.sort_index().loc[start_date:]
+        prices = prices.fillna(method='ffill')
+    except Exception as e:
+        st.error(f"Erro ao processar dados históricos da carteira: {e}")
+        st.stop()
+
+    # Construir DataFrame de Quantidades Diárias (Holdings)
+    all_dates = prices.index
+    df_qtd = pd.DataFrame(0, index=all_dates, columns=[t for t in tickers_carteira if t != "^BVSP"])
+    
+    for _, row in df_aportes.iterrows():
+        idx_loc = df_qtd.index.searchsorted(row['data'])
+        if idx_loc < len(df_qtd):
+            df_qtd.iloc[idx_loc:, df_qtd.columns.get_loc(row['ticker'])] += row['qtd']
+
+    # --- CÁLCULO DE RENTABILIDADE (SISTEMA DE COTAS) ---
+    cols_ativos = [t for t in tickers_carteira if t != "^BVSP" and t in prices.columns]
+    pct_change = prices[cols_ativos].pct_change().fillna(0)
+    
+    # Alinha df_qtd com prices (garante mesmas colunas e indices)
+    df_qtd_aligned = df_qtd[cols_ativos].reindex(prices.index).fillna(method='ffill').fillna(0)
+    
+    pos_yesterday = (prices[cols_ativos].shift(1) * df_qtd_aligned.shift(1)).fillna(0)
+    total_yesterday = pos_yesterday.sum(axis=1)
+    
+    weights = pos_yesterday.div(total_yesterday, axis=0).fillna(0)
+    portfolio_ret = (weights * pct_change).sum(axis=1)
+    
+    # Índice Base 100
+    portfolio_idx = (1 + portfolio_ret).cumprod() * 100
+    if "^BVSP" in prices.columns:
+        ibov_idx = (1 + prices["^BVSP"].pct_change().fillna(0)).cumprod() * 100
+    else:
+        ibov_idx = pd.Series(100, index=portfolio_idx.index)
+    
+    # Normalizar
+    if len(portfolio_idx) > 0:
+        portfolio_idx = (portfolio_idx / portfolio_idx.iloc[0]) * 100
+        ibov_idx = (ibov_idx / ibov_idx.iloc[0]) * 100
+
+    # --- TABELA DE POSIÇÃO NO TOPO (SEM QTD) ---
+    qtd_atual = df_qtd_aligned.iloc[-1]
+    qtd_atual = qtd_atual[qtd_atual > 0]
+    t_list_cart = qtd_atual.index.tolist()
+    
+    pos_data = []
+    total_portfolio_val = 0
+    for t in t_list_cart:
         try:
-            p_atual = float(master_data[tk]['Close'].dropna().iloc[-1])
-            pesos_calc.append({"ticker": tk, "val": p_atual * CARTEIRA_PESSOAL_QTD[tk]})
+            p = float(prices[t].iloc[-1])
+            q = float(qtd_atual[t])
+            val = p * q
+            cl = prices[t].dropna()
+            v_h = calc_variation(cl, 1)
+            v_30 = calc_variation(cl, 21)
+            v_6m = calc_variation(cl, 126)
+            v_12 = calc_variation(cl, 252)
+            v_ytd = calc_variation(cl, ytd=True)
+            v_5a = calc_variation(cl, 1260)
+            
+            pos_data.append({
+                "Ticker": t, "Preço": p, "Total": val,
+                "HOJE": v_h, "30D": v_30, "6M": v_6m, 
+                "12M": v_12, "YTD": v_ytd, "5A": v_5a
+            })
+            total_portfolio_val += val
         except: continue
-    df_p = pd.DataFrame(pesos_calc)
-    if not df_p.empty:
-        total_val = df_p["val"].sum()
-        df_p["peso"] = (df_p["val"] / total_val) * 100
-        t_list = df_p.sort_values("peso", ascending=False)["ticker"].tolist()
-    else: t_list = []
+    
+    df_pos_table = pd.DataFrame(pos_data)
+    
+    if not df_pos_table.empty:
+        df_pos_table["Peso %"] = (df_pos_table["Total"] / total_portfolio_val) * 100
+        df_pos_table = df_pos_table.sort_values("Peso %", ascending=False)
+        
+        # Render HTML Table
+        html_cart = [f'<div class="desktop-view"><table class="list-container"><tr class="list-header"><th>Ticker</th><th>Preço</th><th>Total</th><th>Peso %</th><th>HOJE</th><th>30D</th><th>6M</th><th>12M</th><th>YTD</th><th>5A</th></tr>']
+        html_mob_cart = ['<div class="mobile-view">']
+
+        for _, row in df_pos_table.iterrows():
+            sym = "R$ "
+            t = row["Ticker"]
+            p = row["Preço"]
+            
+            html_cart.append(f'<tr class="list-row"><td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td><td>{format_val_html(row["Total"], sym=sym)}</td><td>{format_val_html(row["Peso %"], is_pct=True, force_white=True)}</td>')
+            for col in ["HOJE", "30D", "6M", "12M", "YTD", "5A"]:
+                html_cart.append(f'<td>{format_val_html(row[col], is_pct=True)}</td>')
+            html_cart.append('</tr>')
+
+            # Mobile
+            f_p = "{:,.2f}".format(p).replace(",", "X").replace(".", ",").replace("X", ".")
+            html_mob_cart.append(f'<details><summary><div class="mob-header-left"><span class="mob-ticker">{t}</span></div><div class="mob-header-right"><span class="mob-price">{sym}{f_p}</span><span class="mob-today">{format_val_html(row["HOJE"], is_pct=True)}</span></div></summary><div class="mob-content"><div class="mob-grid">')
+            html_mob_cart.append(f'<div class="mob-item"><span class="mob-label">TOTAL</span><span class="mob-val">{format_val_html(row["Total"], sym=sym)}</span></div>')
+            html_mob_cart.append(f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(row["Peso %"], is_pct=True, force_white=True)}</span></div>')
+            for col in ["30D", "6M", "12M", "YTD", "5A"]:
+                html_mob_cart.append(f'<div class="mob-item"><span class="mob-label">{col}</span><span class="mob-val">{format_val_html(row[col], is_pct=True)}</span></div>')
+            html_mob_cart.append('</div></div></details>')
+
+        html_cart.append('</table></div>')
+        html_mob_cart.append('</div>')
+        st.markdown("".join(html_cart) + "".join(html_mob_cart), unsafe_allow_html=True)
+
+    # --- GRÁFICOS ---
+    c_chart1, c_chart2 = st.columns(2)
+    
+    var_cart = (portfolio_idx.iloc[-1] - 100)
+    var_ibov = (ibov_idx.iloc[-1] - 100)
+    
+    # 1. Performance vs Ibov (Branco e Dourado)
+    with c_chart1:
+        fig_perf = go.Figure()
+        fig_perf.add_trace(go.Scatter(x=portfolio_idx.index, y=portfolio_idx, name=f"Carteira ({var_cart:+.2f}%)", line=dict(color="#FFFFFF", width=2)))
+        fig_perf.add_trace(go.Scatter(x=ibov_idx.index, y=ibov_idx, name=f"Ibovespa ({var_ibov:+.2f}%)", line=dict(color="#FF9900", width=2))) # Goldenrod
+        
+        fig_perf.update_layout(
+            title=dict(text='Rentabilidade vs Ibovespa', x=0, font=dict(size=14, color='white'), yanchor="top", y=1),
+            template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=350,
+            xaxis=dict(showgrid=False, fixedrange=True), 
+            yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True), 
+            legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
+            dragmode=False, margin=dict(l=0, r=0, t=40, b=40)
+        )      
+        st.plotly_chart(fig_perf, use_container_width=True, config={'displayModeBar': False})
+
+    # 2. Evolução Patrimônio (Barras)
+    with c_chart2:
+        net_worth_series = (df_qtd_aligned * prices[cols_ativos]).sum(axis=1)
+        fig_nw = go.Figure()
+        fig_nw.add_trace(go.Bar(x=net_worth_series.index, y=net_worth_series, name="Patrimônio", marker_color="#FF9900"))
+        
+        fig_nw.update_layout(
+            title=dict(text='Evolução do Patrimônio', x=0, font=dict(size=14, color='white'), yanchor="top", y=1),
+            template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=350,
+            xaxis=dict(showgrid=False, fixedrange=True),
+            yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True),
+            showlegend=False, dragmode=False, margin=dict(l=0, r=0, t=40, b=40)
+        )
+        st.plotly_chart(fig_nw, use_container_width=True, config={'displayModeBar': False})
+
+    # 3. Volatilidade e Drawdown (Lado a Lado)
+    c_vol, c_dd = st.columns(2)
+    
+    with c_vol:
+        vol_cart = portfolio_ret.rolling(21).std() * (252**0.5) * 100
+        if "^BVSP" in prices.columns:
+            vol_ibov = prices["^BVSP"].pct_change().rolling(21).std() * (252**0.5) * 100
+        else:
+            vol_ibov = pd.Series(0, index=vol_cart.index)
+
+        fig_vol = go.Figure()
+        fig_vol.add_trace(go.Scatter(x=vol_cart.index, y=vol_cart, name="Vol. Carteira", line=dict(color="#FFFFFF", width=1)))
+        fig_vol.add_trace(go.Scatter(x=vol_ibov.index, y=vol_ibov, name="Vol. Ibov", line=dict(color="#FF9900", width=1)))
+        
+        fig_vol.update_layout(
+            title=dict(text='Volatilidade (21d)', x=0, font=dict(size=14, color='white'), yanchor="top", y=1),
+            template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=300, 
+            legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0), xaxis=dict(showgrid=False, fixedrange=True),
+            yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True),
+            dragmode=False, margin=dict(l=0, r=0, t=40, b=40)
+        )
+        st.plotly_chart(fig_vol, use_container_width=True, config={'displayModeBar': False})
+
+    with c_dd:
+        dd_cart = (portfolio_idx / portfolio_idx.cummax() - 1) * 100
+        fig_dd = go.Figure()
+        fig_dd.add_trace(go.Scatter(x=dd_cart.index, y=dd_cart, name="Drawdown", line=dict(color="#FFFFFF", width=1), fill='tozeroy', fillcolor='rgba(255, 75, 75, 0.1)'))
+        
+        fig_dd.update_layout(
+            title=dict(text='Drawdown (%)', x=0, font=dict(size=14, color='white'), yanchor="top", y=1),
+            template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=300, showlegend=False,
+            xaxis=dict(showgrid=False, fixedrange=True),
+            yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True),
+            dragmode=False, margin=dict(l=0, r=0, t=40, b=40)
+        )
+        st.plotly_chart(fig_dd, use_container_width=True, config={'displayModeBar': False})
+
+    # --- TABELA DE RENTABILIDADE (MÊS A MÊS + ACUMULADO) ---
+    st.markdown("<br>", unsafe_allow_html=True)
+    m_ret_series = portfolio_ret.resample('ME').apply(lambda x: (1 + x).prod() - 1) * 100
+    df_m = m_ret_series.to_frame(name="ret")
+    df_m['ano'] = df_m.index.year
+    df_m['mes'] = df_m.index.month
+    month_names = {1: 'JAN', 2: 'FEV', 3: 'MAR', 4: 'ABR', 5: 'MAI', 6: 'JUN', 7: 'JUL', 8: 'AGO', 9: 'SET', 10: 'OUT', 11: 'NOV', 12: 'DEZ'}
+    pivot_ret = df_m.pivot(index='ano', columns='mes', values='ret').rename(columns=month_names)
+    
+    # Calcular Ano Acumulado (YTD)
+    for year in pivot_ret.index:
+        y_series = portfolio_ret[portfolio_ret.index.year == year]
+        y_val = ((1 + y_series).prod() - 1) * 100
+        pivot_ret.loc[year, 'Acumulado'] = y_val
+    
+    cols_ordered = [month_names[i] for i in range(1, 13) if month_names[i] in pivot_ret.columns]
+    cols_ordered.append('Acumulado')
+    pivot_ret = pivot_ret[cols_ordered]
+
+    html_rent = ['<table class="rent-table"><tr><th>ANO</th>']
+    for m in pivot_ret.columns: html_rent.append(f'<th>{m}</th>')
+    html_rent.append('</tr>')
+    for year in pivot_ret.index[::-1]: 
+        html_rent.append(f'<tr><td class="rent-year">{year}</td>')
+        for col in pivot_ret.columns:
+            val = pivot_ret.loc[year, col]
+            if pd.isna(val): html_rent.append('<td>-</td>')
+            else:
+                color = "#00FF00" if val > 0 else ("#FF4B4B" if val < 0 else "#FFF")
+                cls = "rent-total" if col == "Acumulado" else ""
+                html_rent.append(f'<td class="{cls}" style="color:{color}">{val:.2f}%</td>')
+        html_rent.append('</tr>')
+    html_rent.append('</table>')
+    st.markdown("".join(html_rent), unsafe_allow_html=True)
+    
+    # Stop para não carregar a parte genérica (botão e tabela antiga)
+    st.stop()
+
 elif aba_selecionada == "Índices":
     headers, t_list = ["Ticker", "Preço"] + cols_base, INDICES_LIST
 else:
@@ -649,7 +914,7 @@ else:
 
 tickers_da_aba = [tk for tk in t_list if isinstance(tk, str)]
 
-with st.popover("GRÁFICOS"):
+with st.popover("GRÁFICOS (COTAÇÕES)"):
     col_pop1, col_pop2 = st.columns(2)
     for i, tk in enumerate(tickers_da_aba):
         target_col = col_pop1 if i % 2 == 0 else col_pop2
@@ -683,12 +948,16 @@ for t in t_list:
         )
 
         html_d_list.append(f'<tr class="list-row"><td><span class="ticker-link">{t}</span></td><td>{format_val_html(p, sym=sym)}</td>')
+        
         if aba_selecionada == "Cobertura":
             alv = COBERTURA[t]["Alvo"]
             html_d_list.append(f'<td>{COBERTURA[t]["Rec"]}</td><td>{format_val_html(alv, sym=sym)}</td><td>{format_val_html((alv/p-1)*100, is_pct=True)}</td>')
+        
         if aba_selecionada == "Carteira pessoal" and not df_p.empty:
-            p_v = df_p[df_p["ticker"] == t]["peso"].values[0]
-            html_d_list.append(f'<td>{format_val_html(p_v, is_pct=True, force_white=True)}</td>')
+            row_data = df_p[df_p["Ticker"] == t].iloc[0]
+            html_d_list.append(f'<td>{int(row_data["Qtd"])}</td>')
+            html_d_list.append(f'<td>{format_val_html(row_data["Total"], sym=sym)}</td>')
+            html_d_list.append(f'<td>{format_val_html(row_data["Peso %"], is_pct=True, force_white=True)}</td>')
         
         for val in [v_h, v_30, v_6m, v_12, v_ytd, v_5a]:
             html_d_list.append(f'<td>{format_val_html(val, is_pct=True)}</td>')
@@ -700,8 +969,10 @@ for t in t_list:
             alv = COBERTURA[t]["Alvo"]
             html_m_list.append(f'<div class="mob-item"><span class="mob-label">REC</span><span class="mob-val">{COBERTURA[t]["Rec"]}</span></div><div class="mob-item"><span class="mob-label">ALVO</span><span class="mob-val">{format_val_html(alv, sym=sym)}</span></div><div class="mob-item"><span class="mob-label">UPSIDE</span><span class="mob-val">{format_val_html((alv/p-1)*100, is_pct=True)}</span></div>')
         if aba_selecionada == "Carteira pessoal" and not df_p.empty:
-            p_v = df_p[df_p["ticker"] == t]["peso"].values[0]
-            html_m_list.append(f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(p_v, is_pct=True, force_white=True)}</span></div>')
+            row_data = df_p[df_p["Ticker"] == t].iloc[0]
+            html_m_list.append(f'<div class="mob-item"><span class="mob-label">QTD</span><span class="mob-val">{int(row_data["Qtd"])}</span></div>')
+            html_m_list.append(f'<div class="mob-item"><span class="mob-label">TOTAL</span><span class="mob-val">{format_val_html(row_data["Total"], sym=sym)}</span></div>')
+            html_m_list.append(f'<div class="mob-item"><span class="mob-label">PESO</span><span class="mob-val">{format_val_html(row_data["Peso %"], is_pct=True, force_white=True)}</span></div>')
         
         periods = [("30D", v_30), ("6M", v_6m), ("12M", v_12), ("YTD", v_ytd), ("5A", v_5a)]
         for lab, val in periods:
