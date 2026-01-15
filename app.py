@@ -88,7 +88,7 @@ st.markdown(f"""
     .rent-table {{ width: 100%; border-collapse: collapse; font-family: 'Tinos', sans-serif; font-size: 0.8rem; text-align: center; border: 1px solid #222; margin-top: 20px; }}
     .rent-table th {{ background-color: #0A0A0A; color: #FFA500; padding: 10px 5px; border: 1px solid #222; text-transform: uppercase; font-size: 0.7rem; }}
     .rent-table td {{ padding: 10px 5px; border: 1px solid #222; color: #FFF; }}
-    .rent-year {{ background-color: #0A0A0A; font-weight: 700; color: #FFF !important; }}
+    .rent-year {{ background-color: #0A0A0A; font-weight: 700; color: #FFF !important; text-align: left; padding-left: 10px; }}
     .rent-total {{ background-color: #0A0A0A; font-weight: 700; }}
 
     details {{ background-color: #000; border-bottom: 1px solid #222; margin-bottom: 0px; font-family: 'Inter', sans-serif; }}
@@ -811,7 +811,7 @@ elif aba_selecionada == "Carteira pessoal":
             yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True), 
             legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
             dragmode=False, margin=dict(l=0, r=0, t=40, b=40)
-        )      
+        )
         st.plotly_chart(fig_perf, use_container_width=True, config={'displayModeBar': False})
 
     # 2. Evolução Patrimônio (Barras)
@@ -868,36 +868,81 @@ elif aba_selecionada == "Carteira pessoal":
 
     # --- TABELA DE RENTABILIDADE (MÊS A MÊS + ACUMULADO) ---
     st.markdown("<br>", unsafe_allow_html=True)
-    m_ret_series = portfolio_ret.resample('ME').apply(lambda x: (1 + x).prod() - 1) * 100
-    df_m = m_ret_series.to_frame(name="ret")
-    df_m['ano'] = df_m.index.year
-    df_m['mes'] = df_m.index.month
-    month_names = {1: 'JAN', 2: 'FEV', 3: 'MAR', 4: 'ABR', 5: 'MAI', 6: 'JUN', 7: 'JUL', 8: 'AGO', 9: 'SET', 10: 'OUT', 11: 'NOV', 12: 'DEZ'}
-    pivot_ret = df_m.pivot(index='ano', columns='mes', values='ret').rename(columns=month_names)
     
-    # Calcular Ano Acumulado (YTD)
-    for year in pivot_ret.index:
-        y_series = portfolio_ret[portfolio_ret.index.year == year]
-        y_val = ((1 + y_series).prod() - 1) * 100
-        pivot_ret.loc[year, 'Acumulado'] = y_val
-    
-    cols_ordered = [month_names[i] for i in range(1, 13) if month_names[i] in pivot_ret.columns]
-    cols_ordered.append('Acumulado')
-    pivot_ret = pivot_ret[cols_ordered]
+    # Prepara dados diários
+    ret_daily_port = portfolio_ret
+    if "^BVSP" in prices.columns:
+        ret_daily_ibov = prices["^BVSP"].pct_change().fillna(0)
+    else:
+        ret_daily_ibov = pd.Series(0, index=portfolio_ret.index)
 
+    # Prepara dados mensais para preencher a tabela
+    ret_m_port = ret_daily_port.resample('ME').apply(lambda x: (1 + x).prod() - 1) * 100
+    ret_m_ibov = ret_daily_ibov.resample('ME').apply(lambda x: (1 + x).prod() - 1) * 100
+
+    def make_pivot(series):
+        df = series.to_frame(name='ret')
+        df['ano'] = df.index.year
+        df['mes'] = df.index.month
+        return df.pivot(index='ano', columns='mes', values='ret')
+
+    piv_port = make_pivot(ret_m_port)
+    piv_ibov = make_pivot(ret_m_ibov)
+    
+    # Cabeçalho da Tabela
     html_rent = ['<table class="rent-table"><tr><th>ANO</th>']
-    for m in pivot_ret.columns: html_rent.append(f'<th>{m}</th>')
-    html_rent.append('</tr>')
-    for year in pivot_ret.index[::-1]: 
-        html_rent.append(f'<tr><td class="rent-year">{year}</td>')
-        for col in pivot_ret.columns:
-            val = pivot_ret.loc[year, col]
-            if pd.isna(val): html_rent.append('<td>-</td>')
+    month_names = {1:'JAN', 2:'FEV', 3:'MAR', 4:'ABR', 5:'MAI', 6:'JUN', 7:'JUL', 8:'AGO', 9:'SET', 10:'OUT', 11:'NOV', 12:'DEZ'}
+    for i in range(1, 13): html_rent.append(f'<th>{month_names[i]}</th>')
+    html_rent.append('<th>ANO</th><th>ACUM.</th></tr>')
+
+    # Anos em ordem decrescente
+    years = sorted(piv_port.index, reverse=True)
+    
+    for y in years:
+        # Calcular Totais do Ano
+        d_p_y = ret_daily_port[ret_daily_port.index.year == y]
+        d_i_y = ret_daily_ibov[ret_daily_ibov.index.year == y]
+        total_y_port = ((1 + d_p_y).prod() - 1) * 100
+        total_y_ibov = ((1 + d_i_y).prod() - 1) * 100
+
+        # Calcular Acumulado (desde o início até o fim deste ano)
+        d_p_cum = ret_daily_port[ret_daily_port.index <= d_p_y.index[-1]]
+        d_i_cum = ret_daily_ibov[ret_daily_ibov.index <= d_i_y.index[-1]]
+        cum_port = ((1 + d_p_cum).prod() - 1) * 100
+        cum_ibov = ((1 + d_i_cum).prod() - 1) * 100
+
+        # Linha Carteira
+        html_rent.append(f'<tr><td style="text-align:left; font-weight:bold; color:#FFF; border:1px solid #222;">Carteira {y}</td>')
+        for m in range(1, 13):
+            val = piv_port.loc[y, m] if m in piv_port.columns else np.nan
+            if pd.isna(val) or (y == years[0] and m > datetime.now().month): # Check futuro simples
+                html_rent.append('<td>-</td>')
             else:
                 color = "#00FF00" if val > 0 else ("#FF4B4B" if val < 0 else "#FFF")
-                cls = "rent-total" if col == "Acumulado" else ""
-                html_rent.append(f'<td class="{cls}" style="color:{color}">{val:.2f}%</td>')
-        html_rent.append('</tr>')
+                html_rent.append(f'<td style="color:{color}">{val:.2f}%</td>')
+        
+        # Totais Carteira
+        c_ano = "#00FF00" if total_y_port > 0 else ("#FF4B4B" if total_y_port < 0 else "#FFF")
+        c_cum = "#00FF00" if cum_port > 0 else ("#FF4B4B" if cum_port < 0 else "#FFF")
+        html_rent.append(f'<td style="font-weight:bold; color:{c_ano}">{total_y_port:.2f}%</td>')
+        html_rent.append(f'<td style="font-weight:bold; color:{c_cum}">{cum_port:.2f}%</td></tr>')
+
+        # Linha Ibovespa
+        html_rent.append(f'<tr><td style="text-align:left; font-weight:bold; color:#DAA520; border:1px solid #222;">Ibovespa {y}</td>')
+        for m in range(1, 13):
+            val = piv_ibov.loc[y, m] if m in piv_ibov.columns else np.nan
+            if pd.isna(val) or (y == years[0] and m > datetime.now().month):
+                html_rent.append('<td>-</td>')
+            else:
+                color = "#00FF00" if val > 0 else ("#FF4B4B" if val < 0 else "#FFF")
+                html_rent.append(f'<td style="color:{color}">{val:.2f}%</td>')
+        
+        # Totais Ibovespa
+        c_ano_i = "#00FF00" if total_y_ibov > 0 else ("#FF4B4B" if total_y_ibov < 0 else "#FFF")
+        c_cum_i = "#00FF00" if cum_ibov > 0 else ("#FF4B4B" if cum_ibov < 0 else "#FFF")
+        html_rent.append(f'<td style="font-weight:bold; color:{c_ano_i}">{total_y_ibov:.2f}%</td>')
+        html_rent.append(f'<td style="font-weight:bold; color:{c_cum_i}">{cum_ibov:.2f}%</td></tr>')
+
     html_rent.append('</table>')
     st.markdown("".join(html_rent), unsafe_allow_html=True)
     
