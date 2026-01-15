@@ -4,10 +4,17 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 import numpy as np
+from PIL import Image
 
 # 1. CONFIGURAÇÃO E CSS
-# Substitua 'favicon.png' pelo nome exato do seu arquivo no GitHub
-st.set_page_config(page_title="DASHBOARD", page_icon="favicon.png", layout="wide")
+# Tenta carregar a imagem de forma robusta.
+# ATENÇÃO: O nome do arquivo no GitHub deve ser EXATAMENTE "favicon.png" (tudo minúsculo).
+try:
+    icone = Image.open("favicon.png")
+    st.set_page_config(page_title="DASHBOARD", page_icon=icone, layout="wide")
+except FileNotFoundError:
+    # Caso não encontre a imagem, usa um emoji para garantir que o app carregue
+    st.set_page_config(page_title="DASHBOARD", page_icon="📊", layout="wide")
 
 if "ticker_selecionado" not in st.session_state:
     st.session_state.ticker_selecionado = None
