@@ -339,7 +339,7 @@ if master_data.empty:
 
 st.write("---")
 
-opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "Backtest", "Banco de dados", "Calendário Econômico"]
+opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "Backtest", "Banco de dados", "Calendário econômico"]
 aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
 if aba_selecionada == "Banco de dados":
@@ -610,7 +610,7 @@ if aba_selecionada == "Backtest":
             st.error("Por favor, digite um ticker.")
     st.stop()
 
-if aba_selecionada == "Calendário Econômico":
+if aba_selecionada == "Calendário econômico":
     html_calendar = """
     <iframe src="https://sslecal2.investing.com?ecoDayBackground=%23000000&defaultFont=%23000000&innerBorderColor=%23ffffff&borderColor=%23ffffff&ecoDayFontColor=%23ffffff&columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timeselector,filters&countries=17,32,37,5,35,4,72&calType=week&timeZone=12&lang=12" width="100%" height="600" frameborder="0" allowtransparency="true" marginwidth="0" marginheight="0"></iframe>
     <div class="poweredBy" style="font-family: Arial, Helvetica, sans-serif;">
