@@ -177,6 +177,7 @@ APORTES_USUARIO = [
 ]
 
 INDICES_LIST = ["^BVSP", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225", "^HSI", "000001.SS", "^GDAXI", "^FTSE", "^FCHI", "^STOXX50E", "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
+
 COBERTURA = {
     "AZZA3.SA": {"Rec": "Compra", "Alvo": 50.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 23.00},
     "MGLU3.SA": {"Rec": "Neutro", "Alvo": 10.00}, "MELI": {"Rec": "Compra", "Alvo": 2810.00},
@@ -798,14 +799,14 @@ elif aba_selecionada == "Carteira pessoal":
     var_cart = (portfolio_idx.iloc[-1] - 100)
     var_ibov = (ibov_idx.iloc[-1] - 100)
     
-    # 1. Performance vs Ibov (Branco e Dourado)
+    # 1. Performance vs Ibov
     with c_chart1:
         fig_perf = go.Figure()
         fig_perf.add_trace(go.Scatter(x=portfolio_idx.index, y=portfolio_idx, name=f"Carteira ({var_cart:+.2f}%)", line=dict(color="#FFFFFF", width=2)))
-        fig_perf.add_trace(go.Scatter(x=ibov_idx.index, y=ibov_idx, name=f"Ibovespa ({var_ibov:+.2f}%)", line=dict(color="#FF9900", width=2))) # Goldenrod
+        fig_perf.add_trace(go.Scatter(x=ibov_idx.index, y=ibov_idx, name=f"Ibovespa ({var_ibov:+.2f}%)", line=dict(color="#FF9900", width=2)))
         
         fig_perf.update_layout(
-            title=dict(text='Rentabilidade vs Ibovespa', x=0, font=dict(size=14, color='white'), yanchor="top", y=1),
+            title=dict(text='Rentabilidade vs Ibovespa', x=0, font=dict(size=14, color='white'), y=1),
             template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=350,
             xaxis=dict(showgrid=False, fixedrange=True), 
             yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True), 
@@ -821,7 +822,7 @@ elif aba_selecionada == "Carteira pessoal":
         fig_nw.add_trace(go.Bar(x=net_worth_series.index, y=net_worth_series, name="Patrimônio", marker_color="#FF9900"))
         
         fig_nw.update_layout(
-            title=dict(text='Evolução do Patrimônio', x=0, font=dict(size=14, color='white'), yanchor="top", y=1),
+            title=dict(text='Evolução do Patrimônio', x=0, font=dict(size=14, color='white'), y=1),
             template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=350,
             xaxis=dict(showgrid=False, fixedrange=True),
             yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True),
@@ -840,11 +841,11 @@ elif aba_selecionada == "Carteira pessoal":
             vol_ibov = pd.Series(0, index=vol_cart.index)
 
         fig_vol = go.Figure()
-        fig_vol.add_trace(go.Scatter(x=vol_cart.index, y=vol_cart, name="Vol. Carteira", line=dict(color="#FFFFFF", width=1)))
-        fig_vol.add_trace(go.Scatter(x=vol_ibov.index, y=vol_ibov, name="Vol. Ibov", line=dict(color="#FF9900", width=1)))
+        fig_vol.add_trace(go.Scatter(x=vol_cart.index, y=vol_cart, name="Vol. Carteira", line=dict(color="#FFFFFF", width=2)))
+        fig_vol.add_trace(go.Scatter(x=vol_ibov.index, y=vol_ibov, name="Vol. Ibov", line=dict(color="#FF9900", width=2)))
         
         fig_vol.update_layout(
-            title=dict(text='Volatilidade (21d)', x=0, font=dict(size=14, color='white'), yanchor="top", y=1),
+            title=dict(text='Volatilidade (21d)', x=0, font=dict(size=14, color='white'), y=1),
             template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=300, 
             legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0), xaxis=dict(showgrid=False, fixedrange=True),
             yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True),
@@ -855,16 +856,102 @@ elif aba_selecionada == "Carteira pessoal":
     with c_dd:
         dd_cart = (portfolio_idx / portfolio_idx.cummax() - 1) * 100
         fig_dd = go.Figure()
-        fig_dd.add_trace(go.Scatter(x=dd_cart.index, y=dd_cart, name="Drawdown", line=dict(color="#FFFFFF", width=1), fill='tozeroy', fillcolor='rgba(255, 75, 75, 0.1)'))
+        fig_dd.add_trace(go.Scatter(x=dd_cart.index, y=dd_cart, name="Drawdown", line=dict(color="#FFFFFF", width=2), fill='tozeroy', fillcolor='rgba(255, 75, 75, 0.1)'))
         
         fig_dd.update_layout(
-            title=dict(text='Drawdown (%)', x=0, font=dict(size=14, color='white'), yanchor="top", y=1),
+            title=dict(text='Drawdown (%)', x=0, font=dict(size=14, color='white'), y=1),
             template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=300, showlegend=False,
             xaxis=dict(showgrid=False, fixedrange=True),
             yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True),
             dragmode=False, margin=dict(l=0, r=0, t=40, b=40)
         )
         st.plotly_chart(fig_dd, use_container_width=True, config={'displayModeBar': False})
+
+    # --- 4. SHARPE E SETORES (NOVOS GRÁFICOS) ---
+    c_sharpe, c_setor = st.columns(2)
+
+    with c_sharpe:
+        # Calcular Taxa Livre de Risco (Selic) via DB_MACRO
+        info_selic = DB_MACRO["Taxa Selic"]
+        # Puxa desde o inicio da carteira
+        df_selic = get_macro_data("Taxa Selic", info_selic, start_date=start_date)
+        
+        # Cria Série de Retorno Livre de Risco Diário
+        # Selic Meta é % a.a. -> Converter para diário: (1 + taxa/100)^(1/252) - 1
+        if not df_selic.empty:
+            df_selic['Data'] = pd.to_datetime(df_selic['Data'], dayfirst=True)
+            df_selic = df_selic.set_index('Data').reindex(portfolio_ret.index).ffill().fillna(0)
+            rf_daily = (1 + df_selic['Valor'] / 100) ** (1/252) - 1
+        else:
+            rf_daily = pd.Series(0, index=portfolio_ret.index)
+
+        # Cálculo do Sharpe Rolling (Janela 30 dias)
+        excess_ret = portfolio_ret - rf_daily
+        rolling_mean = excess_ret.rolling(window=30).mean()
+        rolling_std = portfolio_ret.rolling(window=30).std()
+        sharpe_rolling = (rolling_mean / rolling_std) * (252 ** 0.5) # Anualizado
+
+        fig_sharpe = go.Figure()
+        fig_sharpe.add_trace(go.Scatter(x=sharpe_rolling.index, y=sharpe_rolling, name="Índice Sharpe (30d)", line=dict(color="#FFFFFF", width=2)))
+        
+        fig_sharpe.update_layout(
+            title=dict(text='Índice Sharpe (30d Rolling)', x=0, font=dict(size=14, color='white'), y=1),
+            template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=300, 
+            showlegend=False, xaxis=dict(showgrid=False, fixedrange=True),
+            yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True),
+            dragmode=False, margin=dict(l=0, r=0, t=40, b=40)
+        )
+        st.plotly_chart(fig_sharpe, use_container_width=True, config={'displayModeBar': False})
+
+    with c_setor:
+        # Dicionário de Setores para o Gráfico
+        MAPA_SETORES_GRAFICO = {
+            "WEGE3.SA": "Capital Goods", "EQTL3.SA": "Utilities", "MULT3.SA": "Malls",
+            "RENT3.SA": "Transport & Logistics", "LEVE3.SA": "Capital Goods", "ITUB3.SA": "Banks & Non-banks",
+            "EGIE3.SA": "Utilities", "RADL3.SA": "Retail & Consumer Goods", "SMFT3.SA": "Retail & Consumer Goods",
+            "MDIA3.SA": "Agribusiness", "BBSE3.SA": "Banks & Non-banks", "LREN3.SA": "Retail & Consumer Goods",
+            "BPAC3.SA": "Banks & Non-banks", "VIVT3.SA": "Tech, Media & Telecom", "ASAI3.SA": "Retail & Consumer Goods",
+            "UNIP3.SA": "Chemicals", "PSSA3.SA": "Banks & Non-banks", "PRIO3.SA": "Oil & Gas",
+            "VULC3.SA": "Retail & Consumer Goods"
+        }
+        
+        # Calcular alocação atual
+        current_prices = prices.iloc[-1]
+        current_qtd = qtd_atual
+        
+        alloc_data = []
+        total_val = 0
+        for t, q in current_qtd.items():
+            if t in current_prices:
+                val = current_prices[t] * q
+                sector = MAPA_SETORES_GRAFICO.get(t, "Outros")
+                alloc_data.append({"Setor": sector, "Valor": val})
+                total_val += val
+        
+        if alloc_data:
+            df_alloc = pd.DataFrame(alloc_data)
+            df_sector = df_alloc.groupby("Setor")["Valor"].sum().sort_values(ascending=True)
+            df_sector_pct = (df_sector / total_val) * 100
+            
+            fig_sec = go.Figure(go.Bar(
+                x=df_sector_pct.values,
+                y=df_sector_pct.index,
+                orientation='h',
+                marker=dict(color='#FF9900'),
+                text=[f"{v:.1f}%" for v in df_sector_pct.values],
+                textposition='auto',
+                textfont=dict(size=20, color='#FFFFFF')
+            ))
+            
+            fig_sec.update_layout(
+                title=dict(text='Alocação por Setor', x=0, font=dict(size=14, color='white'), y=1),
+                template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=300,
+                xaxis=dict(showgrid=False, showticklabels=False, fixedrange=True),
+                yaxis=dict(showgrid=False, tickfont=dict(color='white'), fixedrange=True),
+                margin=dict(l=0, r=0, t=40, b=40), dragmode=False
+            )
+            st.plotly_chart(fig_sec, use_container_width=True, config={'displayModeBar': False})
+
 
     # --- TABELA DE RENTABILIDADE (MÊS A MÊS + ACUMULADO) ---
     st.markdown("<br>", unsafe_allow_html=True)
