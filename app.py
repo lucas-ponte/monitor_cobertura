@@ -914,7 +914,7 @@ elif aba_selecionada == "Carteira pessoal":
             "MDIA3.SA": "Agribusiness", "BBSE3.SA": "Banks & Non-banks", "LREN3.SA": "Retail & Consumer Goods",
             "BPAC3.SA": "Banks & Non-banks", "VIVT3.SA": "Tech, Media & Telecom", "ASAI3.SA": "Retail & Consumer Goods",
             "UNIP3.SA": "Chemicals", "PSSA3.SA": "Banks & Non-banks", "PRIO3.SA": "Oil & Gas",
-            "VULC3.SA": "Retail & Consumer Goods"
+            "VULC3.SA": "Retail & Consumer Goods", "VALE3.SA": "Mining & Steel"
         }
         
         # Calcular alocação atual
