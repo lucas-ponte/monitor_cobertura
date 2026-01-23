@@ -173,6 +173,8 @@ APORTES_USUARIO = [
     {"ticker": "MDIA3.SA", "data": "2025-12-19", "qtd": 4},
     {"ticker": "ASAI3.SA", "data": "2025-12-19", "qtd": 10},
     {"ticker": "PRIO3.SA", "data": "2025-12-19", "qtd": 4},
+
+    {"ticker": "VALE3.SA", "data": "2026-02-23", "qtd": 3},
     # Adicione novos aportes abaixo copiando a estrutura acima
 ]
 
