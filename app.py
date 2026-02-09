@@ -175,6 +175,9 @@ APORTES_USUARIO = [
     {"ticker": "PRIO3.SA", "data": "2025-12-19", "qtd": 4},
 
     {"ticker": "VALE3.SA", "data": "2026-01-23", "qtd": 3},
+
+    {"ticker": "MDIA3.SA", "data": "2026-02-09", "qtd": -5},
+    {"ticker": "SBSP3.SA", "data": "2026-02-09", "qtd": 1},
     # Adicione novos aportes abaixo copiando a estrutura acima
 ]
 
@@ -914,7 +917,7 @@ elif aba_selecionada == "Carteira pessoal":
             "MDIA3.SA": "Agribusiness", "BBSE3.SA": "Banks & Non-banks", "LREN3.SA": "Retail & Consumer Goods",
             "BPAC3.SA": "Banks & Non-banks", "VIVT3.SA": "Tech, Media & Telecom", "ASAI3.SA": "Retail & Consumer Goods",
             "UNIP3.SA": "Chemicals", "PSSA3.SA": "Banks & Non-banks", "PRIO3.SA": "Oil & Gas",
-            "VULC3.SA": "Retail & Consumer Goods", "VALE3.SA": "Mining & Steel"
+            "VULC3.SA": "Retail & Consumer Goods", "VALE3.SA": "Mining & Steel", "SBSP3.SA": "Utilities"
         }
         
         # Calcular alocação atual
