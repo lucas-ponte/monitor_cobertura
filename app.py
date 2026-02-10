@@ -390,7 +390,7 @@ if master_data.empty:
 
 st.write("---")
 
-opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "Backtest", "Banco de dados", "Calendário econômico"]
+opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "Backtest", "Backtest portfólio", "Banco de dados", "Calendário econômico"]
 aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
 if aba_selecionada == "Banco de dados":
@@ -659,6 +659,293 @@ if aba_selecionada == "Backtest":
                 st.error(f"Erro ao processar backtest: {e}")
         else:
             st.error("Por favor, digite um ticker.")
+    st.stop()
+
+if aba_selecionada == "Backtest portfólio":
+    col1, col2, col3, col4 = st.columns([2, 1.5, 1.5, 1.2])
+    with col1:
+        st.caption("Insira os ativos e pesos na tabela abaixo")
+    with col2:
+        data_ini = st.date_input("Início", value=datetime(2023, 1, 1))
+    with col3:
+        data_fim = st.date_input("Fim", value=datetime.now())
+    with col4:
+        bench_map = {"Ibovespa": "^BVSP", "S&P 500": "^GSPC"}
+        bench_label = st.selectbox("Benchmark", options=list(bench_map.keys()), index=0)
+        benchmark = bench_map[bench_label]
+
+    # Dataframe editável para entrada de portfólio - AGORA COMEÇA VAZIO
+    if "df_portfolio_input" not in st.session_state:
+        st.session_state.df_portfolio_input = pd.DataFrame(columns=["Ticker", "Peso (%)"])
+
+    edited_df = st.data_editor(st.session_state.df_portfolio_input, num_rows="dynamic", use_container_width=True)
+
+    if st.button("Gerar Backtest Portfólio"):
+        # Limpar e validar dados
+        valid_rows = edited_df.dropna(subset=["Ticker", "Peso (%)"])
+        valid_rows = valid_rows[valid_rows["Ticker"].astype(str).str.strip() != ""]
+        
+        # FIX CRÍTICO: Converter para numérico antes de somar ou comparar
+        valid_rows["Peso (%)"] = pd.to_numeric(valid_rows["Peso (%)"], errors='coerce').fillna(0)
+        
+        if valid_rows.empty:
+            st.error("Adicione pelo menos um ativo.")
+            st.stop()
+
+        total_weight = valid_rows["Peso (%)"].sum()
+        if not (99.9 <= total_weight <= 100.1): # Tolerância pequena para ponto flutuante
+            st.error(f"A soma dos pesos deve ser 100%. Soma atual: {total_weight:.2f}%")
+            st.stop()
+
+        # Preparar tickers
+        tickers_list = []
+        weights_dict = {}
+        
+        for idx, row in valid_rows.iterrows():
+            t_raw = str(row["Ticker"]).upper().strip()
+            t_fmt = f"{t_raw}.SA" if (len(t_raw) >= 5 and "." not in t_raw) else t_raw
+            tickers_list.append(t_fmt)
+            weights_dict[t_fmt] = row["Peso (%)"] / 100.0
+
+        tickers_download = tickers_list + [benchmark]
+        
+        try:
+            raw_data = yf.download(tickers_download, start=data_ini, end=data_fim, auto_adjust=True)['Close']
+            
+            if raw_data.empty:
+                st.error("Dados não encontrados.")
+                st.stop()
+
+            # Calcular retorno do portfólio
+            # 1. Obter retornos diários de todos os ativos
+            daily_rets = raw_data.pct_change().fillna(0)
+            
+            # 2. Calcular retorno ponderado
+            portfolio_daily_ret = pd.Series(0, index=daily_rets.index)
+            
+            for t in tickers_list:
+                if t in daily_rets.columns:
+                    portfolio_daily_ret += daily_rets[t] * weights_dict[t]
+            
+            # 3. Criar série de preço base 100 para o portfólio
+            portfolio_price = (1 + portfolio_daily_ret).cumprod() * 100
+            
+            # Criar um DataFrame similar ao bt_data da aba original para compatibilidade
+            bt_data = pd.DataFrame(index=portfolio_price.index)
+            ticker_bt = "PORTFOLIO" # Nome genérico para usar no código copiado
+            bt_data[ticker_bt] = portfolio_price
+            bt_data[benchmark] = raw_data[benchmark]
+            
+            if not bt_data.empty:
+                
+                # --- NOVO: VISÃO GERAL DO PORTFÓLIO ---
+                st.markdown("### Composição do Portfólio")
+                c_pie, c_tab = st.columns([1, 1])
+                
+                with c_pie:
+                    fig_pie = go.Figure(data=[go.Pie(
+                        labels=list(weights_dict.keys()), 
+                        values=list(weights_dict.values()), 
+                        hole=.3,
+                        textposition='auto',
+                        textinfo='percent+label'
+                    )])
+                    fig_pie.update_layout(
+                        template="plotly_dark", 
+                        plot_bgcolor='rgba(0,0,0,0)', 
+                        paper_bgcolor='rgba(0,0,0,0)', 
+                        margin=dict(t=20, b=20, l=20, r=20), 
+                        height=450 # Altura aumentada para eliminar barra de rolagem na legenda
+                    )
+                    st.plotly_chart(fig_pie, use_container_width=True)
+                
+                with c_tab:
+                    st.dataframe(valid_rows, hide_index=True, use_container_width=True)
+
+                st.write("---")
+
+                # --- CÓDIGO ORIGINAL COPIADO DA ABA BACKTEST (ADAPTADO PARA 'PORTFOLIO') ---
+                
+                # 1. Gráfico de Performance (Base 100)
+                # Normaliza benchmark também (o portfólio já está em base 100 mas normalizamos novamente para garantir inicio em 100 cravado no dia 0)
+                df_norm = pd.DataFrame()
+                df_norm[ticker_bt] = (bt_data[ticker_bt] / bt_data[ticker_bt].iloc[0]) * 100
+                df_norm[benchmark] = (bt_data[benchmark] / bt_data[benchmark].iloc[0]) * 100
+                
+                var_ticker = ((bt_data[ticker_bt].iloc[-1] / bt_data[ticker_bt].iloc[0]) - 1) * 100
+                var_bench = ((bt_data[benchmark].iloc[-1] / bt_data[benchmark].iloc[0]) - 1) * 100
+                
+                fig_bt = go.Figure()
+                
+                fig_bt.add_trace(go.Scatter(
+                    x=df_norm.index, 
+                    y=df_norm[ticker_bt], 
+                    name=f"{ticker_bt} ({var_ticker:+.2f}%)", 
+                    line=dict(color="#FFFFFF", width=2)
+                ))
+                
+                fig_bt.add_trace(go.Scatter(
+                    x=df_norm.index, 
+                    y=df_norm[benchmark], 
+                    name=f"{bench_label} ({var_bench:+.2f}%)", 
+                    line=dict(color="#FF9900", width=1.5)
+                ))
+                
+                fig_bt.update_layout(
+                    title=dict(text="Performance Base 100", font=dict(color="#FFF", size=14), yanchor="top", y=1),
+                    template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                    height=450, margin=dict(l=0, r=0, t=40, b=0), 
+                    xaxis=dict(showgrid=False, fixedrange=True),
+                    yaxis=dict(showgrid=True, gridcolor="#222", side="right", fixedrange=True),
+                    legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
+                    dragmode=False # Permite scroll no mobile
+                )
+                st.plotly_chart(fig_bt, use_container_width=True, config={'displayModeBar': False})
+
+                # 2. Gráfico de Volatilidade Anualizada (Janela 21 dias)
+                returns = bt_data.pct_change()
+                vol_ticker = returns[ticker_bt].rolling(window=21).std() * (252 ** 0.5) * 100
+                vol_bench = returns[benchmark].rolling(window=21).std() * (252 ** 0.5) * 100
+                
+                vol_ticker = vol_ticker.dropna()
+                vol_bench = vol_bench.dropna()
+                
+                fig_vol = go.Figure()
+                
+                fig_vol.add_trace(go.Scatter(
+                    x=vol_ticker.index, 
+                    y=vol_ticker, 
+                    name=f"Vol. {ticker_bt}", 
+                    line=dict(color="#FFFFFF", width=1.5)
+                ))
+                
+                fig_vol.add_trace(go.Scatter(
+                    x=vol_bench.index, 
+                    y=vol_bench, 
+                    name=f"Vol. {bench_label}", 
+                    line=dict(color="#FF9900", width=1.5)
+                ))
+                
+                fig_vol.update_layout(
+                    title=dict(text="Volatilidade Anualizada (21 dias úteis)", font=dict(color="#FFF", size=14), yanchor="top", y=1),
+                    template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                    height=350, margin=dict(l=0, r=0, t=40, b=0), 
+                    xaxis=dict(showgrid=False, fixedrange=True),
+                    yaxis=dict(showgrid=True, gridcolor="#222", side="right", title="%", fixedrange=True),
+                    legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
+                    dragmode=False # Permite scroll no mobile
+                )
+                st.plotly_chart(fig_vol, use_container_width=True, config={'displayModeBar': False})
+
+                # 3. Gráfico de Drawdown
+                dd_ticker = (bt_data[ticker_bt] / bt_data[ticker_bt].cummax() - 1) * 100
+                dd_bench = (bt_data[benchmark] / bt_data[benchmark].cummax() - 1) * 100
+
+                fig_dd = go.Figure()
+
+                fig_dd.add_trace(go.Scatter(
+                    x=dd_ticker.index,
+                    y=dd_ticker,
+                    name=f"DD {ticker_bt}",
+                    line=dict(color="#FFFFFF", width=1),
+                    fill='tozeroy',
+                    fillcolor='rgba(255, 255, 255, 0.1)'
+                ))
+
+                fig_dd.add_trace(go.Scatter(
+                    x=dd_bench.index,
+                    y=dd_bench,
+                    name=f"DD {bench_label}",
+                    line=dict(color="#FF9900", width=1),
+                    fill='tozeroy',
+                    fillcolor='rgba(255, 153, 0, 0.1)'
+                ))
+
+                fig_dd.update_layout(
+                    title=dict(text="Drawdown (%)", font=dict(color="#FFF", size=14), yanchor="top", y=1),
+                    template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                    height=350, margin=dict(l=0, r=0, t=40, b=0),
+                    xaxis=dict(showgrid=False, fixedrange=True),
+                    yaxis=dict(showgrid=True, gridcolor="#222", side="right", fixedrange=True),
+                    legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="left", x=0),
+                    dragmode=False # Permite scroll no mobile
+                )
+                st.plotly_chart(fig_dd, use_container_width=True, config={'displayModeBar': False})
+
+                # 4. TABELA DE RENTABILIDADE MENSAL
+                st.markdown(f"<div style='color:#FFF; font-size:14px; font-weight:700; margin-top:30px; margin-bottom:10px;'>Rentabilidade Mensal - {ticker_bt}</div>", unsafe_allow_html=True)
+                
+                monthly_prices = bt_data[ticker_bt].resample('ME').last()
+                first_price = bt_data[ticker_bt].iloc[0]
+                m_ret = monthly_prices.pct_change() * 100
+                
+                if not m_ret.empty:
+                    m_ret.iloc[0] = ((monthly_prices.iloc[0] / first_price) - 1) * 100
+
+                df_m = m_ret.to_frame()
+                df_m['ano'] = df_m.index.year
+                df_m['mes'] = df_m.index.month
+                
+                month_names = {1: 'JAN', 2: 'FEV', 3: 'MAR', 4: 'ABR', 5: 'MAI', 6: 'JUN', 7: 'JUL', 8: 'AGO', 9: 'SET', 10: 'OUT', 11: 'NOV', 12: 'DEZ'}
+                pivot_ret = df_m.pivot(index='ano', columns='mes', values=ticker_bt)
+                pivot_ret = pivot_ret.rename(columns=month_names)
+                
+                cols_ordered = [month_names[i] for i in range(1, 13) if month_names[i] in pivot_ret.columns]
+                pivot_ret = pivot_ret[cols_ordered]
+
+                for year in pivot_ret.index:
+                    y_data = bt_data[ticker_bt][bt_data[ticker_bt].index.year == year]
+                    y_val = ((y_data.iloc[-1] / y_data.iloc[0]) - 1) * 100
+                    pivot_ret.loc[year, 'ANO'] = y_val
+
+                html_rent = ['<table class="rent-table"><tr><th>ANO</th>']
+                for m in pivot_ret.columns: html_rent.append(f'<th>{m}</th>')
+                html_rent.append('</tr>')
+                
+                for year in pivot_ret.index[::-1]: 
+                    html_rent.append(f'<tr><td class="rent-year">{year}</td>')
+                    for col in pivot_ret.columns:
+                        val = pivot_ret.loc[year, col]
+                        if pd.isna(val):
+                            html_rent.append('<td>-</td>')
+                        else:
+                            color = "#00FF00" if val > 0 else ("#FF4B4B" if val < 0 else "#FFF")
+                            css_class = "rent-total" if col == "ANO" else ""
+                            html_rent.append(f'<td class="{css_class}" style="color:{color}">{val:.2f}%</td>')
+                    html_rent.append('</tr>')
+                html_rent.append('</table>')
+                st.markdown("".join(html_rent), unsafe_allow_html=True)
+
+                # 5. TABELA DE RENTABILIDADE ANUAL VS BENCHMARK
+                st.markdown(f"<div style='color:#FFF; font-size:14px; font-weight:700; margin-top:30px; margin-bottom:10px;'>Rentabilidade Anual - {ticker_bt}</div>", unsafe_allow_html=True)
+                
+                annual_comparison = []
+                years_list = sorted(bt_data.index.year.unique(), reverse=True)
+                
+                for yr in years_list:
+                    yr_prices = bt_data[bt_data.index.year == yr]
+                    t_ret_yr = ((yr_prices[ticker_bt].iloc[-1] / yr_prices[ticker_bt].iloc[0]) - 1) * 100
+                    b_ret_yr = ((yr_prices[benchmark].iloc[-1] / yr_prices[benchmark].iloc[0]) - 1) * 100
+                    rel_yr = t_ret_yr - b_ret_yr
+                    annual_comparison.append({"ano": yr, "ticker": t_ret_yr, "bench": b_ret_yr, "rel": rel_yr})
+                
+                html_annual = ['<table class="rent-table"><tr><th>ANO</th>', f'<th>{ticker_bt}</th>', f'<th>{bench_label}</th>', '<th>RELATIVO</th></tr>']
+                for row in annual_comparison:
+                    c_t = "#00FF00" if row["ticker"] > 0 else ("#FF4B4B" if row["ticker"] < 0 else "#FFF")
+                    c_b = "#00FF00" if row["bench"] > 0 else ("#FF4B4B" if row["bench"] < 0 else "#FFF")
+                    c_r = "#00FF00" if row["rel"] > 0 else ("#FF4B4B" if row["rel"] < 0 else "#FFF")
+                    
+                    html_annual.append(f'<tr><td class="rent-year">{row["ano"]}</td>')
+                    html_annual.append(f'<td style="color:{c_t}">{row["ticker"]:.2f}%</td>')
+                    html_annual.append(f'<td style="color:{c_b}">{row["bench"]:.2f}%</td>')
+                    html_annual.append(f'<td class="rent-total" style="color:{c_r}">{row["rel"]:.2f}%</td></tr>')
+                html_annual.append('</table><br>')
+                st.markdown("".join(html_annual), unsafe_allow_html=True)
+
+            else:
+                st.warning("Nenhum dado encontrado para os parâmetros selecionados.")
+        except Exception as e:
+            st.error(f"Erro ao processar backtest: {e}")
     st.stop()
 
 if aba_selecionada == "Calendário econômico":
