@@ -942,6 +942,90 @@ if aba_selecionada == "Backtest portfólio":
                 html_annual.append('</table><br>')
                 st.markdown("".join(html_annual), unsafe_allow_html=True)
 
+                # 6. NOVOS GRÁFICOS: RENTABILIDADE INDIVIDUAL E CONTRIBUIÇÃO
+                st.markdown("---")
+                st.markdown("### Detalhamento por Ativo")
+                c_indiv, c_contrib = st.columns(2)
+
+                with c_indiv:
+                    # Gráfico 1: Performance Individual (Base 100)
+                    # Normalizar todos os ativos selecionados
+                    df_assets_norm = (raw_data[tickers_list] / raw_data[tickers_list].iloc[0]) * 100
+                    
+                    fig_assets = go.Figure()
+                    
+                    # Adiciona cada ativo (linhas mais finas/transparentes)
+                    for t in tickers_list:
+                        final_val = df_assets_norm[t].iloc[-1]
+                        ret_val = final_val - 100
+                        fig_assets.add_trace(go.Scatter(
+                            x=df_assets_norm.index, 
+                            y=df_assets_norm[t], 
+                            name=f"{t} ({ret_val:+.1f}%)",
+                            line=dict(width=1),
+                            opacity=0.7
+                        ))
+
+                    # Adiciona o Portfolio (linha grossa destaque)
+                    # portfolio_price já existe no contexto anterior
+                    port_ret_val = portfolio_price.iloc[-1] - 100
+                    fig_assets.add_trace(go.Scatter(
+                        x=portfolio_price.index, 
+                        y=portfolio_price, 
+                        name=f"PORTFÓLIO ({port_ret_val:+.1f}%)",
+                        line=dict(color="#FFFFFF", width=3)
+                    ))
+
+                    fig_assets.update_layout(
+                        title=dict(text="Rentabilidade Individual (Base 100)", font=dict(color="#FFF", size=14)),
+                        template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=400, margin=dict(l=0, r=0, t=40, b=0),
+                        xaxis=dict(showgrid=False, fixedrange=True),
+                        yaxis=dict(showgrid=True, gridcolor="#222", fixedrange=True),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5), # Legenda embaixo pois são muitos itens
+                        dragmode=False
+                    )
+                    st.plotly_chart(fig_assets, use_container_width=True, config={'displayModeBar': False})
+
+                with c_contrib:
+                    # Gráfico 2: Contribuição Ponderada
+                    # Calculo: Retorno Total do Ativo * Peso
+                    # raw_data contém os preços. tickers_list e weights_dict
+                    
+                    contrib_data = []
+                    for t in tickers_list:
+                        # Retorno total do ativo no período
+                        total_ret_asset = (raw_data[t].iloc[-1] / raw_data[t].iloc[0]) - 1
+                        # Peso original
+                        w = weights_dict[t]
+                        # Contribuição aproximada
+                        contribution = total_ret_asset * w * 100
+                        contrib_data.append({"Ticker": t, "Contrib": contribution})
+                    
+                    df_contrib = pd.DataFrame(contrib_data).sort_values("Contrib", ascending=True)
+                    
+                    # Cores (Verde positivo, Vermelho negativo)
+                    colors = ["#00FF00" if v >= 0 else "#FF4B4B" for v in df_contrib["Contrib"]]
+
+                    fig_contrib = go.Figure(go.Bar(
+                        x=df_contrib["Contrib"],
+                        y=df_contrib["Ticker"],
+                        orientation='h',
+                        marker=dict(color=colors),
+                        text=[f"{v:+.2f} p.p." for v in df_contrib["Contrib"]],
+                        textposition='auto'
+                    ))
+
+                    fig_contrib.update_layout(
+                        title=dict(text="Contribuição Ponderada (Pontos Percentuais)", font=dict(color="#FFF", size=14)),
+                        template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        height=400, margin=dict(l=0, r=0, t=40, b=0),
+                        xaxis=dict(showgrid=True, gridcolor="#222", fixedrange=True),
+                        yaxis=dict(showgrid=False, fixedrange=True),
+                        dragmode=False
+                    )
+                    st.plotly_chart(fig_contrib, use_container_width=True, config={'displayModeBar': False})
+
             else:
                 st.warning("Nenhum dado encontrado para os parâmetros selecionados.")
         except Exception as e:
