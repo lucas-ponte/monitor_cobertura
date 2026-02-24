@@ -107,16 +107,21 @@ st.markdown(f"""
     .mob-sector {{ background-color: #1a1a1a; color: #FFA500; padding: 10px 10px; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #333; margin-top: 10px; }}
     [data-testid="stBaseButton-pills"] {{ background-color: transparent !important; border: none !important; color: #888 !important; border-radius: 0px !important; font-family: 'Tinos', sans-serif !important; padding: 4px 12px !important; }}
     [data-testid="stBaseButton-pillsActive"] {{ background-color: transparent !important; color: #FFFFFF !important; border: none !important; border-bottom: 1px solid #FFFFFF !important; border-radius: 0px !important; font-weight: 700 !important; }}
+    
     @media (max-width: 768px) {{
-        .mobile-view {{ display: block !important; }}
+        .mobile-view {{ display: block !important; padding: 0 10px !important; }}
         .desktop-view {{ display: none !important; }}
         div[data-testid="stPills"] {{ display: block !important; }}
         div[data-testid="stPills"] > div {{ display: flex !important; flex-direction: column !important; width: 100% !important; }}
-        div[data-testid="stPills"] button {{ width: 100% !important; max-width: 100% !important; margin: 2px 0px !important; background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #333 !important; border-radius: 0px !important; justify-content: flex-start !important; text-align: left !important; padding: 12px !important; }}
-        div[data-testid="stPills"] button[aria-checked="true"] {{ background-color: #111 !important; border: 1px solid #FFFFFF !important; }}
+        div[data-testid="stPills"] button {{ width: 100% !important; max-width: 100% !important; margin: 0 !important; background-color: transparent !important; color: #AAAAAA !important; border: none !important; border-bottom: 1px solid #222 !important; border-radius: 0px !important; justify-content: flex-start !important; text-align: left !important; padding: 16px 10px !important; font-size: 1rem !important; font-family: 'Inter', sans-serif !important; }}
+        div[data-testid="stPills"] button[aria-checked="true"] {{ color: #FFFFFF !important; border-bottom: 1px solid #FFA500 !important; font-weight: 700 !important; }}
         div[data-testid="column"]:nth-child(2) {{ margin-top: 15px !important; width: 100% !important; display: flex !important; justify-content: flex-end !important; }}
-        div[data-testid="stPopoverBody"] > div {{ display: flex !important; flex-direction: column !important; align-items: center !important; text-align: center !important; }}
+        div[data-testid="stPopover"] {{ display: none !important; }} /* Remove o toggle de gráficos no mobile */
+        details {{ margin-bottom: 8px !important; border: 1px solid #222 !important; border-radius: 8px !important; overflow: hidden; }}
+        summary {{ background-color: #0A0A0A !important; border-radius: 8px !important; }}
+        .mob-sector {{ margin: 15px 0px 5px 0px !important; border-radius: 4px; }}
     }}
+    
     div.stButton > button {{ background-color: #000000 !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; }}
     div[data-testid="stPopover"] > button {{ height: auto !important; min-height: 0px !important; padding: 4px 16px !important; background-color: transparent !important; color: #FFFFFF !important; border: 1px solid #FFFFFF !important; font-size: 0.8rem !important; font-weight: 400 !important; width: auto !important; }}
     div[data-testid="stPopoverBody"] {{ background-color: #0A0A0A !important; border: 1px solid #333 !important; }}
