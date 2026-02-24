@@ -396,7 +396,11 @@ if master_data.empty:
 st.write("---")
 
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "Backtest", "Backtest portfólio", "Banco de dados", "Calendário econômico"]
-aba_selecionada = st.selectbox("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
+aba_selecionada = st.pills("", options=opcoes_nav, default=st.session_state.aba_ativa, label_visibility="collapsed")
+if not aba_selecionada:
+    aba_selecionada = st.session_state.aba_ativa
+else:
+    st.session_state.aba_ativa = aba_selecionada
 
 if aba_selecionada == "Banco de dados":
     c_sel, c_d1, c_d2 = st.columns([2, 1, 1])
