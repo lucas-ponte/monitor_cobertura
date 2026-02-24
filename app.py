@@ -92,15 +92,15 @@ st.markdown(f"""
     .rent-total {{ background-color: #0A0A0A; font-weight: 700; }}
 
     details {{ background-color: #000; border-bottom: 1px solid #222; margin-bottom: 0px; font-family: 'Inter', sans-serif; }}
-    summary {{ list-style: none; padding: 10px 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-color: #050505; }}
+    summary {{ list-style: none; padding: 4px 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-color: #050505; }}
     summary:hover {{ background-color: #111; }}
     .mob-header-left {{ display: flex; align-items: center; }}
     .mob-header-right {{ display: flex; flex-direction: column; align-items: flex-end; }}
     .mob-ticker {{ font-weight: 800; color: #FFF; font-size: 0.75rem; letter-spacing: -0.2px; }}
     .mob-price {{ color: #DDD; font-size: 0.75rem; font-weight: 600; margin-bottom: 1px; }}
     .mob-today {{ font-weight: 700; font-size: 0.7rem; }}
-    .mob-content {{ padding: 10px; background-color: #111; border-top: 1px solid #222; }}
-    .mob-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px 6px; }}
+    .mob-content {{ padding: 4px 6px; background-color: #111; border-top: 1px solid #222; }}
+    .mob-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }}
     .mob-item {{ display: flex; flex-direction: column; }}
     .mob-label {{ color: #666; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }}
     .mob-val {{ color: #FFF; font-size: 0.75rem; font-weight: 500; }}
@@ -117,7 +117,7 @@ st.markdown(f"""
         div[data-testid="stPills"] button[aria-checked="true"] {{ color: #FFFFFF !important; border-bottom: 1px solid #FFA500 !important; font-weight: 700 !important; }}
         div[data-testid="column"]:nth-child(2) {{ margin-top: 15px !important; width: 100% !important; display: flex !important; justify-content: flex-end !important; }}
         div[data-testid="stPopover"] {{ display: none !important; }} /* Remove o toggle de gráficos no mobile */
-        details {{ margin-bottom: 8px !important; border: 1px solid #222 !important; border-radius: 8px !important; overflow: hidden; }}
+        details {{ margin-bottom: 2px !important; border: 1px solid #222 !important; border-radius: 4px !important; overflow: hidden; }}
         summary {{ background-color: #0A0A0A !important; border-radius: 8px !important; }}
         .mob-sector {{ margin: 15px 0px 5px 0px !important; border-radius: 4px; }}
     }}
