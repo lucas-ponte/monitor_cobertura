@@ -77,34 +77,34 @@ st.markdown(f"""
     .neg-val {{ color: #FF4B4B; }}
     .white-val {{ color: #FFFFFF !important; }}
     .list-container {{ width: 100%; border-collapse: collapse; margin-top: 1rem; font-family: 'Tinos', sans-serif; border: 1px solid #222; }}
-    .list-header {{ background-color: #0A0A0A; color: #FFA500; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }}
-    .list-header th {{ padding: 12px 8px; text-align: left; font-weight: 700; border: 1px solid #222; color: #FFA500; }}
-    .list-row td {{ padding: 10px 8px; color: white; font-size: 0.8rem; border: 1px solid #222; }}
+    .list-header {{ background-color: #0A0A0A; color: #FFA500; text-transform: uppercase; letter-spacing: 1px; }}
+    .list-header th {{ padding: 8px 6px; text-align: left; font-weight: 700; border: 1px solid #222; color: #FFA500; font-size: 0.65rem; }}
+    .list-row td {{ padding: 6px 6px; color: white; font-size: 0.75rem; border: 1px solid #222; }}
     .list-row:hover {{ background-color: #0F0F0F; }}
-    .sector-row {{ background-color: #111; color: #FFA500; font-weight: 700; font-size: 0.75rem; letter-spacing: 1px; }}
-    .sector-row td {{ padding: 15px 8px; border: 1px solid #222; }}
+    .sector-row {{ background-color: #111; color: #FFA500; font-weight: 700; font-size: 0.7rem; letter-spacing: 1px; }}
+    .sector-row td {{ padding: 10px 6px; border: 1px solid #222; }}
     
     /* Estilo Rentabilidade Mensal e Anual */
-    .rent-table {{ width: 100%; border-collapse: collapse; font-family: 'Tinos', sans-serif; font-size: 0.8rem; text-align: center; border: 1px solid #222; margin-top: 20px; }}
-    .rent-table th {{ background-color: #0A0A0A; color: #FFA500; padding: 10px 5px; border: 1px solid #222; text-transform: uppercase; font-size: 0.7rem; }}
-    .rent-table td {{ padding: 10px 5px; border: 1px solid #222; color: #FFF; }}
-    .rent-year {{ background-color: #0A0A0A; font-weight: 700; color: #FFF !important; text-align: left; padding-left: 10px; }}
+    .rent-table {{ width: 100%; border-collapse: collapse; font-family: 'Tinos', sans-serif; font-size: 0.75rem; text-align: center; border: 1px solid #222; margin-top: 20px; }}
+    .rent-table th {{ background-color: #0A0A0A; color: #FFA500; padding: 8px 4px; border: 1px solid #222; text-transform: uppercase; font-size: 0.65rem; }}
+    .rent-table td {{ padding: 8px 4px; border: 1px solid #222; color: #FFF; }}
+    .rent-year {{ background-color: #0A0A0A; font-weight: 700; color: #FFF !important; text-align: left; padding-left: 8px; }}
     .rent-total {{ background-color: #0A0A0A; font-weight: 700; }}
 
     details {{ background-color: #000; border-bottom: 1px solid #222; margin-bottom: 0px; font-family: 'Inter', sans-serif; }}
-    summary {{ list-style: none; padding: 12px 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-color: #050505; }}
+    summary {{ list-style: none; padding: 10px 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-color: #050505; }}
     summary:hover {{ background-color: #111; }}
     .mob-header-left {{ display: flex; align-items: center; }}
     .mob-header-right {{ display: flex; flex-direction: column; align-items: flex-end; }}
-    .mob-ticker {{ font-weight: 800; color: #FFF; font-size: 0.8rem; letter-spacing: -0.2px; }}
-    .mob-price {{ color: #DDD; font-size: 0.8rem; font-weight: 600; margin-bottom: 1px; }}
-    .mob-today {{ font-weight: 700; font-size: 0.75rem; }}
-    .mob-content {{ padding: 12px; background-color: #111; border-top: 1px solid #222; }}
-    .mob-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px 8px; }}
+    .mob-ticker {{ font-weight: 800; color: #FFF; font-size: 0.75rem; letter-spacing: -0.2px; }}
+    .mob-price {{ color: #DDD; font-size: 0.75rem; font-weight: 600; margin-bottom: 1px; }}
+    .mob-today {{ font-weight: 700; font-size: 0.7rem; }}
+    .mob-content {{ padding: 10px; background-color: #111; border-top: 1px solid #222; }}
+    .mob-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px 6px; }}
     .mob-item {{ display: flex; flex-direction: column; }}
     .mob-label {{ color: #666; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }}
-    .mob-val {{ color: #FFF; font-size: 0.85rem; font-weight: 500; }}
-    .mob-sector {{ background-color: #1a1a1a; color: #FFA500; padding: 10px 10px; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #333; margin-top: 10px; }}
+    .mob-val {{ color: #FFF; font-size: 0.75rem; font-weight: 500; }}
+    .mob-sector {{ background-color: #1a1a1a; color: #FFA500; padding: 8px 10px; font-weight: 700; font-size: 0.75rem; letter-spacing: 1px; border-bottom: 1px solid #333; margin-top: 8px; }}
     [data-testid="stBaseButton-pills"] {{ background-color: transparent !important; border: none !important; color: #888 !important; border-radius: 0px !important; font-family: 'Tinos', sans-serif !important; padding: 4px 12px !important; }}
     [data-testid="stBaseButton-pillsActive"] {{ background-color: transparent !important; color: #FFFFFF !important; border: none !important; border-bottom: 1px solid #FFFFFF !important; border-radius: 0px !important; font-weight: 700 !important; }}
     
@@ -396,7 +396,7 @@ if master_data.empty:
 st.write("---")
 
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "Backtest", "Backtest portfólio", "Banco de dados", "Calendário econômico"]
-aba_selecionada = st.pills("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
+aba_selecionada = st.selectbox("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
 if aba_selecionada == "Banco de dados":
     c_sel, c_d1, c_d2 = st.columns([2, 1, 1])
