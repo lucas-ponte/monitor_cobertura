@@ -262,7 +262,7 @@ DB_MACRO = {
 }
 
 # 3. FUNÇÕES
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=1800)
 def get_all_data(tickers):
     try:
         with st.spinner(""):
@@ -679,11 +679,17 @@ if aba_selecionada == "Backtest portfólio":
         bench_label = st.selectbox("Benchmark", options=list(bench_map.keys()), index=0)
         benchmark = bench_map[bench_label]
 
-    # Dataframe editável para entrada de portfólio - AGORA COMEÇA VAZIO
+    # Dataframe editável para entrada de portfólio - AGORA COMEÇA VAZIO E PERSISTE DADOS
     if "df_portfolio_input" not in st.session_state:
         st.session_state.df_portfolio_input = pd.DataFrame(columns=["Ticker", "Peso (%)"])
 
-    edited_df = st.data_editor(st.session_state.df_portfolio_input, num_rows="dynamic", use_container_width=True)
+    st.session_state.df_portfolio_input = st.data_editor(
+        st.session_state.df_portfolio_input, 
+        num_rows="dynamic", 
+        use_container_width=True,
+        key="portfolio_editor_key"
+    )
+    edited_df = st.session_state.df_portfolio_input
 
     if st.button("Gerar Backtest Portfólio"):
         # Limpar e validar dados
