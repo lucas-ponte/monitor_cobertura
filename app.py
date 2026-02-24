@@ -374,7 +374,7 @@ APORTES_USUARIO = [
 
 
 
-INDICES_LIST = ["^BVSP", "SMAL11.SA", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225", "^HSI", "000001.SS", "^GDAXI", "^FTSE", "^FCHI", "^STOXX50E", "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
+INDICES_LIST = ["^BVSP", "SMALL11.SA", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225", "^HSI", "000001.SS", "^GDAXI", "^FTSE", "^FCHI", "^STOXX50E", "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
 
 
 
@@ -526,7 +526,7 @@ DB_MACRO = {
 
 # 3. FUNÇÕES
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=1800)
 
 def get_all_data(tickers):
 
@@ -1361,45 +1361,85 @@ if aba_selecionada == "Backtest portfólio":
 
 
     # Dataframe editável para entrada de portfólio - AGORA COMEÇA VAZIO
+
     if "df_portfolio_input" not in st.session_state:
+
         st.session_state.df_portfolio_input = pd.DataFrame(columns=["Ticker", "Peso (%)"])
+
+
 
     edited_df = st.data_editor(st.session_state.df_portfolio_input, num_rows="dynamic", use_container_width=True)
 
+
+
     if st.button("Gerar Backtest Portfólio"):
+
         # Limpar e validar dados
+
         valid_rows = edited_df.dropna(subset=["Ticker", "Peso (%)"])
+
         valid_rows = valid_rows[valid_rows["Ticker"].astype(str).str.strip() != ""]
+
         
+
         # FIX CRÍTICO: Converter para numérico antes de somar ou comparar
+
         valid_rows["Peso (%)"] = pd.to_numeric(valid_rows["Peso (%)"], errors='coerce').fillna(0)
+
         
+
         if valid_rows.empty:
+
             st.error("Adicione pelo menos um ativo.")
+
             st.stop()
+
+
 
         total_weight = valid_rows["Peso (%)"].sum()
+
         if not (99.9 <= total_weight <= 100.1): # Tolerância pequena para ponto flutuante
+
             st.error(f"A soma dos pesos deve ser 100%. Soma atual: {total_weight:.2f}%")
+
             st.stop()
 
+
+
         # Preparar tickers
+
         tickers_list = []
+
         weights_dict = {}
+
         
+
         for idx, row in valid_rows.iterrows():
+
             t_raw = str(row["Ticker"]).upper().strip()
+
             t_fmt = f"{t_raw}.SA" if (len(t_raw) >= 5 and "." not in t_raw and t_raw[-1].isdigit()) else t_raw
+
             tickers_list.append(t_fmt)
+
             weights_dict[t_fmt] = row["Peso (%)"] / 100.0
 
+
+
         tickers_download = tickers_list + [benchmark]
+
         
+
         try:
+
             raw_data = yf.download(tickers_download, start=data_ini, end=data_fim, auto_adjust=True)['Close']
+
             
+
             if raw_data.empty:
+
                 st.error("Dados não encontrados.")
+
                 st.stop()
 
 
