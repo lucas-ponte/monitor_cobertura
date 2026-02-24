@@ -124,6 +124,8 @@ st.markdown(f"""
     .list-row:hover {{ background-color: #0F0F0F; }}
     .sector-row {{ background-color: #111; color: #FFA500; font-weight: 700; font-size: 0.7rem; letter-spacing: 1px; }}
     .sector-row td {{ padding: 10px 6px; border: 1px solid #222; }}
+    footer { visibility: hidden !important; display: none !important; }
+    #MainMenu { visibility: hidden !important; }
     
     /* Estilo Rentabilidade Mensal e Anual */
     .rent-table {{ width: 100%; border-collapse: collapse; font-family: 'Tinos', sans-serif; font-size: 0.75rem; text-align: center; border: 1px solid #222; margin-top: 20px; }}
