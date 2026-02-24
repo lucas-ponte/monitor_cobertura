@@ -5,9 +5,50 @@ import plotly.graph_objects as go
 import streamlit.components.v1 as components
 from datetime import datetime, timedelta
 import numpy as np
+import base64
 
 # 1. CONFIGURAÇÃO E CSS
 st.set_page_config(page_title="DASHBOARD", page_icon="favicon.png", layout="wide")
+
+# 1.1 INJEÇÃO DE ÍCONE PARA WEB APP (iOS e Windows)
+def get_base64_of_bin_file(bin_file):
+    try:
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except Exception:
+        return ""
+
+icone_base64 = get_base64_of_bin_file("favicon.png")
+
+if icone_base64:
+    components.html(
+        f"""
+        <script>
+            const doc = window.parent.document;
+            
+            // Tag para iPhone/iPad
+            let appleIcon = doc.querySelector("link[rel='apple-touch-icon']");
+            if (!appleIcon) {{
+                appleIcon = doc.createElement('link');
+                appleIcon.rel = 'apple-touch-icon';
+                doc.head.appendChild(appleIcon);
+            }}
+            appleIcon.href = 'data:image/png;base64,{icone_base64}';
+
+            // Configuração para comportamento de app nativo no iOS
+            let appleCapable = doc.querySelector("meta[name='apple-mobile-web-app-capable']");
+            if (!appleCapable) {{
+                appleCapable = doc.createElement('meta');
+                appleCapable.name = 'apple-mobile-web-app-capable';
+                appleCapable.content = 'yes';
+                doc.head.appendChild(appleCapable);
+            }}
+        </script>
+        """,
+        height=0,
+        width=0
+    )
 
 if "ticker_selecionado" not in st.session_state:
     st.session_state.ticker_selecionado = None
