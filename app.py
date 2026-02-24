@@ -396,7 +396,7 @@ if master_data.empty:
 st.write("---")
 
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices", "Backtest", "Backtest portfólio", "Banco de dados", "Calendário econômico"]
-aba_selecionada = st.sidebar.selectbox("Navegação", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
+aba_selecionada = st.selectbox("", options=opcoes_nav, key="aba_ativa", label_visibility="collapsed")
 
 if aba_selecionada == "Banco de dados":
     c_sel, c_d1, c_d2 = st.columns([2, 1, 1])
