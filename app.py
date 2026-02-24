@@ -475,7 +475,7 @@ if aba_selecionada == "Backtest":
     
     if st.button("Gerar Backtest"):
         if ticker_raw:
-            ticker_bt = f"{ticker_raw}.SA" if (len(ticker_raw) >= 5 and "." not in ticker_raw) else ticker_raw
+            ticker_bt = f"{ticker_raw}.SA" if (len(ticker_raw) >= 5 and "." not in ticker_raw and ticker_raw[-1].isdigit()) else ticker_raw
             
             try:
                 bt_data = yf.download([ticker_bt, benchmark], start=data_ini, end=data_fim, auto_adjust=True)['Close']
@@ -703,7 +703,7 @@ if aba_selecionada == "Backtest portfólio":
         
         for idx, row in valid_rows.iterrows():
             t_raw = str(row["Ticker"]).upper().strip()
-            t_fmt = f"{t_raw}.SA" if (len(t_raw) >= 5 and "." not in t_raw) else t_raw
+            t_fmt = f"{t_raw}.SA" if (len(t_raw) >= 5 and "." not in t_raw and t_raw[-1].isdigit()) else t_raw
             tickers_list.append(t_fmt)
             weights_dict[t_fmt] = row["Peso (%)"] / 100.0
 
