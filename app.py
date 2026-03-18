@@ -1450,7 +1450,7 @@ elif aba_selecionada == "Carteira pessoal":
     c_hoje_d = "#00FF00" if dif_hoje > 0 else ("#FF4B4B" if dif_hoje < 0 else "#FFF")
     
     html_hoje = f'''
-    <table class="rent-table" style="width:100%; margin-top:0px; margin-bottom:40px;">
+    <table class="rent-table" style="width:100%; margin-top:40px; margin-bottom:40px;">
         <tr><th colspan="3" style="text-align:center;">RENTABILIDADE HOJE (PESOS ATUAIS)</th></tr>
         <tr><th>CARTEIRA</th><th>IBOVESPA</th><th>DIFERENÇA</th></tr>
         <tr>
