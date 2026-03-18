@@ -1375,6 +1375,93 @@ elif aba_selecionada == "Carteira pessoal":
             )
             st.plotly_chart(fig_sec, use_container_width=True, config={'displayModeBar': False})
 
+    # --- NOVAS ADIÇÕES SOLICITADAS ---
+    st.markdown("### Rentabilidade Detalhada")
+    c_ativos_hist, c_ativos_mes = st.columns(2)
+
+    with c_ativos_hist:
+        fig_ativos_hist = go.Figure()
+        for t in t_list_cart: 
+            idx_in = df_qtd_aligned[t] > 0
+            if idx_in.any():
+                first_date = idx_in.idxmax()
+                asset_prices = prices[t].loc[first_date:]
+                if not asset_prices.empty and len(asset_prices) > 0:
+                    asset_idx = (asset_prices / asset_prices.iloc[0]) * 100
+                    ret_val = asset_idx.iloc[-1] - 100
+                    fig_ativos_hist.add_trace(go.Scatter(
+                        x=asset_idx.index, y=asset_idx, name=f"{t} ({ret_val:+.1f}%)", line=dict(width=1.5), opacity=0.8
+                    ))
+        fig_ativos_hist.update_layout(
+            title=dict(text='Rentabilidade por Ativo (Desde o 1º Aporte)', x=0, font=dict(size=14, color='white'), y=1),
+            template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=350,
+            xaxis=dict(showgrid=False, fixedrange=True),
+            yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True),
+            margin=dict(l=0, r=0, t=40, b=40), dragmode=False,
+            legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
+        )
+        st.plotly_chart(fig_ativos_hist, use_container_width=True, config={'displayModeBar': False})
+
+    with c_ativos_mes:
+        if len(prices) > 0:
+            mes_atual = prices.index[-1].month
+            ano_atual = prices.index[-1].year
+            mascara_mes = (prices.index.month == mes_atual) & (prices.index.year == ano_atual)
+            
+            if mascara_mes.any():
+                precos_mes = prices[mascara_mes]
+                idx_anterior = prices.index.get_loc(precos_mes.index[0]) - 1
+                if idx_anterior >= 0:
+                    base_price = prices.iloc[idx_anterior][cols_ativos]
+                else:
+                    base_price = precos_mes.iloc[0][cols_ativos]
+                
+                mtd_rets = (precos_mes.iloc[-1][cols_ativos] / base_price - 1) * 100
+                mtd_rets = mtd_rets[mtd_rets.index.isin(t_list_cart)].dropna().sort_values(ascending=True)
+            else:
+                mtd_rets = pd.Series(dtype=float)
+
+            if not mtd_rets.empty:
+                colors_mtd = ["#00FF00" if v >= 0 else "#FF4B4B" for v in mtd_rets.values]
+                fig_mtd = go.Figure(go.Bar(
+                    x=mtd_rets.values, y=mtd_rets.index, orientation='h', marker_color=colors_mtd,
+                    text=[f"{v:+.2f}%" for v in mtd_rets.values], textposition='auto', textfont=dict(color='white')
+                ))
+                fig_mtd.update_layout(
+                    title=dict(text='Rentabilidade no Mês Atual', x=0, font=dict(size=14, color='white'), y=1),
+                    template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=350,
+                    xaxis=dict(showgrid=False, fixedrange=True),
+                    yaxis=dict(showgrid=False, fixedrange=True),
+                    margin=dict(l=0, r=0, t=40, b=40), dragmode=False
+                )
+                st.plotly_chart(fig_mtd, use_container_width=True, config={'displayModeBar': False})
+            else:
+                st.info("Sem dados suficientes para rentabilidade do mês atual.")
+
+    port_hoje = portfolio_ret.iloc[-1] * 100
+    if "^BVSP" in prices.columns:
+        ibov_hoje = prices["^BVSP"].pct_change().iloc[-1] * 100
+    else:
+        ibov_hoje = 0.0
+    dif_hoje = port_hoje - ibov_hoje
+    
+    c_hoje_t = "#00FF00" if port_hoje > 0 else ("#FF4B4B" if port_hoje < 0 else "#FFF")
+    c_hoje_i = "#00FF00" if ibov_hoje > 0 else ("#FF4B4B" if ibov_hoje < 0 else "#FFF")
+    c_hoje_d = "#00FF00" if dif_hoje > 0 else ("#FF4B4B" if dif_hoje < 0 else "#FFF")
+    
+    html_hoje = f'''
+    <table class="rent-table" style="width:100%; margin-top:0px; margin-bottom:40px;">
+        <tr><th colspan="3" style="text-align:center;">RENTABILIDADE HOJE (PESOS ATUAIS)</th></tr>
+        <tr><th>CARTEIRA</th><th>IBOVESPA</th><th>DIFERENÇA</th></tr>
+        <tr>
+            <td style="color:{c_hoje_t}; font-weight:bold; font-size:1rem;">{port_hoje:+.2f}%</td>
+            <td style="color:{c_hoje_i}; font-weight:bold; font-size:1rem;">{ibov_hoje:+.2f}%</td>
+            <td style="color:{c_hoje_d}; font-weight:bold; font-size:1rem;">{dif_hoje:+.2f}%</td>
+        </tr>
+    </table>
+    '''
+    st.markdown(html_hoje, unsafe_allow_html=True)
+
 
     # --- TABELA DE RENTABILIDADE (MÊS A MÊS + ACUMULADO) ---
     st.markdown("<br>", unsafe_allow_html=True)
