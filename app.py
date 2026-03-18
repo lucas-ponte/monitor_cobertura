@@ -1429,7 +1429,7 @@ elif aba_selecionada == "Carteira pessoal":
                 ))
                 fig_mtd.update_layout(
                     title=dict(text='Rentabilidade no Mês Atual', x=0, font=dict(size=14, color='white'), y=1),
-                    template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=700, bargap=0.15
+                    template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=700, bargap=0.15,
                     xaxis=dict(showgrid=False, fixedrange=True),
                     yaxis=dict(showgrid=False, fixedrange=True),
                     margin=dict(l=0, r=0, t=40, b=40), dragmode=False
