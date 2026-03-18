@@ -1398,7 +1398,7 @@ elif aba_selecionada == "Carteira pessoal":
             xaxis=dict(showgrid=False, fixedrange=True),
             yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True),
             margin=dict(l=0, r=0, t=40, b=40), dragmode=False,
-            legend=dict(orientation="h", yanchor="bottom", y=-0.75, xanchor="center", x=0.5)
+            legend=dict(orientation="h", yanchor="bottom", y=-0.6, xanchor="center", x=0.5)
         )
         st.plotly_chart(fig_ativos_hist, use_container_width=True, config={'displayModeBar': False})
 
