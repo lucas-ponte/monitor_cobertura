@@ -1394,7 +1394,7 @@ elif aba_selecionada == "Carteira pessoal":
                     ))
         fig_ativos_hist.update_layout(
             title=dict(text='Rentabilidade por Ativo (Desde o 1º Aporte)', x=0, font=dict(size=14, color='white'), y=1),
-            template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=350,
+            template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', height=700, bargap=0.15,
             xaxis=dict(showgrid=False, fixedrange=True),
             yaxis=dict(showgrid=True, gridcolor="#333", side="right", fixedrange=True),
             margin=dict(l=0, r=0, t=40, b=40), dragmode=False,
