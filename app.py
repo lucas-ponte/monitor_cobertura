@@ -1116,7 +1116,7 @@ elif aba_selecionada == "Carteira pessoal":
         # Ajuste de timezone e filtro de data
         prices.index = prices.index.tz_localize(None)
         prices = prices.sort_index().loc[start_date:]
-        prices = prices.fillna(method='ffill')
+        prices = prices.ffill()
     except Exception as e:
         st.error(f"Erro ao processar dados históricos da carteira: {e}")
         st.stop()
@@ -1135,7 +1135,7 @@ elif aba_selecionada == "Carteira pessoal":
     pct_change = prices[cols_ativos].pct_change().fillna(0)
     
     # Alinha df_qtd com prices (garante mesmas colunas e indices)
-    df_qtd_aligned = df_qtd[cols_ativos].reindex(prices.index).fillna(method='ffill').fillna(0)
+    df_qtd_aligned = df_qtd[cols_ativos].reindex(prices.index).ffill().fillna(0)
     
     pos_yesterday = (prices[cols_ativos].shift(1) * df_qtd_aligned.shift(1)).fillna(0)
     total_yesterday = pos_yesterday.sum(axis=1)
