@@ -1341,7 +1341,7 @@ elif aba_selecionada == "Carteira pessoal":
             p = float(prices[t].iloc[-1])
             q = float(qtd_atual[t])
             val = p * q
-            cl = prices[t].dropna()
+            cl = master_data[t]['Close'].dropna() if t in master_data.columns.levels[0] else prices[t].dropna()
             pos_data.append({
                 "Ticker": t, "Preço": p, "Total": val,
                 "HOJE": calc_variation(cl, 1), "30D": calc_variation(cl, 21),
