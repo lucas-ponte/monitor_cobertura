@@ -55,7 +55,7 @@ st.markdown("""
 *, *::before, *::after { box-sizing: border-box; }
 [data-testid="stStatusWidget"] { visibility: hidden !important; }
 header[data-testid="stHeader"] { background: transparent !important; }
-.block-container { padding: 4rem 1rem 2rem !important; max-width: 100% !important; }
+.block-container { padding: 2.5rem 1rem 2rem !important; max-width: 100% !important; }
 
 /* Sidebar escura */
 section[data-testid="stSidebar"] {
@@ -389,6 +389,7 @@ summary:hover { background: #0f0f0f; }
         overflow-x: hidden !important;
     }
 
+    .terminal-header { margin-top: 30px !important; }
     .terminal-title { font-size: 1rem; letter-spacing: 2px; }
     .terminal-sub { font-size: 0.5rem; letter-spacing: 2px; }
     .terminal-time { font-size: 0.55rem; }
@@ -805,6 +806,22 @@ opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices",
 with st.sidebar:
     st.markdown('<div style="font-family:\'IBM Plex Mono\',monospace; color:#FF9900; font-size:0.75rem; font-weight:700; letter-spacing:3px; padding:12px 0 10px 0; border-bottom:1px solid #FF9900; margin-bottom:12px;">MENU</div>', unsafe_allow_html=True)
     aba_selecionada = st.radio("", options=opcoes_nav, index=0, key="aba_nav", label_visibility="collapsed")
+
+    # Fecha a sidebar ao clicar numa aba (mobile)
+components.html("""
+<script>
+const doc = window.parent.document;
+const radios = doc.querySelectorAll('section[data-testid="stSidebar"] input[type="radio"]');
+radios.forEach(r => {
+    r.addEventListener('change', () => {
+        const closeBtn = doc.querySelector('button[data-testid="stSidebarCollapseButton"]');
+        if (closeBtn && window.innerWidth <= 768) {
+            setTimeout(() => closeBtn.click(), 150);
+        }
+    });
+});
+</script>
+""", height=0, width=0)
 
 # ──────────────────────────────────────────────
 # 10. ABA: BANCO DE DADOS
