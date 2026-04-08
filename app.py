@@ -807,25 +807,6 @@ with st.sidebar:
     st.markdown('<div style="font-family:\'IBM Plex Mono\',monospace; color:#FF9900; font-size:0.75rem; font-weight:700; letter-spacing:3px; padding:12px 0 10px 0; border-bottom:1px solid #FF9900; margin-bottom:12px;">MENU</div>', unsafe_allow_html=True)
     aba_selecionada = st.radio("", options=opcoes_nav, index=0, key="aba_nav", label_visibility="collapsed")
 
-# Auto-fecha sidebar no mobile após rerun
-components.html("""
-<script>
-(function() {
-    if (window.innerWidth > 768) return;
-    const doc = window.parent.document;
-    setTimeout(() => {
-        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
-        if (sidebar && sidebar.getAttribute('aria-expanded') === 'true') {
-            const closeBtn = doc.querySelector('section[data-testid="stSidebar"] button[kind="header"]')
-                || doc.querySelector('section[data-testid="stSidebar"] button')
-                || doc.querySelector('[data-testid="stSidebarCollapseButton"]');
-            if (closeBtn) closeBtn.click();
-        }
-    }, 100);
-})();
-</script>
-""", height=0, width=0)
-
 # ──────────────────────────────────────────────
 # 10. ABA: BANCO DE DADOS
 # ──────────────────────────────────────────────
