@@ -343,6 +343,9 @@ summary:hover { background: #0f0f0f; }
     .terminal-title { font-size: 1rem; letter-spacing: 2px; }
     .terminal-sub { font-size: 0.5rem; letter-spacing: 2px; }
     .terminal-time { font-size: 0.55rem; }
+    
+    /* SYNC button – espaçamento do header */
+    div.stButton { margin-top: 6px !important; }
 
     .desktop-view { display: none !important; }
     .mobile-view { display: block !important; }
@@ -356,42 +359,49 @@ summary:hover { background: #0f0f0f; }
         touch-action: pan-x pan-y;
     }
 
-    /* Pills nav – estilo Bloomberg mobile */
-    div[data-testid="stPills"] > div {
-        display: flex !important;
-        flex-direction: column !important;
-        width: 100% !important;
-        gap: 0 !important;
-        background: #0d0d0d !important;
-        border: 1px solid #1a1a1a !important;
-        border-radius: 2px !important;
-        padding: 4px 0 !important;
-        margin-bottom: 8px !important;
-    }
-    div[data-testid="stPills"] button {
-        width: 100% !important;
-        border: none !important;
-        border-left: 3px solid transparent !important;
-        border-bottom: none !important;
-        border-radius: 0 !important;
-        justify-content: flex-start !important;
-        text-align: left !important;
-        padding: 12px 14px !important;
-        font-size: 0.72rem !important;
-        letter-spacing: 1.5px !important;
-        color: #888 !important;
-        background: transparent !important;
-    }
-    div[data-testid="stPills"] button:hover {
-        background: #111 !important;
-        color: #ccc !important;
-    }
-    div[data-testid="stPills"] button[aria-checked="true"] {
-        color: #FF9900 !important;
-        background: rgba(255,153,0,0.06) !important;
-        border-left: 3px solid #FF9900 !important;
-        font-weight: 700 !important;
-    }
+    /* Pills nav – barra horizontal scrollável estilo app */
+div[data-testid="stPills"] > div {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 0 !important;
+    width: 100% !important;
+    border-bottom: 1px solid #1a1a1a !important;
+    padding: 0 !important;
+    margin-bottom: 6px !important;
+    scrollbar-width: none !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
+div[data-testid="stPills"] > div::-webkit-scrollbar { display: none !important; }
+div[data-testid="stPills"] button {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    width: auto !important;
+    padding: 10px 12px !important;
+    font-size: 0.6rem !important;
+    letter-spacing: 1px !important;
+    color: #777 !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    border-left: none !important;
+    border-radius: 0 !important;
+}
+div[data-testid="stPills"] button:hover {
+    color: #bbb !important;
+    background: transparent !important;
+}
+div[data-testid="stPills"] button[aria-checked="true"] {
+    color: #FF9900 !important;
+    background: transparent !important;
+    border-bottom: 2px solid #FF9900 !important;
+    border-left: none !important;
+    font-weight: 700 !important;
+}
 
     div[data-testid="stPopover"] { display: none !important; }
 
