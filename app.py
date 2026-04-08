@@ -53,22 +53,50 @@ st.markdown("""
 /* ── BASE ── */
 .stApp { background-color: #0a0a0a; font-family: 'IBM Plex Sans', sans-serif; }
 *, *::before, *::after { box-sizing: border-box; }
-header, [data-testid="stStatusWidget"] { visibility: hidden !important; }
+[data-testid="stStatusWidget"] { visibility: hidden !important; }
+header[data-testid="stHeader"] { background: transparent !important; }
 .block-container { padding: 0.75rem 1rem 2rem !important; max-width: 100% !important; }
+
 /* Sidebar escura */
 section[data-testid="stSidebar"] {
     background-color: #0d0d0d !important;
 }
-section[data-testid="stSidebar"] [data-testid="stRadio"] label {
+section[data-testid="stSidebar"] [data-testid="stRadio"] {
+    gap: 0 !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] {
+    gap: 0 !important;
+}
+/* Esconde as bolas do radio */
+section[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label > div:first-child {
+    display: none !important;
+}
+/* Estilo de cada item do menu */
+section[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label {
+    border-left: 3px solid transparent !important;
+    padding: 8px 8px !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label p {
     color: #999 !important;
     font-family: 'IBM Plex Mono', monospace !important;
-    font-size: 0.7rem !important;
-    letter-spacing: 1.5px !important;
+    font-size: 0.6rem !important;
+    letter-spacing: 2px !important;
     text-transform: uppercase !important;
+    margin: 0 !important;
+    line-height: 1.4 !important;
 }
-section[data-testid="stSidebar"] [data-testid="stRadio"] label[data-checked="true"] {
+/* Item ativo - borda lateral */
+section[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) {
+    border-left: 3px solid transparent !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p {
     color: #FF9900 !important;
     font-weight: 700 !important;
+    border-bottom: 1px solid #FF9900 !important;
+    padding-bottom: 2px !important;
+    display: inline !important;
 }
 div[data-testid="stDecoration"] { display: none; }
 
