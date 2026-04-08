@@ -55,7 +55,7 @@ st.markdown("""
 *, *::before, *::after { box-sizing: border-box; }
 [data-testid="stStatusWidget"] { visibility: hidden !important; }
 header[data-testid="stHeader"] { background: transparent !important; }
-.block-container { padding: 2.5rem 1rem 2rem !important; max-width: 100% !important; }
+.block-container { padding: 4rem 1rem 2rem !important; max-width: 100% !important; }
 
 /* Sidebar escura */
 section[data-testid="stSidebar"] {
