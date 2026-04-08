@@ -318,9 +318,18 @@ summary:hover { background: #0f0f0f; }
 .mob-val { color: #e0e0e0; font-size: 0.72rem; font-weight: 500; }
 .mob-sector { background: #0d0d0d; color: #FF9900; padding: 7px 10px; font-weight: 700; font-size: 0.65rem; letter-spacing: 2px; border-bottom: 1px solid #1e1e1e; margin-top: 10px; }
 
-/* ── RESPONSIVE – MOBILE BLOOMBERG ── */
+/* ── RESPONSIVE ── */
+.desktop-view { display: block; }
+.mobile-view { display: none; }
+
+/* Wrapper para tabelas com scroll horizontal no mobile */
+.table-scroll-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 @media (max-width: 768px) {
-    /* Trava scroll horizontal da página inteira */
     html, body, .stApp {
         overflow-x: hidden !important;
         max-width: 100vw !important;
@@ -331,22 +340,23 @@ summary:hover { background: #0f0f0f; }
         overflow-x: hidden !important;
     }
 
-    /* Header compacto */
     .terminal-title { font-size: 1rem; letter-spacing: 2px; }
     .terminal-sub { font-size: 0.5rem; letter-spacing: 2px; }
     .terminal-time { font-size: 0.55rem; }
 
-    /* Tabelas: scroll horizontal DENTRO do container, sem mover a página */
     .desktop-view { display: none !important; }
     .mobile-view { display: block !important; }
+
+    /* Tabelas com scroll horizontal interno */
     .bb-table, .rent-table {
         display: block;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        max-width: 100%;
+        max-width: 100vw;
+        touch-action: pan-x pan-y;
     }
 
-    /* Pills nav – estilo Bloomberg mobile: lista vertical com fundo sutil */
+    /* Pills nav – estilo Bloomberg mobile */
     div[data-testid="stPills"] > div {
         display: flex !important;
         flex-direction: column !important;
@@ -371,7 +381,6 @@ summary:hover { background: #0f0f0f; }
         letter-spacing: 1.5px !important;
         color: #888 !important;
         background: transparent !important;
-        transition: all 0.1s;
     }
     div[data-testid="stPills"] button:hover {
         background: #111 !important;
@@ -384,10 +393,8 @@ summary:hover { background: #0f0f0f; }
         font-weight: 700 !important;
     }
 
-    /* Popover escondido no mobile */
     div[data-testid="stPopover"] { display: none !important; }
 
-    /* Accordion mobile – mais limpo */
     details {
         border: none !important;
         border-bottom: 1px solid #111 !important;
@@ -411,26 +418,18 @@ summary:hover { background: #0f0f0f; }
         background: transparent !important;
     }
 
-    /* KPIs em grid 2x3 no mobile */
-    div[data-testid="column"] {
-        min-width: 0 !important;
-    }
-
-    /* Section labels mais compactos */
     .section-label {
         font-size: 0.55rem !important;
         margin: 18px 0 8px 0 !important;
         letter-spacing: 2px !important;
     }
 
-    /* Inputs e selects mais compactos */
     div[data-testid="stTextInput"] input,
     div[data-testid="stDateInput"] input {
         font-size: 0.7rem !important;
         padding: 6px 8px !important;
     }
 
-    /* Graficos Plotly – garante que nao estouram */
     .js-plotly-plot, .plotly {
         max-width: 100% !important;
         overflow: hidden !important;
