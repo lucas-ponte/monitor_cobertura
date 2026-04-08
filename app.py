@@ -318,21 +318,123 @@ summary:hover { background: #0f0f0f; }
 .mob-val { color: #e0e0e0; font-size: 0.72rem; font-weight: 500; }
 .mob-sector { background: #0d0d0d; color: #FF9900; padding: 7px 10px; font-weight: 700; font-size: 0.65rem; letter-spacing: 2px; border-bottom: 1px solid #1e1e1e; margin-top: 10px; }
 
-/* ── RESPONSIVE ── */
-.desktop-view { display: block; }
-.mobile-view { display: none; }
-
+/* ── RESPONSIVE – MOBILE BLOOMBERG ── */
 @media (max-width: 768px) {
-    .block-container { padding: 0.5rem 0.5rem 2rem !important; }
-    .terminal-title { font-size: 1.1rem; letter-spacing: 2px; }
+    /* Trava scroll horizontal da página inteira */
+    html, body, .stApp {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
+    .block-container {
+        padding: 0.4rem 0.6rem 2rem !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Header compacto */
+    .terminal-title { font-size: 1rem; letter-spacing: 2px; }
+    .terminal-sub { font-size: 0.5rem; letter-spacing: 2px; }
+    .terminal-time { font-size: 0.55rem; }
+
+    /* Tabelas: scroll horizontal DENTRO do container, sem mover a página */
     .desktop-view { display: none !important; }
     .mobile-view { display: block !important; }
-    div[data-testid="stPills"] > div { display: flex !important; flex-direction: column !important; width: 100% !important; }
-    div[data-testid="stPills"] button { width: 100% !important; border-bottom: 1px solid #1a1a1a !important; justify-content: flex-start !important; text-align: left !important; padding: 14px 10px !important; font-size: 0.85rem !important; letter-spacing: 1px !important; }
-    div[data-testid="stPills"] button[aria-checked="true"] { color: #FF9900 !important; border-bottom: 1px solid #FF9900 !important; }
+    .bb-table, .rent-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+
+    /* Pills nav – estilo Bloomberg mobile: lista vertical com fundo sutil */
+    div[data-testid="stPills"] > div {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 0 !important;
+        background: #0d0d0d !important;
+        border: 1px solid #1a1a1a !important;
+        border-radius: 2px !important;
+        padding: 4px 0 !important;
+        margin-bottom: 8px !important;
+    }
+    div[data-testid="stPills"] button {
+        width: 100% !important;
+        border: none !important;
+        border-left: 3px solid transparent !important;
+        border-bottom: none !important;
+        border-radius: 0 !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        padding: 12px 14px !important;
+        font-size: 0.72rem !important;
+        letter-spacing: 1.5px !important;
+        color: #888 !important;
+        background: transparent !important;
+        transition: all 0.1s;
+    }
+    div[data-testid="stPills"] button:hover {
+        background: #111 !important;
+        color: #ccc !important;
+    }
+    div[data-testid="stPills"] button[aria-checked="true"] {
+        color: #FF9900 !important;
+        background: rgba(255,153,0,0.06) !important;
+        border-left: 3px solid #FF9900 !important;
+        font-weight: 700 !important;
+    }
+
+    /* Popover escondido no mobile */
     div[data-testid="stPopover"] { display: none !important; }
-    details { border: 1px solid #111 !important; border-radius: 2px !important; margin-bottom: 3px !important; }
-    .mob-sector { margin: 12px 0 4px !important; border-radius: 2px; }
+
+    /* Accordion mobile – mais limpo */
+    details {
+        border: none !important;
+        border-bottom: 1px solid #111 !important;
+        border-radius: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    summary { padding: 10px 8px !important; }
+    .mob-ticker { font-size: 0.75rem; }
+    .mob-price { font-size: 0.68rem; }
+    .mob-today { font-size: 0.7rem; }
+    .mob-content { padding: 8px; }
+    .mob-grid { gap: 8px; }
+    .mob-label { font-size: 0.5rem; letter-spacing: 1.5px; }
+    .mob-val { font-size: 0.68rem; }
+    .mob-sector {
+        margin: 14px 0 4px !important;
+        padding: 8px 8px !important;
+        font-size: 0.6rem !important;
+        letter-spacing: 2px !important;
+        border-bottom: 1px solid #FF9900 !important;
+        background: transparent !important;
+    }
+
+    /* KPIs em grid 2x3 no mobile */
+    div[data-testid="column"] {
+        min-width: 0 !important;
+    }
+
+    /* Section labels mais compactos */
+    .section-label {
+        font-size: 0.55rem !important;
+        margin: 18px 0 8px 0 !important;
+        letter-spacing: 2px !important;
+    }
+
+    /* Inputs e selects mais compactos */
+    div[data-testid="stTextInput"] input,
+    div[data-testid="stDateInput"] input {
+        font-size: 0.7rem !important;
+        padding: 6px 8px !important;
+    }
+
+    /* Graficos Plotly – garante que nao estouram */
+    .js-plotly-plot, .plotly {
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
 }
 </style>
 
