@@ -55,7 +55,7 @@ st.markdown("""
 *, *::before, *::after { box-sizing: border-box; }
 [data-testid="stStatusWidget"] { visibility: hidden !important; }
 header[data-testid="stHeader"] { background: transparent !important; }
-.block-container { padding: 0.75rem 1rem 2rem !important; max-width: 100% !important; }
+.block-container { padding: 2.5rem 1rem 2rem !important; max-width: 100% !important; }
 
 /* Sidebar escura */
 section[data-testid="stSidebar"] {
@@ -99,6 +99,12 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] div[role="radiogroup"] 
     display: inline !important;
 }
 div[data-testid="stDecoration"] { display: none; }
+
+/* Header transparente - mantém o hamburger nativo */
+header[data-testid="stHeader"] {
+    background: #0a0a0a !important;
+    border-bottom: none !important;
+}
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
