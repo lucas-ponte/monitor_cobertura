@@ -807,47 +807,6 @@ with st.sidebar:
     st.markdown('<div style="font-family:\'IBM Plex Mono\',monospace; color:#FF9900; font-size:0.75rem; font-weight:700; letter-spacing:3px; padding:12px 0 10px 0; border-bottom:1px solid #FF9900; margin-bottom:12px;">MENU</div>', unsafe_allow_html=True)
     aba_selecionada = st.radio("", options=opcoes_nav, index=0, key="aba_nav", label_visibility="collapsed")
 
-    # Fecha a sidebar ao clicar numa aba (mobile)
-components.html("""
-<script>
-function setup() {
-    const doc = window.parent.document;
-    const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
-    if (!sidebar) return false;
-    const labels = sidebar.querySelectorAll('[data-testid="stRadio"] label');
-    if (labels.length === 0) return false;
-    labels.forEach(label => {
-        if (!label._closeAdded) {
-            label.addEventListener('click', () => {
-                if (window.innerWidth <= 768) {
-                    setTimeout(() => {
-                        // Tenta todos os seletores possíveis do botão fechar
-                        const btns = doc.querySelectorAll('button');
-                        for (const btn of btns) {
-                            if (btn.getAttribute('data-testid') === 'stSidebarCollapseButton'
-                                || btn.getAttribute('aria-label') === 'Close'
-                                || btn.getAttribute('aria-expanded') === 'true') {
-                                btn.click();
-                                break;
-                            }
-                        }
-                    }, 300);
-                }
-            });
-            label._closeAdded = true;
-        }
-    });
-    return true;
-}
-// Retry até encontrar
-let attempts = 0;
-const interval = setInterval(() => {
-    if (setup() || attempts > 30) clearInterval(interval);
-    attempts++;
-}, 500);
-</script>
-""", height=0, width=0)
-
 # ──────────────────────────────────────────────
 # 10. ABA: BANCO DE DADOS
 # ──────────────────────────────────────────────
