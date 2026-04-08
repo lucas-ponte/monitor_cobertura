@@ -329,6 +329,34 @@ summary:hover { background: #0f0f0f; }
     -webkit-overflow-scrolling: touch;
 }
 
+/* Desktop: expander invisível, pills direto */
+@media (min-width: 769px) {
+    div[data-testid="stExpander"] {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stExpander"] details {
+        border: none !important;
+        background: transparent !important;
+    }
+    div[data-testid="stExpander"] summary {
+        display: none !important;
+    }
+    div[data-testid="stExpander"] details[open] > div,
+    div[data-testid="stExpander"] details > div {
+        display: block !important;
+    }
+    div[data-testid="stExpander"] details {
+        pointer-events: auto;
+    }
+    div[data-testid="stExpander"] details:not([open]) > div {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+}
+
 @media (max-width: 768px) {
     html, body, .stApp {
         overflow-x: hidden !important;
@@ -359,70 +387,26 @@ summary:hover { background: #0f0f0f; }
         touch-action: pan-x pan-y;
     }
 
-    /* Pills nav – força linha horizontal em QUALQUER estrutura interna */
-div[data-testid="stPills"] * {
-    flex-wrap: nowrap !important;
+    /* Expander como menu colapsável mobile */
+div[data-testid="stExpander"] {
+    border: 1px solid #1a1a1a !important;
+    border-radius: 2px !important;
+    margin-bottom: 8px !important;
+    background: #0d0d0d !important;
 }
-div[data-testid="stPills"] [role="tablist"],
-div[data-testid="stPills"] > div,
-div[data-testid="stPills"] > div > div,
-div[data-testid="stPills"] > div > div > div {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    gap: 0 !important;
-    width: 100% !important;
-    padding: 0 !important;
-    margin-bottom: 0 !important;
-    scrollbar-width: none !important;
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-}
-div[data-testid="stPills"] [role="tablist"]::-webkit-scrollbar,
-div[data-testid="stPills"] > div::-webkit-scrollbar,
-div[data-testid="stPills"] > div > div::-webkit-scrollbar,
-div[data-testid="stPills"] > div > div > div::-webkit-scrollbar {
-    display: none !important;
-}
-div[data-testid="stPills"] button,
-div[data-testid="stPills"] [role="tab"] {
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
-    width: auto !important;
-    min-width: auto !important;
-    padding: 10px 12px !important;
-    font-size: 0.58rem !important;
-    letter-spacing: 1px !important;
-    color: #777 !important;
-    background: transparent !important;
-    border: none !important;
-    border-bottom: 2px solid transparent !important;
-    border-left: none !important;
-    border-radius: 0 !important;
-    text-transform: uppercase !important;
-    font-family: 'IBM Plex Mono', monospace !important;
-}
-div[data-testid="stPills"] button:hover,
-div[data-testid="stPills"] [role="tab"]:hover {
-    color: #bbb !important;
-    background: transparent !important;
-}
-div[data-testid="stPills"] button[aria-checked="true"],
-div[data-testid="stPills"] [role="tab"][aria-selected="true"],
-div[data-testid="stPills"] [data-testid="stBaseButton-pillsActive"] {
+div[data-testid="stExpander"] summary {
+    background: #0d0d0d !important;
     color: #FF9900 !important;
-    background: transparent !important;
-    border-bottom: 2px solid #FF9900 !important;
-    border-left: none !important;
-    font-weight: 700 !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 2px !important;
+    padding: 12px 14px !important;
 }
-/* Linha inferior da barra de abas */
-div[data-testid="stPills"] {
-    border-bottom: 1px solid #1a1a1a !important;
-    margin-bottom: 6px !important;
+div[data-testid="stExpander"] summary span {
+    color: #FF9900 !important;
+}
+div[data-testid="stExpander"] svg {
+    color: #FF9900 !important;
 }
 
     div[data-testid="stPopover"] { display: none !important; }
@@ -819,7 +803,9 @@ if master_data.empty:
 st.markdown('<div style="margin-top:8px;"></div>', unsafe_allow_html=True)
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices",
               "Backtest", "Backtest portfólio", "Banco de dados", "Calendário econômico"]
-aba_selecionada = st.pills("", options=opcoes_nav, default="Cobertura", key="aba_nav")
+
+with st.expander("☰ MENU", expanded=False):
+    aba_selecionada = st.pills("", options=opcoes_nav, default="Cobertura", key="aba_nav")
 
 # ──────────────────────────────────────────────
 # 10. ABA: BANCO DE DADOS
