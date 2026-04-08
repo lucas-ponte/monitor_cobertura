@@ -965,7 +965,7 @@ if aba_selecionada == "Backtest":
                         html_rent.append(f'<td {css} style="color:{color}">{val:.2f}%</td>')
                 html_rent.append('</tr>')
             html_rent.append('</table>')
-            st.markdown("".join(html_rent), unsafe_allow_html=True)
+            st.markdown('<div class="table-scroll-wrapper">' + "".join(html_rent) + '</div>', unsafe_allow_html=True)
 
             st.markdown(f'<div class="section-label" style="margin-top:16px;">ANUAL VS {bench_label.upper()}</div>', unsafe_allow_html=True)
             annual_comparison = []
@@ -984,7 +984,7 @@ if aba_selecionada == "Backtest":
                                f'<td style="color:{c_b}">{row["bench"]:.2f}%</td>'
                                f'<td class="rent-total" style="color:{c_r}">{row["rel"]:.2f}%</td></tr>')
             html_a.append('</table>')
-            st.markdown("".join(html_a), unsafe_allow_html=True)
+            st.markdown('<div class="table-scroll-wrapper">' + "".join(html_a) + '</div>', unsafe_allow_html=True)
 
         except Exception as e:
             st.error(f"Erro: {e}")
@@ -1166,7 +1166,7 @@ if aba_selecionada == "Backtest portfólio":
                 html_rent.append('</tr>')
             html_rent.append('</table>')
             rent_table_html = "".join(html_rent)
-            st.markdown(rent_table_html, unsafe_allow_html=True)
+            st.markdown('<div class="table-scroll-wrapper">' + rent_table_html + '</div>', unsafe_allow_html=True)
 
             # ── Gerar relatório HTML para download ──
             report_css = (
@@ -1558,7 +1558,7 @@ elif aba_selecionada == "Carteira pessoal":
             html_rent.append(f'<td style="font-weight:700; color:{c_c}">{cum:.2f}%</td></tr>')
 
     html_rent.append('</table>')
-    st.markdown("".join(html_rent), unsafe_allow_html=True)
+    st.markdown('<div class="table-scroll-wrapper">' + "".join(html_rent) + '</div>', unsafe_allow_html=True)
     st.stop()
 
 elif aba_selecionada == "Índices":
@@ -1585,7 +1585,7 @@ with st.popover("↗ GRÁFICOS"):
         if target_col.button(tk, key=f"btn_{tk}", use_container_width=True):
             exibir_grafico_popup(tk, master_data)
 
-html_d = ['<div class="desktop-view"><table class="bb-table"><thead><tr>']
+html_d = ['<div class="desktop-view"><div class="table-scroll-wrapper"><table class="bb-table"><thead><tr>']
 for h in headers:
     html_d.append(f'<th>{h.upper()}</th>')
 html_d.append('</tr></thead><tbody>')
@@ -1647,6 +1647,6 @@ for t in t_list:
     except Exception:
         continue
 
-html_d.append('</tbody></table></div>')
+html_d.append('</tbody></table></div></div>')
 html_m.append('</div>')
 st.markdown("".join(html_d) + "".join(html_m), unsafe_allow_html=True)
