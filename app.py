@@ -55,7 +55,21 @@ st.markdown("""
 *, *::before, *::after { box-sizing: border-box; }
 header, [data-testid="stStatusWidget"] { visibility: hidden !important; }
 .block-container { padding: 0.75rem 1rem 2rem !important; max-width: 100% !important; }
-section[data-testid="stSidebar"] { display: none; }
+/* Sidebar escura */
+section[data-testid="stSidebar"] {
+    background-color: #0d0d0d !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label {
+    color: #999 !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 1.5px !important;
+    text-transform: uppercase !important;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label[data-checked="true"] {
+    color: #FF9900 !important;
+    font-weight: 700 !important;
+}
 div[data-testid="stDecoration"] { display: none; }
 
 /* ── SCROLLBAR ── */
@@ -329,33 +343,6 @@ summary:hover { background: #0f0f0f; }
     -webkit-overflow-scrolling: touch;
 }
 
-/* Desktop: expander invisível, pills direto */
-@media (min-width: 769px) {
-    div[data-testid="stExpander"] {
-        border: none !important;
-        background: transparent !important;
-        box-shadow: none !important;
-    }
-    div[data-testid="stExpander"] details {
-        border: none !important;
-        background: transparent !important;
-    }
-    div[data-testid="stExpander"] summary {
-        display: none !important;
-    }
-    div[data-testid="stExpander"] details[open] > div,
-    div[data-testid="stExpander"] details > div {
-        display: block !important;
-    }
-    div[data-testid="stExpander"] details {
-        pointer-events: auto;
-    }
-    div[data-testid="stExpander"] details:not([open]) > div {
-        display: block !important;
-        height: auto !important;
-        overflow: visible !important;
-    }
-}
 
 @media (max-width: 768px) {
     html, body, .stApp {
@@ -386,28 +373,6 @@ summary:hover { background: #0f0f0f; }
         max-width: 100vw;
         touch-action: pan-x pan-y;
     }
-
-    /* Expander como menu colapsável mobile */
-div[data-testid="stExpander"] {
-    border: 1px solid #1a1a1a !important;
-    border-radius: 2px !important;
-    margin-bottom: 8px !important;
-    background: #0d0d0d !important;
-}
-div[data-testid="stExpander"] summary {
-    background: #0d0d0d !important;
-    color: #FF9900 !important;
-    font-family: 'IBM Plex Mono', monospace !important;
-    font-size: 0.7rem !important;
-    letter-spacing: 2px !important;
-    padding: 12px 14px !important;
-}
-div[data-testid="stExpander"] summary span {
-    color: #FF9900 !important;
-}
-div[data-testid="stExpander"] svg {
-    color: #FF9900 !important;
-}
 
     div[data-testid="stPopover"] { display: none !important; }
 
@@ -800,12 +765,12 @@ if master_data.empty:
 # 9. NAVEGAÇÃO
 # ──────────────────────────────────────────────
 
-st.markdown('<div style="margin-top:8px;"></div>', unsafe_allow_html=True)
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices",
               "Backtest", "Backtest portfólio", "Banco de dados", "Calendário econômico"]
 
-with st.expander("☰ MENU", expanded=False):
-    aba_selecionada = st.pills("", options=opcoes_nav, default="Cobertura", key="aba_nav")
+with st.sidebar:
+    st.markdown('<div style="font-family:\'IBM Plex Mono\',monospace; color:#FF9900; font-size:0.75rem; font-weight:700; letter-spacing:3px; padding:12px 0 10px 0; border-bottom:1px solid #FF9900; margin-bottom:12px;">MENU</div>', unsafe_allow_html=True)
+    aba_selecionada = st.radio("", options=opcoes_nav, index=0, key="aba_nav", label_visibility="collapsed")
 
 # ──────────────────────────────────────────────
 # 10. ABA: BANCO DE DADOS
