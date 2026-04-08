@@ -7,6 +7,7 @@ import streamlit.components.v1 as components
 from datetime import datetime, timedelta
 import numpy as np
 import base64
+from fpdf import FPDF
 
 # ──────────────────────────────────────────────
 # 1. CONFIG
@@ -1186,79 +1187,194 @@ if aba_selecionada == "Backtest portfólio":
             rent_table_html = "".join(html_rent)
             st.markdown('<div class="table-scroll-wrapper">' + rent_table_html + '</div>', unsafe_allow_html=True)
 
-            # ── Gerar relatório HTML para download ──
-            report_css = (
-                "body { background:#0a0a0a; color:#e0e0e0; font-family:'IBM Plex Mono',monospace; margin:20px; padding:20px; }\n"
-                "h1 { color:#FF9900; font-size:1.2rem; letter-spacing:3px; border-bottom:1px solid #FF9900; padding-bottom:8px; margin-bottom:4px; }\n"
-                "h2 { color:#aaa; font-size:0.7rem; letter-spacing:2px; text-transform:uppercase; margin-top:32px; margin-bottom:8px; border-bottom:1px solid #1a1a1a; padding-bottom:4px; }\n"
-                ".meta { font-size:0.65rem; color:#777; margin-bottom:20px; }\n"
-                ".kpi-row { display:flex; gap:12px; margin:16px 0 24px 0; flex-wrap:wrap; }\n"
-                ".kpi-box { border:1px solid #1a1a1a; padding:10px 16px; min-width:140px; }\n"
-                ".kpi-label { font-size:0.55rem; color:#aaa; letter-spacing:2px; text-transform:uppercase; }\n"
-                ".kpi-val { font-size:1rem; font-weight:700; margin-top:4px; }\n"
-                ".chart-container { margin:12px 0 24px 0; }\n"
-                ".rent-table { width:100%; border-collapse:collapse; font-family:'IBM Plex Mono',monospace; font-size:0.68rem; border:1px solid #1a1a1a; margin:12px 0; }\n"
-                ".rent-table th { background:#0d0d0d; color:#FF9900; padding:6px 4px; border:1px solid #1a1a1a; text-transform:uppercase; font-size:0.58rem; letter-spacing:1px; text-align:center; }\n"
-                ".rent-table td { padding:5px 4px; border:1px solid #111; color:#e0e0e0; text-align:center; font-variant-numeric:tabular-nums; }\n"
-                ".rent-year { background:#0d0d0d !important; font-weight:700; color:#e0e0e0 !important; text-align:left !important; padding-left:8px !important; }\n"
-                ".rent-total { background:#0d0d0d; font-weight:700; }\n"
-                ".comp-table { border-collapse:collapse; font-size:0.72rem; margin:8px 0 16px 0; }\n"
-                ".comp-table th { color:#FF9900; text-align:left; padding:6px 12px; border-bottom:1px solid #FF9900; font-size:0.6rem; letter-spacing:1px; text-transform:uppercase; }\n"
-                ".comp-table td { padding:5px 12px; border-bottom:1px solid #111; color:#e0e0e0; }\n"
-                "@media print { body { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; } }\n"
-            )
+            # ── Gerar PDF estilo lâmina ──
+            import tempfile, os
+            pdf = FPDF(orientation='P', unit='mm', format='A4')
+            pdf.set_auto_page_break(auto=False)
+            pdf.add_page()
+            W = 210
+            H = 297
+            M = 8
+            pdf.set_fill_color(10, 10, 10)
+            pdf.rect(0, 0, W, H, 'F')
 
-            rel_val = var_ticker - var_bench
-            kpi_html = (
-                '<div class="kpi-row">'
-                '<div class="kpi-box"><div class="kpi-label">RETORNO PORTFÓLIO</div>'
-                f'<div class="kpi-val" style="color:{"#00C853" if var_ticker>=0 else "#FF3D3D"}">{var_ticker:+.2f}%</div></div>'
-                f'<div class="kpi-box"><div class="kpi-label">RETORNO {bench_label.upper()}</div>'
-                f'<div class="kpi-val" style="color:{"#00C853" if var_bench>=0 else "#FF3D3D"}">{var_bench:+.2f}%</div></div>'
-                '<div class="kpi-box"><div class="kpi-label">RELATIVO</div>'
-                f'<div class="kpi-val" style="color:{"#00C853" if rel_val>=0 else "#FF3D3D"}">{rel_val:+.2f}%</div></div>'
-                '</div>'
-            )
+            # Header
+            pdf.set_font('Helvetica', 'B', 13)
+            pdf.set_text_color(255, 153, 0)
+            pdf.set_xy(M, 7)
+            pdf.cell(0, 6, 'BACKTEST PORTFOLIO')
+            pdf.set_font('Helvetica', '', 5)
+            pdf.set_text_color(130, 130, 130)
+            pdf.set_xy(M, 14)
+            pdf.cell(0, 3, f'{data_ini.strftime("%d/%m/%Y")} a {data_fim.strftime("%d/%m/%Y")}  |  Benchmark: {bench_label}  |  {datetime.now().strftime("%d/%m/%Y %H:%M")}')
+            pdf.set_draw_color(255, 153, 0)
+            pdf.line(M, 18, W - M, 18)
 
-            comp_html = '<table class="comp-table"><tr><th>TICKER</th><th>PESO</th></tr>'
+            # KPIs
+            ky = 20
+            vol_total = returns[ticker_bt].std() * (252 ** 0.5) * 100
+            dd_total = ((bt_data[ticker_bt] / bt_data[ticker_bt].cummax()) - 1).min() * 100
+            kpis = [
+                ("RETORNO", f"{var_ticker:+.2f}%", var_ticker >= 0),
+                (f"{bench_label.upper()}", f"{var_bench:+.2f}%", var_bench >= 0),
+                ("RELATIVO", f"{(var_ticker - var_bench):+.2f}%", (var_ticker - var_bench) >= 0),
+                ("VOLATILIDADE", f"{vol_total:.1f}%", None),
+                ("MAX DD", f"{dd_total:.2f}%", False),
+            ]
+            kw = (W - 2 * M) / len(kpis)
+            for i, (lbl, val, pos) in enumerate(kpis):
+                x = M + i * kw
+                pdf.set_font('Helvetica', '', 4)
+                pdf.set_text_color(140, 140, 140)
+                pdf.set_xy(x, ky)
+                pdf.cell(kw, 2.5, lbl)
+                pdf.set_font('Helvetica', 'B', 8)
+                if pos is None:
+                    pdf.set_text_color(224, 224, 224)
+                elif pos:
+                    pdf.set_text_color(0, 200, 83)
+                else:
+                    pdf.set_text_color(255, 61, 61)
+                pdf.set_xy(x, ky + 3)
+                pdf.cell(kw, 4, val)
+
+            # Composição + Rent mensal (zona superior)
+            sy = 30
+            n_ativos = len(weights_dict)
+            comp_height = max(n_ativos * 2.5 + 5, 18)
+
+            pdf.set_font('Helvetica', 'B', 5)
+            pdf.set_text_color(255, 153, 0)
+            pdf.set_xy(M, sy)
+            pdf.cell(60, 2.5, 'COMPOSICAO')
+            pdf.set_draw_color(50, 50, 50)
+            pdf.line(M, sy + 3, 68, sy + 3)
+            ry = sy + 5
+            pdf.set_font('Helvetica', '', 4.5)
             for tk, w in weights_dict.items():
-                comp_html += f'<tr><td style="color:#fff; font-weight:700;">{tk}</td><td>{w*100:.1f}%</td></tr>'
-            comp_html += '</table>'
+                pdf.set_text_color(200, 200, 200)
+                pdf.set_xy(M, ry)
+                pdf.cell(30, 2.5, tk)
+                pdf.cell(12, 2.5, f'{w*100:.1f}%')
+                ry += 2.5
 
-            charts_html = ""
-            plotly_js_included = False
-            for chart_title, fig in _report_figs:
-                include_js = 'cdn' if not plotly_js_included else False
-                plotly_js_included = True
-                fig_for_report = go.Figure(fig)
-                fig_for_report.update_layout(paper_bgcolor='#0a0a0a', plot_bgcolor='#0a0a0a')
-                chart_div = pio.to_html(fig_for_report, full_html=False, include_plotlyjs=include_js)
-                charts_html += f'<h2>{chart_title}</h2><div class="chart-container">{chart_div}</div>'
+            # Rent mensal
+            pdf.set_font('Helvetica', 'B', 5)
+            pdf.set_text_color(255, 153, 0)
+            pdf.set_xy(75, sy)
+            pdf.cell(0, 2.5, 'RENTABILIDADE MENSAL')
+            pdf.line(75, sy + 3, W - M, sy + 3)
+            ms = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ','ANO']
+            cw2 = 9.2
+            tx = 75
+            pdf.set_font('Helvetica', 'B', 3.5)
+            pdf.set_text_color(255, 153, 0)
+            pdf.set_xy(tx, sy + 4.5)
+            pdf.cell(7, 2, 'ANO')
+            for j, m in enumerate(ms):
+                pdf.set_xy(tx + 7 + j * cw2, sy + 4.5)
+                pdf.cell(cw2, 2, m, align='C')
+            pdf.set_font('Helvetica', '', 3.5)
+            tr_y = sy + 7
+            for year in pivot_ret.index[::-1]:
+                if tr_y > sy + 24:
+                    break
+                pdf.set_text_color(200, 200, 200)
+                pdf.set_xy(tx, tr_y)
+                pdf.cell(7, 2.5, str(year))
+                for j, cn in enumerate(pivot_ret.columns):
+                    v = pivot_ret.loc[year, cn]
+                    pdf.set_xy(tx + 7 + j * cw2, tr_y)
+                    if pd.isna(v):
+                        pdf.set_text_color(80, 80, 80)
+                        pdf.cell(cw2, 2.5, '-', align='C')
+                    else:
+                        if v > 0:
+                            pdf.set_text_color(0, 200, 83)
+                        elif v < 0:
+                            pdf.set_text_color(255, 61, 61)
+                        else:
+                            pdf.set_text_color(200, 200, 200)
+                        pdf.cell(cw2, 2.5, f'{v:.1f}%', align='C')
+                tr_y += 2.5
 
-            report_full_html = (
-                '<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n'
-                '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-                '<title>Backtest Portfólio</title>\n'
-                f'<style>\n{report_css}</style>\n</head>\n<body>\n'
-                '<h1>BACKTEST PORTFÓLIO</h1>\n'
-                f'<div class="meta">Gerado em {datetime.now().strftime("%d/%m/%Y %H:%M")} &nbsp;|&nbsp; '
-                f'Período: {data_ini.strftime("%d/%m/%Y")} a {data_fim.strftime("%d/%m/%Y")} &nbsp;|&nbsp; '
-                f'Benchmark: {bench_label}</div>\n'
-                f'{kpi_html}\n'
-                '<h2>COMPOSIÇÃO</h2>\n'
-                f'{comp_html}\n'
-                f'{charts_html}\n'
-                '<h2>RENTABILIDADE MENSAL</h2>\n'
-                f'{rent_table_html}\n'
-                '</body>\n</html>'
-            )
+            # Calcula onde começam os gráficos
+            charts_start = max(sy + comp_height + 2, sy + 28)
+            chart_area = H - charts_start - 8  # espaço até o footer
+            row_h = chart_area / 3 - 3  # 3 linhas de gráficos
+            half = (W - 2 * M - 4) / 2
 
+            # Helper gráfico (sem título interno)
+            def export_fig(fig_src, x, y, w, h, extra=None):
+                try:
+                    f = go.Figure(fig_src)
+                    layout = dict(
+                        paper_bgcolor='#0a0a0a', plot_bgcolor='#0a0a0a',
+                        width=int(w * 5.5), height=int(h * 5.5),
+                        margin=dict(l=35, r=15, t=8, b=25),
+                        font=dict(color='#ccc', size=9),
+                        title=None, showlegend=True,
+                        legend=dict(font=dict(size=7), bgcolor='rgba(0,0,0,0)')
+                    )
+                    if extra:
+                        layout.update(extra)
+                    f.update_layout(**layout)
+                    with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+                        p = tmp.name
+                    f.write_image(p, scale=2, engine='kaleido')
+                    pdf.image(p, x=x, y=y, w=w, h=h)
+                    os.unlink(p)
+                except Exception:
+                    pass
+
+            # Label helper
+            def lbl(text, x, y):
+                pdf.set_font('Helvetica', 'B', 4.5)
+                pdf.set_text_color(255, 153, 0)
+                pdf.set_xy(x, y)
+                pdf.cell(half, 2.5, text)
+
+            # Linha 1: Donut + Performance
+            y1 = charts_start
+            lbl('COMPOSICAO', M, y1)
+            lbl('PERFORMANCE BASE 100', M + half + 4, y1)
+            y1 += 3
+            export_fig(fig_pie, M, y1, half, row_h,
+                    {'margin': dict(l=5, r=5, t=5, b=5), 'showlegend': False})
+            export_fig(fig_bt, M + half + 4, y1, half, row_h)
+
+            # Linha 2: Vol + DD
+            y2 = y1 + row_h + 4
+            lbl('VOLATILIDADE 21D', M, y2)
+            lbl('DRAWDOWN', M + half + 4, y2)
+            y2 += 3
+            export_fig(fig_vol, M, y2, half, row_h)
+            export_fig(fig_dd, M + half + 4, y2, half, row_h)
+
+            # Linha 3: Individual + Contribuição
+            y3 = y2 + row_h + 4
+            lbl('RENTABILIDADE INDIVIDUAL', M, y3)
+            lbl('CONTRIBUICAO (P.P.)', M + half + 4, y3)
+            y3 += 3
+            export_fig(fig_a, M, y3, half, row_h,
+                    {'legend': dict(font=dict(size=5), orientation='h', y=-0.2, bgcolor='rgba(0,0,0,0)'),
+                        'margin': dict(l=30, r=10, t=5, b=35)})
+            export_fig(fig_c, M + half + 4, y3, half, row_h,
+                    {'margin': dict(l=50, r=10, t=5, b=20)})
+
+            # Footer
+            pdf.set_font('Helvetica', '', 3.5)
+            pdf.set_text_color(80, 80, 80)
+            pdf.set_xy(M, H - 5)
+            pdf.cell(0, 3, f'Terminal Market Intelligence  |  {datetime.now().strftime("%d/%m/%Y %H:%M")}  |  Dados: Yahoo Finance  |  Este documento nao constitui recomendacao de investimento.')
+
+            pdf_bytes = pdf.output()
             st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
             st.download_button(
-                "↓ EXPORTAR RELATÓRIO",
-                data=report_full_html.encode('utf-8'),
-                file_name=f"backtest_portfolio_{datetime.now().strftime('%Y%m%d_%H%M')}.html",
-                mime="text/html"
+                "↓ EXPORTAR PDF",
+                data=bytes(pdf_bytes),
+                file_name=f"backtest_portfolio_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                mime="application/pdf"
             )
 
         except Exception as e:
