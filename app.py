@@ -810,38 +810,41 @@ with st.sidebar:
     # Fecha a sidebar ao clicar numa aba (mobile)
 components.html("""
 <script>
-function attachSidebarClose() {
+function setup() {
     const doc = window.parent.document;
-    const radios = doc.querySelectorAll('section[data-testid="stSidebar"] input[type="radio"]');
-    if (radios.length === 0) return false;
-    radios.forEach(r => {
-        if (!r._listenerAdded) {
-            r.addEventListener('click', () => {
+    const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+    if (!sidebar) return false;
+    const labels = sidebar.querySelectorAll('[data-testid="stRadio"] label');
+    if (labels.length === 0) return false;
+    labels.forEach(label => {
+        if (!label._closeAdded) {
+            label.addEventListener('click', () => {
                 if (window.innerWidth <= 768) {
                     setTimeout(() => {
-                        const closeBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"]')
-                            || doc.querySelector('button[kind="headerNoPadding"]')
-                            || doc.querySelector('section[data-testid="stSidebar"] button[aria-label="Close"]');
-                        if (closeBtn) closeBtn.click();
-                    }, 200);
+                        // Tenta todos os seletores possíveis do botão fechar
+                        const btns = doc.querySelectorAll('button');
+                        for (const btn of btns) {
+                            if (btn.getAttribute('data-testid') === 'stSidebarCollapseButton'
+                                || btn.getAttribute('aria-label') === 'Close'
+                                || btn.getAttribute('aria-expanded') === 'true') {
+                                btn.click();
+                                break;
+                            }
+                        }
+                    }, 300);
                 }
             });
-            r._listenerAdded = true;
+            label._closeAdded = true;
         }
     });
     return true;
 }
-
-// Tenta imediatamente
-if (!attachSidebarClose()) {
-    // Se não encontrou, observa mudanças no DOM
-    const observer = new MutationObserver(() => {
-        if (attachSidebarClose()) observer.disconnect();
-    });
-    observer.observe(window.parent.document.body, { childList: true, subtree: true });
-    // Timeout de segurança
-    setTimeout(() => observer.disconnect(), 10000);
-}
+// Retry até encontrar
+let attempts = 0;
+const interval = setInterval(() => {
+    if (setup() || attempts > 30) clearInterval(interval);
+    attempts++;
+}, 500);
 </script>
 """, height=0, width=0)
 
