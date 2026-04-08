@@ -810,16 +810,38 @@ with st.sidebar:
     # Fecha a sidebar ao clicar numa aba (mobile)
 components.html("""
 <script>
-const doc = window.parent.document;
-const radios = doc.querySelectorAll('section[data-testid="stSidebar"] input[type="radio"]');
-radios.forEach(r => {
-    r.addEventListener('change', () => {
-        const closeBtn = doc.querySelector('button[data-testid="stSidebarCollapseButton"]');
-        if (closeBtn && window.innerWidth <= 768) {
-            setTimeout(() => closeBtn.click(), 150);
+function attachSidebarClose() {
+    const doc = window.parent.document;
+    const radios = doc.querySelectorAll('section[data-testid="stSidebar"] input[type="radio"]');
+    if (radios.length === 0) return false;
+    radios.forEach(r => {
+        if (!r._listenerAdded) {
+            r.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    setTimeout(() => {
+                        const closeBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"]')
+                            || doc.querySelector('button[kind="headerNoPadding"]')
+                            || doc.querySelector('section[data-testid="stSidebar"] button[aria-label="Close"]');
+                        if (closeBtn) closeBtn.click();
+                    }, 200);
+                }
+            });
+            r._listenerAdded = true;
         }
     });
-});
+    return true;
+}
+
+// Tenta imediatamente
+if (!attachSidebarClose()) {
+    // Se não encontrou, observa mudanças no DOM
+    const observer = new MutationObserver(() => {
+        if (attachSidebarClose()) observer.disconnect();
+    });
+    observer.observe(window.parent.document.body, { childList: true, subtree: true });
+    // Timeout de segurança
+    setTimeout(() => observer.disconnect(), 10000);
+}
 </script>
 """, height=0, width=0)
 
