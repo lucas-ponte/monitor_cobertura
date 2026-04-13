@@ -506,11 +506,11 @@ INDICES_LIST = ["^BVSP", "SMALL11.SA", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "
                 "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
 
 COBERTURA = {
-    "AZZA3.SA": {"Rec": "Compra", "Alvo": 50.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 23.00},
-    "MGLU3.SA": {"Rec": "Neutro", "Alvo": 10.00}, "MELI":     {"Rec": "Compra", "Alvo": 2810.00},
-    "ASAI3.SA": {"Rec": "Compra", "Alvo": 18.00}, "RADL3.SA": {"Rec": "Compra", "Alvo": 29.00},
-    "SMFT3.SA": {"Rec": "Compra", "Alvo": 36.00}, "NATU3.SA": {"Rec": "Compra", "Alvo": 15.00},
-    "AUAU3.SA": {"Rec": "Neutro", "Alvo": 3.00},  "ABEV3.SA": {"Rec": "Neutro", "Alvo": 15.00},
+    "AZZA3.SA": {"Rec": "Compra", "Alvo": 45.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 19.00},
+    "MGLU3.SA": {"Rec": "Neutro", "Alvo": 9.00}, "MELI":     {"Rec": "Compra", "Alvo": 2600.00},
+    "ASAI3.SA": {"Rec": "Compra", "Alvo": 14.00}, "RADL3.SA": {"Rec": "Compra", "Alvo": 33.00},
+    "SMFT3.SA": {"Rec": "Compra", "Alvo": 33.00}, "NATU3.SA": {"Rec": "Compra", "Alvo": 16.00},
+    "AUAU3.SA": {"Rec": "Neutro", "Alvo": 6.00},  "ABEV3.SA": {"Rec": "Neutro", "Alvo": 17.00},
     "MULT3.SA": {"Rec": "Compra", "Alvo": 35.00}, "WEGE3.SA": {"Rec": "Neutro", "Alvo": 49.00},
     "RENT3.SA": {"Rec": "Compra", "Alvo": 58.00}, "SLCE3.SA": {"Rec": "Compra", "Alvo": 24.60},
     "JBS":      {"Rec": "Compra", "Alvo": 20.00}, "MBRF3.SA": {"Rec": "Neutro", "Alvo": 22.00},
