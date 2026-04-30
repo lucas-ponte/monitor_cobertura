@@ -498,7 +498,7 @@ APORTES_USUARIO = [
     {"ticker": "PRIO3.SA", "data": "2025-12-19", "qtd": 4},
     {"ticker": "VALE3.SA", "data": "2026-01-23", "qtd": 3},
     {"ticker": "MDIA3.SA", "data": "2026-02-09", "qtd": -5},
-    {"ticker": "SBSP3.SA", "data": "2026-02-09", "qtd": 1},
+    {"ticker": "SBSP3.SA", "data": "2026-02-09", "qtd": 5},
 ]
 
 INDICES_LIST = ["^BVSP", "SMALL11.SA", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "^N225",
