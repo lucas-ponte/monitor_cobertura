@@ -506,7 +506,7 @@ INDICES_LIST = ["^BVSP", "SMALL11.SA", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "
                 "BRL=X", "DX-Y.NYB", "BTC-USD", "ES=F", "BZ=F", "TIO=F", "GC=F"]
 
 COBERTURA = {
-    "AZZA3.SA": {"Rec": "Compra", "Alvo": 45.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 19.00},
+    "AZZA3.SA": {"Rec": "Neutro", "Alvo": 46.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 19.00},
     "MGLU3.SA": {"Rec": "Neutro", "Alvo": 9.00}, "MELI":     {"Rec": "Compra", "Alvo": 2600.00},
     "ASAI3.SA": {"Rec": "Compra", "Alvo": 14.00}, "RADL3.SA": {"Rec": "Compra", "Alvo": 33.00},
     "SMFT3.SA": {"Rec": "Compra", "Alvo": 33.00}, "NATU3.SA": {"Rec": "Compra", "Alvo": 16.00},
