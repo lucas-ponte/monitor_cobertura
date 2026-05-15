@@ -542,6 +542,8 @@ SETORES_ACOMPANHAMENTO = {
 
 DB_MACRO = {
     "Índice de confiança de serviços":               {"fonte": "bcb",  "codigo": 17660,                "freq": "mensal"},
+    "Inadimplência PF cartão de crédito total":      {"fonte": "bcb",  "codigo": 21129,                "freq": "mensal"},
+    "Inadimplência PF carteira de crédito total":    {"fonte": "bcb",  "codigo": 21084,                "freq": "mensal"},
     "CDI anualizado":                                {"fonte": "bcb",  "codigo": 4389,                 "freq": "diario"},
     "TJLP mensal":                                   {"fonte": "bcb",  "codigo": 256,                  "freq": "mensal"},
     "Taxa Selic":                                    {"fonte": "bcb",  "codigo": 432,                  "freq": "diario"},
