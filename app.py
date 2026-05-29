@@ -716,9 +716,13 @@ def apply_chart_layout(fig, title="", height=350, legend=False):
 
 @st.dialog("COTAÇÃO", width="large")
 def exibir_grafico_popup(t_sel, data):
+    _grafico_fragment(t_sel, data)
+
+@st.fragment
+def _grafico_fragment(t_sel, data):
     per_map = {"30D": 21, "6M": 126, "12M": 252, "5A": 1260, "YTD": "ytd"}
     nova = st.pills("", options=list(per_map.keys()), key="pills_popup",
-                     default=st.session_state.periodo_grafico)
+                    default=st.session_state.periodo_grafico)
     if nova:
         st.session_state.periodo_grafico = nova
     try:
@@ -784,32 +788,30 @@ with c_btn:
         st.cache_data.clear()
         st.rerun()
 
-# ──────────────────────────────────────────────
-# 8. DADOS MASTER
-# ──────────────────────────────────────────────
-
-tickers_carteira_usuario = list(set([item['ticker'] for item in APORTES_USUARIO]))
-all_tickers_master = sorted(list(set(
-    list(COBERTURA.keys()) +
-    [t for s in SETORES_ACOMPANHAMENTO.values() for t in s] +
-    tickers_carteira_usuario + INDICES_LIST
-)))
-master_data = get_all_data(all_tickers_master)
-
-if master_data.empty:
-    st.error("DADOS INDISPONÍVEIS. Verifique a conexão e tente novamente.")
-    st.stop()
-
-# ──────────────────────────────────────────────
-# 9. NAVEGAÇÃO
-# ──────────────────────────────────────────────
+# ── 8. NAVEGAÇÃO ──
+tickers_carteira_usuario = list(set(item['ticker'] for item in APORTES_USUARIO))
 
 opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices",
               "Backtest", "Backtest portfólio", "Banco de dados", "Calendário econômico"]
 
 with st.sidebar:
-    st.markdown('<div style="font-family:\'IBM Plex Mono\',monospace; color:#FF9900; font-size:0.75rem; font-weight:700; letter-spacing:3px; padding:12px 0 10px 0; border-bottom:1px solid #FF9900; margin-bottom:12px;">MENU</div>', unsafe_allow_html=True)
-    aba_selecionada = st.radio("", options=opcoes_nav, index=0, key="aba_nav", label_visibility="collapsed")
+    st.markdown('<div ...>MENU</div>', unsafe_allow_html=True)  # mantenha seu markdown atual
+    aba_selecionada = st.radio("", options=opcoes_nav, index=0,
+                               key="aba_nav", label_visibility="collapsed")
+
+# ── 9. DADOS MASTER — só carrega nas abas que realmente usam ──
+ABAS_COM_DADOS = {"Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"}
+master_data = pd.DataFrame()
+if aba_selecionada in ABAS_COM_DADOS:
+    all_tickers_master = sorted(set(
+        list(COBERTURA.keys())
+        + [t for s in SETORES_ACOMPANHAMENTO.values() for t in s]
+        + tickers_carteira_usuario + INDICES_LIST
+    ))
+    master_data = get_all_data(all_tickers_master)
+    if master_data.empty:
+        st.error("DADOS INDISPONÍVEIS. Verifique a conexão e tente novamente.")
+        st.stop()
 
 # ──────────────────────────────────────────────
 # 10. ABA: BANCO DE DADOS
