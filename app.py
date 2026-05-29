@@ -585,7 +585,7 @@ DB_MACRO = {
 @st.cache_data(ttl=1800)
 def get_all_data(tickers):
     try:
-        with st.spinner(""):
+        with st.spinner("Carregando cotações..."):
             data = yf.download(tickers, period="5y", group_by='ticker',
                                auto_adjust=True, progress=False, threads=True)
             return data if not data.empty else pd.DataFrame()
