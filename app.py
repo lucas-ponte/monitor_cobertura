@@ -1879,10 +1879,35 @@ if aba_selecionada == "Cobertura":
         tickers_rec_all = rec_tickers + (["^BVSP"] if "^BVSP" not in rec_tickers else [])
 
         try:
-            valid_rec = [t for t in tickers_rec_all if t in master_data.columns.levels[0]]
-            prices_rec = pd.DataFrame({t: master_data[t]['Close'] for t in valid_rec})
-            prices_rec.index = prices_rec.index.tz_localize(None)
-            prices_rec = prices_rec.sort_index().loc[start_date_rec:].ffill()
+            def _naive(s):
+                s = s.copy()
+                idx = pd.to_datetime(s.index)
+                if getattr(idx, "tz", None) is not None:
+                    idx = idx.tz_localize(None)
+                s.index = idx
+                return s
+
+            em_master = [t for t in tickers_rec_all if t in master_data.columns.levels[0]]
+            faltantes = [t for t in tickers_rec_all if t not in em_master]
+
+            series = {t: _naive(master_data[t]['Close']) for t in em_master}
+
+            # tickers fora do master_data (deslistados / fora da cobertura: AMER3, PETZ3, NTCO3...)
+            if faltantes:
+                extra = get_all_data(faltantes)
+                if not extra.empty:
+                    multi = isinstance(extra.columns, pd.MultiIndex)
+                    for t in faltantes:
+                        try:
+                            if multi:
+                                if t in extra.columns.levels[0]:
+                                    series[t] = _naive(extra[t]['Close'])
+                            else:                       # download de 1 ticker → colunas planas
+                                series[t] = _naive(extra['Close'])
+                        except Exception:
+                            continue
+
+            prices_rec = pd.DataFrame(series).sort_index().loc[start_date_rec:].ffill()
         except Exception:
             prices_rec = pd.DataFrame()
 
@@ -2017,3 +2042,63 @@ if aba_selecionada == "Cobertura":
                 fig_sharpe.add_trace(go.Scatter(x=sharpe_rolling.index, y=sharpe_rolling, line=dict(color="#fff", width=1.5)))
                 apply_chart_layout(fig_sharpe, "Índice Sharpe 30d Rolling", height=280)
                 st.plotly_chart(fig_sharpe, use_container_width=True, config={'displayModeBar': False})
+
+                # ── Rentabilidade individual desde o início da recomendação ──
+            held_prev = active.shift(1).fillna(0.0)   # ativo no fechamento de t-1
+            indiv_rows = []
+            for t in cols_rec:
+                rets_t = pct_rec[t].where(held_prev[t] > 0, 0.0)   # retorno só nos dias em compra
+                cum_pct = ((1 + rets_t).prod() - 1) * 100          # acumula todos os períodos em compra
+                dias = int(active[t].sum())
+                if dias == 0:
+                    continue
+                ev_t = df_rec[df_rec['ticker'] == t].sort_values('data')
+                inicio = ev_t['data'].min()
+                em_lista = bool(active[t].iloc[-1] > 0)
+                saida = None
+                if not em_lista:
+                    s_ = ev_t[ev_t['acao'] == 'saida']['data']
+                    saida = s_.max() if not s_.empty else None
+                indiv_rows.append({
+                    "Ticker": t, "EmLista": em_lista,
+                    "Inicio": inicio, "Saida": saida, "Dias": dias, "Rent": cum_pct,
+                })
+            df_indiv = pd.DataFrame(indiv_rows)
+
+            st.markdown('<div class="section-label" style="margin-top:24px;">RENTABILIDADE POR RECOMENDAÇÃO — DESDE O INÍCIO</div>', unsafe_allow_html=True)
+            filtro = st.pills("", options=["Todos", "Na lista", "Fora da lista"], default="Todos", key="filtro_recom")
+            if filtro == "Na lista":
+                df_view = df_indiv[df_indiv["EmLista"]]
+            elif filtro == "Fora da lista":
+                df_view = df_indiv[~df_indiv["EmLista"]]
+            else:
+                df_view = df_indiv
+
+            if not df_view.empty:
+                df_view = df_view.sort_values(["EmLista", "Rent"], ascending=[False, False])
+                hd = ['<div class="desktop-view"><div class="table-scroll-wrapper"><table class="bb-table"><thead><tr>',
+                      '<th>TICKER</th><th>STATUS</th><th>INÍCIO</th><th>SAÍDA</th><th>DIAS</th><th>RENT. ACUM.</th></tr></thead><tbody>']
+                hm = ['<div class="mobile-view">']
+                for _, r in df_view.iterrows():
+                    badge = ('<span class="rec-compra">NA LISTA</span>' if r["EmLista"]
+                             else '<span class="rec-neutro">FORA</span>')
+                    ini_s = r["Inicio"].strftime("%d/%m/%y")
+                    sai_s = r["Saida"].strftime("%d/%m/%y") if (r["Saida"] is not None and pd.notna(r["Saida"])) else "—"
+                    hd.append(f'<tr><td><span class="ticker-sym">{r["Ticker"]}</span></td>'
+                              f'<td style="text-align:left;">{badge}</td>'
+                              f'<td>{ini_s}</td><td>{sai_s}</td>'
+                              f'<td>{int(r["Dias"])}</td>'
+                              f'<td>{fmt_pct(r["Rent"])}</td></tr>')
+                    hm.append(f'<details><summary>'
+                              f'<div class="mob-header-left"><span class="mob-ticker">{r["Ticker"]}</span>&nbsp;{badge}</div>'
+                              f'<div class="mob-header-right"><span class="mob-today">{fmt_pct(r["Rent"])}</span></div></summary>'
+                              f'<div class="mob-content"><div class="mob-grid">'
+                              f'<div class="mob-item"><span class="mob-label">INÍCIO</span><span class="mob-val">{ini_s}</span></div>'
+                              f'<div class="mob-item"><span class="mob-label">SAÍDA</span><span class="mob-val">{sai_s}</span></div>'
+                              f'<div class="mob-item"><span class="mob-label">DIAS</span><span class="mob-val">{int(r["Dias"])}</span></div>'
+                              f'</div></div></details>')
+                hd.append('</tbody></table></div></div>')
+                hm.append('</div>')
+                st.markdown("".join(hd) + "".join(hm), unsafe_allow_html=True)
+            else:
+                st.info("Nenhuma ação para o filtro selecionado.")
