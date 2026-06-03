@@ -514,9 +514,42 @@ COBERTURA = {
     "MULT3.SA": {"Rec": "Compra", "Alvo": 35.00}, "WEGE3.SA": {"Rec": "Neutro", "Alvo": 49.00},
     "RENT3.SA": {"Rec": "Compra", "Alvo": 58.00}, "SLCE3.SA": {"Rec": "Compra", "Alvo": 24.60},
     "JBS":      {"Rec": "Compra", "Alvo": 20.00}, "MBRF3.SA": {"Rec": "Neutro", "Alvo": 22.00},
-    "BEEF3.SA": {"Rec": "Neutro", "Alvo": 7.00},  "EZTC3.SA": {"Rec": "Compra", "Alvo": 24.00},
-    "MRVE3.SA": {"Rec": "Neutro", "Alvo": 9.50},
+    "BEEF3.SA": {"Rec": "Neutro", "Alvo": 7.00}
 }
+
+# Histórico de recomendações de COMPRA (igual a APORTES_USUARIO).
+# Todo ticker listado entra como COMPRA na data informada e permanece até hoje.
+# Para tirar um ticker da lista, adicione um evento com "acao": "saida" na data.
+# O retorno acumula apenas o período em que o ticker esteve na lista.
+HISTORICO_RECOMENDACOES = [
+    {"ticker": "MGLU3.SA", "data": "2022-11-07"},
+    {"ticker": "AMER3.SA", "data": "2022-11-07"},
+    {"ticker": "AZZA3.SA", "data": "2022-11-07"},
+    {"ticker": "LREN3.SA", "data": "2022-11-07"},
+    {"ticker": "ASAI3.SA", "data": "2022-11-07"},
+    {"ticker": "PCAR3.SA", "data": "2022-11-07"},
+    {"ticker": "PETZ3.SA", "data": "2022-11-07"},
+    {"ticker": "RADL3.SA", "data": "2022-11-07"},
+    {"ticker": "MULT3.SA", "data": "2022-11-07"},
+    {"ticker": "MGLU3.SA", "data": "2022-12-22", "acao": "saida"},
+    {"ticker": "AMER3.SA", "data": "2022-12-22", "acao": "saida"},
+    {"ticker": "PETZ3.SA", "data": "2023-04-06", "acao": "saida"},
+    {"ticker": "ASAI3.SA", "data": "2023-06-27", "acao": "saida"},
+    {"ticker": "PCAR3.SA", "data": "2023-06-27", "acao": "saida"},
+    {"ticker": "ABEV3.SA", "data": "2023-08-02"},
+    {"ticker": "RADL3.SA", "data": "2023-08-09", "acao": "saida"},
+    {"ticker": "MELI", "data": "2023-11-13"},
+    {"ticker": "ASAI3.SA", "data": "2024-03-26"},
+    {"ticker": "NTCO3.SA", "data": "2024-04-22"},
+    {"ticker": "SMFT3.SA", "data": "2024-11-11"},
+    {"ticker": "RADL3.SA", "data": "2024-12-19"},
+    {"ticker": "ABEV3.SA", "data": "2025-03-27", "acao": "saida"},
+    {"ticker": "NTCO3.SA", "data": "2025-07-03", "acao": "saida"},
+    {"ticker": "NATU3.SA", "data": "2025-07-04"},
+    {"ticker": "AZZA3.SA", "data": "2026-05-12", "acao": "saida"},
+    # Exemplo de saída da lista de recomendações:
+    # {"ticker": "NATU3.SA", "data": "2026-03-01", "acao": "saida"},
+]
 
 SETORES_ACOMPANHAMENTO = {
     "IBOV":                        ["^BVSP"],
@@ -1789,3 +1822,198 @@ for t in t_list:
 html_d.append('</tbody></table></div></div>')
 html_m.append('</div>')
 st.markdown("".join(html_d) + "".join(html_m), unsafe_allow_html=True)
+
+if aba_selecionada == "Cobertura":
+
+    # ── Distribuição de recomendações + upside médio ──
+    rec_counts = {"Compra": 0, "Neutro": 0, "Venda": 0}
+    ups_compra, ups_total = [], []
+    for tk in COBERTURA:
+        rec = COBERTURA[tk]["Rec"]
+        rec_counts[rec] = rec_counts.get(rec, 0) + 1
+        try:
+            cl_ = master_data[tk]['Close'].dropna()
+            p_ = float(cl_.iloc[-1])
+            up_ = (COBERTURA[tk]["Alvo"] / p_ - 1) * 100
+            ups_total.append(up_)
+            if rec == "Compra":
+                ups_compra.append(up_)
+        except Exception:
+            continue
+
+    total_rec = sum(rec_counts.values()) or 1
+    pct_compra = rec_counts["Compra"] / total_rec * 100
+    pct_neutro = rec_counts["Neutro"] / total_rec * 100
+    pct_venda  = rec_counts["Venda"]  / total_rec * 100
+    up_med_compra = (sum(ups_compra) / len(ups_compra)) if ups_compra else 0.0
+    up_med_total  = (sum(ups_total)  / len(ups_total))  if ups_total  else 0.0
+
+    st.markdown('<div class="section-label" style="margin-top:24px;">DISTRIBUIÇÃO DE RECOMENDAÇÕES</div>', unsafe_allow_html=True)
+    dist_data = [
+        ("% COMPRA", f"{pct_compra:.1f}%", True),
+        ("% NEUTRO", f"{pct_neutro:.1f}%", None),
+        ("% VENDA",  f"{pct_venda:.1f}%",  (False if rec_counts["Venda"] > 0 else None)),
+        ("UPSIDE MÉD. COMPRA", f"{up_med_compra:+.2f}%", up_med_compra >= 0),
+        ("UPSIDE MÉD. TOTAL",  f"{up_med_total:+.2f}%",  up_med_total >= 0),
+    ]
+    dist_cols = st.columns(5)
+    for col, (lbl, val, is_pos) in zip(dist_cols, dist_data):
+        color = "#00C853" if is_pos is True else ("#FF3D3D" if is_pos is False else "#FF9900")
+        col.markdown(
+            f'<div style="border:1px solid #1a1a1a; padding:8px 10px; margin-top:10px;">'
+            f'  <div style="font-family:\'IBM Plex Mono\',monospace; font-size:0.52rem; color:#aaa; letter-spacing:2px;">{lbl}</div>'
+            f'  <div style="font-family:\'IBM Plex Mono\',monospace; font-size:0.9rem; font-weight:700; color:{color}; margin-top:3px;">{val}</div>'
+            f'</div>', unsafe_allow_html=True
+        )
+
+    # ── Performance das recomendações de COMPRA (pesos iguais) ──
+    if HISTORICO_RECOMENDACOES:
+        df_rec = pd.DataFrame(HISTORICO_RECOMENDACOES)
+        df_rec['data'] = pd.to_datetime(df_rec['data'])
+        if 'acao' not in df_rec.columns:
+            df_rec['acao'] = 'inicio'
+        df_rec['acao'] = df_rec['acao'].fillna('inicio').astype(str).str.lower()
+
+        start_date_rec = df_rec['data'].min()
+        rec_tickers = df_rec['ticker'].unique().tolist()
+        tickers_rec_all = rec_tickers + (["^BVSP"] if "^BVSP" not in rec_tickers else [])
+
+        try:
+            valid_rec = [t for t in tickers_rec_all if t in master_data.columns.levels[0]]
+            prices_rec = pd.DataFrame({t: master_data[t]['Close'] for t in valid_rec})
+            prices_rec.index = prices_rec.index.tz_localize(None)
+            prices_rec = prices_rec.sort_index().loc[start_date_rec:].ffill()
+        except Exception:
+            prices_rec = pd.DataFrame()
+
+        cols_rec = [t for t in rec_tickers if t in prices_rec.columns]
+
+        if not prices_rec.empty and cols_rec and "^BVSP" in prices_rec.columns:
+            # Matriz de presença por dia (trata entradas e saídas)
+            active = pd.DataFrame(0.0, index=prices_rec.index, columns=cols_rec)
+            for t in cols_rec:
+                ev = df_rec[df_rec['ticker'] == t].sort_values('data')
+                state = pd.Series(0.0, index=prices_rec.index)
+                for _, e in ev.iterrows():
+                    loc = prices_rec.index.searchsorted(e['data'])
+                    if loc < len(state):
+                        state.iloc[loc:] = 0.0 if e['acao'] == 'saida' else 1.0
+                active[t] = state
+
+            n_active = active.sum(axis=1)
+            weights_rec = active.div(n_active, axis=0).fillna(0.0)        # pesos iguais entre ativos do dia
+            pct_rec = prices_rec[cols_rec].pct_change().fillna(0.0)
+            weights_yest = weights_rec.shift(1).fillna(0.0)              # evita look-ahead
+            port_ret_rec = (weights_yest * pct_rec).sum(axis=1)
+
+            port_idx_rec = (1 + port_ret_rec).cumprod() * 100
+            ibov_ret_rec = prices_rec["^BVSP"].pct_change().fillna(0.0)
+            ibov_idx_rec = (1 + ibov_ret_rec).cumprod() * 100
+            if len(port_idx_rec) > 0:
+                port_idx_rec = (port_idx_rec / port_idx_rec.iloc[0]) * 100
+                ibov_idx_rec = (ibov_idx_rec / ibov_idx_rec.iloc[0]) * 100
+
+            var_rec   = port_idx_rec.iloc[-1] - 100
+            var_ibov  = ibov_idx_rec.iloc[-1] - 100
+            rec_hoje  = port_ret_rec.iloc[-1] * 100
+            ibov_hoje = ibov_ret_rec.iloc[-1] * 100
+            alfa_hoje = rec_hoje - ibov_hoje
+
+            st.markdown('<div class="section-label" style="margin-top:24px;">PERFORMANCE DAS RECOMENDAÇÕES DE COMPRA (PESOS IGUAIS)</div>', unsafe_allow_html=True)
+            kpi_rec = [
+                ("HOJE RECOM.",   f"{rec_hoje:+.2f}%", rec_hoje >= 0),
+                ("HOJE IBOV",     f"{ibov_hoje:+.2f}%", ibov_hoje >= 0),
+                ("ALFA HOJE",     f"{alfa_hoje:+.2f}%", alfa_hoje >= 0),
+                ("RETORNO TOTAL", f"{var_rec:+.2f}%", var_rec >= 0),
+                ("vs IBOVESPA",   f"{(var_rec - var_ibov):+.2f}%", (var_rec - var_ibov) >= 0),
+                ("ATIVOS",        f"{int(n_active.iloc[-1])}", None),
+            ]
+            kc = st.columns(6)
+            for col, (lbl, val, is_pos) in zip(kc, kpi_rec):
+                color = "#00C853" if is_pos is True else ("#FF3D3D" if is_pos is False else "#FF9900")
+                col.markdown(
+                    f'<div style="border:1px solid #1a1a1a; padding:8px 10px; margin-top:10px;">'
+                    f'  <div style="font-family:\'IBM Plex Mono\',monospace; font-size:0.52rem; color:#aaa; letter-spacing:2px;">{lbl}</div>'
+                    f'  <div style="font-family:\'IBM Plex Mono\',monospace; font-size:0.9rem; font-weight:700; color:{color}; margin-top:3px;">{val}</div>'
+                    f'</div>', unsafe_allow_html=True
+                )
+
+            # ── Tabela: rentabilidade do dia ponderada pelo peso ──
+            w_today = weights_rec.iloc[-1]
+            ret_today = pct_rec.iloc[-1] * 100
+            rows_daily = []
+            for t in cols_rec:
+                wt = float(w_today[t])
+                if wt <= 0:
+                    continue
+                rt = float(ret_today[t])
+                rows_daily.append({"Ticker": t, "Peso": wt * 100, "Ret": rt, "Contrib": wt * rt})
+            df_daily = pd.DataFrame(rows_daily)
+
+            st.markdown('<div class="section-label" style="margin-top:8px;">RENTABILIDADE DO DIA — PONDERADA PELO PESO</div>', unsafe_allow_html=True)
+            if not df_daily.empty:
+                df_daily = df_daily.sort_values("Contrib", ascending=False)
+                total_dia = df_daily["Contrib"].sum()
+                hd = ['<div class="desktop-view"><div class="table-scroll-wrapper"><table class="bb-table"><thead><tr>',
+                      '<th>TICKER</th><th>PESO</th><th>RET. DIA</th><th>CONTRIB.</th></tr></thead><tbody>']
+                hm = ['<div class="mobile-view">']
+                for _, r in df_daily.iterrows():
+                    hd.append(f'<tr><td><span class="ticker-sym">{r["Ticker"]}</span></td>'
+                              f'<td><span style="color:#fff">{fmt_num(r["Peso"])}%</span></td>'
+                              f'<td>{fmt_pct(r["Ret"])}</td>'
+                              f'<td>{fmt_pct(r["Contrib"])}</td></tr>')
+                    hm.append(f'<details><summary>'
+                              f'<div class="mob-header-left"><span class="mob-ticker">{r["Ticker"]}</span></div>'
+                              f'<div class="mob-header-right"><span class="mob-price" style="color:#fff">{fmt_num(r["Peso"])}%</span>'
+                              f'<span class="mob-today">{fmt_pct(r["Ret"])}</span></div></summary>'
+                              f'<div class="mob-content"><div class="mob-grid">'
+                              f'<div class="mob-item"><span class="mob-label">CONTRIB.</span><span class="mob-val">{fmt_pct(r["Contrib"])}</span></div>'
+                              f'</div></div></details>')
+                hd.append(f'<tr style="border-top:1px solid #FF9900; background:#0d0d0d;">'
+                          f'<td style="color:#FF9900; font-weight:700;">TOTAL PONDERADO</td><td></td><td></td>'
+                          f'<td>{fmt_pct(total_dia)}</td></tr>')
+                hd.append('</tbody></table></div></div>')
+                hm.append('</div>')
+                st.markdown("".join(hd) + "".join(hm), unsafe_allow_html=True)
+
+            # ── Gráficos (mesmo estilo/config da Carteira pessoal) ──
+            st.markdown('<div style="margin-top:20px;"></div>', unsafe_allow_html=True)
+            cR1, cR2 = st.columns(2)
+            with cR1:
+                fig_perf = go.Figure()
+                fig_perf.add_trace(go.Scatter(x=port_idx_rec.index, y=port_idx_rec, name=f"Recomendações ({var_rec:+.2f}%)", line=dict(color="#fff", width=1.5)))
+                fig_perf.add_trace(go.Scatter(x=ibov_idx_rec.index, y=ibov_idx_rec, name=f"Ibovespa ({var_ibov:+.2f}%)", line=dict(color="#FF9900", width=1.2)))
+                apply_chart_layout(fig_perf, "Rentabilidade vs Ibovespa", height=320, legend=True)
+                st.plotly_chart(fig_perf, use_container_width=True, config={'displayModeBar': False})
+            with cR2:
+                dd_rec = (port_idx_rec / port_idx_rec.cummax() - 1) * 100
+                fig_dd = go.Figure()
+                fig_dd.add_trace(go.Scatter(x=dd_rec.index, y=dd_rec, line=dict(color="#FF3D3D", width=1.5),
+                                            fill='tozeroy', fillcolor='rgba(255,61,61,0.06)'))
+                apply_chart_layout(fig_dd, "Drawdown", height=280)
+                st.plotly_chart(fig_dd, use_container_width=True, config={'displayModeBar': False})
+
+            c_vol, c_sharpe = st.columns(2)
+            with c_vol:
+                vol_rec  = port_ret_rec.rolling(21).std() * (252 ** 0.5) * 100
+                vol_ibov = ibov_ret_rec.rolling(21).std() * (252 ** 0.5) * 100
+                fig_vol = go.Figure()
+                fig_vol.add_trace(go.Scatter(x=vol_rec.index, y=vol_rec, name="Recomendações", line=dict(color="#fff", width=1.5)))
+                fig_vol.add_trace(go.Scatter(x=vol_ibov.index, y=vol_ibov, name="Ibov", line=dict(color="#FF9900", width=1.2)))
+                apply_chart_layout(fig_vol, "Volatilidade 21d", height=280, legend=True)
+                st.plotly_chart(fig_vol, use_container_width=True, config={'displayModeBar': False})
+            with c_sharpe:
+                info_selic = DB_MACRO["Taxa Selic"]
+                df_selic = get_macro_data("Taxa Selic", info_selic, start_date=start_date_rec)
+                if not df_selic.empty:
+                    df_selic['Data'] = pd.to_datetime(df_selic['Data'], dayfirst=True)
+                    df_selic = df_selic.set_index('Data').reindex(port_ret_rec.index).ffill().fillna(0)
+                    rf_daily = (1 + df_selic['Valor'] / 100) ** (1/252) - 1
+                else:
+                    rf_daily = pd.Series(0, index=port_ret_rec.index)
+                excess_ret = port_ret_rec - rf_daily
+                sharpe_rolling = (excess_ret.rolling(30).mean() / port_ret_rec.rolling(30).std()) * (252 ** 0.5)
+                fig_sharpe = go.Figure()
+                fig_sharpe.add_trace(go.Scatter(x=sharpe_rolling.index, y=sharpe_rolling, line=dict(color="#fff", width=1.5)))
+                apply_chart_layout(fig_sharpe, "Índice Sharpe 30d Rolling", height=280)
+                st.plotly_chart(fig_sharpe, use_container_width=True, config={'displayModeBar': False})
