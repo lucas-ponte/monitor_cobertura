@@ -908,13 +908,13 @@ if aba_selecionada == "Overview":
     .ov-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .ov-table {
         width: 100%; max-width: 700px; border-collapse: collapse;
-        font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem;
+        font-family: 'IBM Plex Mono', monospace; font-size: 1.00rem;
         border: 1px solid #1a1a1a; margin-top: 8px; table-layout: fixed;
     }
     .ov-table thead tr { background: #0d0d0d; border-bottom: 1px solid #FF9900; }
     .ov-table thead th {
         padding: 8px 12px; color: #FF9900; font-weight: 700; text-transform: uppercase;
-        letter-spacing: 1px; font-size: 0.68rem; border-right: 1px solid #1a1a1a;
+        letter-spacing: 1px; font-size: 0.82rem; border-right: 1px solid #1a1a1a;
         white-space: nowrap; text-align: right;
     }
     .ov-table thead th:first-child { text-align: left; }
@@ -922,11 +922,11 @@ if aba_selecionada == "Overview":
     .ov-table tbody tr:hover { background: #0f0f0f; }
     .ov-table tbody td {
         padding: 7px 12px; color: #d0d0d0; border-right: 1px solid #111;
-        text-align: right; white-space: nowrap; font-size: 0.82rem;
+        text-align: right; white-space: nowrap; font-size: 1.00rem;
     }
     .ov-table tbody td:first-child { text-align: left; color: #e8e8e8; font-weight: 500; }
     .ov-table .sector-row td {
-        color: #FF9900; font-weight: 700; letter-spacing: 2px; font-size: 0.68rem;
+        color: #FF9900; font-weight: 700; letter-spacing: 2px; font-size: 0.82rem;
         text-align: left; padding: 8px 12px; border-top: 1px solid #1e1e1e;
     }
     @media (max-width: 768px) { .ov-table { max-width: 100%; } }
