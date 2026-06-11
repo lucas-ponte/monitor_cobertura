@@ -836,6 +836,47 @@ with st.sidebar:
     aba_selecionada = st.radio("", options=opcoes_nav,
                                key="aba_nav", label_visibility="collapsed")
 
+# Fecha o menu lateral automaticamente ao clicar numa aba — apenas no mobile
+components.html(
+    """
+    <script>
+    const doc = window.parent.document;
+    const win = doc.defaultView || window.parent;
+
+    function isMobile() { return win.innerWidth <= 768; }
+
+    function collapseBtn() {
+        return doc.querySelector('[data-testid="stSidebarCollapseButton"] button')
+            || doc.querySelector('[data-testid="stSidebarCollapseButton"]')
+            || doc.querySelector('section[data-testid="stSidebar"] header button');
+    }
+
+    function doCollapse() {
+        const btn = collapseBtn();
+        // só clica se o botão estiver visível (ou seja, menu aberto) — evita reabrir
+        if (btn && btn.offsetParent !== null) btn.click();
+    }
+
+    function bind() {
+        const labels = doc.querySelectorAll('section[data-testid="stSidebar"] [data-testid="stRadio"] label');
+        labels.forEach(function(lbl) {
+            if (lbl.dataset.collBound) return;
+            lbl.dataset.collBound = '1';
+            lbl.addEventListener('click', function() {
+                if (!isMobile()) return;
+                setTimeout(doCollapse, 200);
+                setTimeout(doCollapse, 500);
+            });
+        });
+    }
+    bind();
+    setInterval(bind, 800);
+    </script>
+    """,
+    height=0, width=0
+)
+
+
 # ── 9. DADOS MASTER — só carrega nas abas que realmente usam ──
 ABAS_COM_DADOS = {"Overview", "Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"}
 master_data = pd.DataFrame()
