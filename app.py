@@ -841,36 +841,41 @@ components.html(
     """
     <script>
     const doc = window.parent.document;
-    const win = doc.defaultView || window.parent;
 
-    function isMobile() { return win.innerWidth <= 768; }
+    // injeta o script UMA vez na página principal (sobrevive às trocas de aba)
+    if (!doc.getElementById('__mobile_sidebar_collapse')) {
+        const s = doc.createElement('script');
+        s.id = '__mobile_sidebar_collapse';
+        s.textContent = `
+            (function() {
+                function isMobile() { return window.innerWidth <= 768; }
 
-    function collapseBtn() {
-        return doc.querySelector('[data-testid="stSidebarCollapseButton"] button')
-            || doc.querySelector('[data-testid="stSidebarCollapseButton"]')
-            || doc.querySelector('section[data-testid="stSidebar"] header button');
+                function collapseBtn() {
+                    return document.querySelector('[data-testid="stSidebarCollapseButton"] button')
+                        || document.querySelector('button[data-testid="stSidebarCollapseButton"]')
+                        || document.querySelector('[data-testid="stSidebarCollapseButton"]')
+                        || document.querySelector('[data-testid="baseButton-headerNoPadding"]')
+                        || document.querySelector('section[data-testid="stSidebar"] header button');
+                }
+
+                function doCollapse() {
+                    var btn = collapseBtn();
+                    // só clica se o botão estiver visível (menu aberto) — evita reabrir
+                    if (btn && btn.offsetParent !== null) btn.click();
+                }
+
+                // ouve cliques na página inteira e age só se for num item do menu
+                document.addEventListener('click', function(e) {
+                    if (!isMobile()) return;
+                    var alvo = e.target.closest('section[data-testid="stSidebar"] [data-testid="stRadio"] label');
+                    if (!alvo) return;
+                    setTimeout(doCollapse, 250);
+                    setTimeout(doCollapse, 600);
+                }, true);
+            })();
+        `;
+        doc.head.appendChild(s);
     }
-
-    function doCollapse() {
-        const btn = collapseBtn();
-        // só clica se o botão estiver visível (ou seja, menu aberto) — evita reabrir
-        if (btn && btn.offsetParent !== null) btn.click();
-    }
-
-    function bind() {
-        const labels = doc.querySelectorAll('section[data-testid="stSidebar"] [data-testid="stRadio"] label');
-        labels.forEach(function(lbl) {
-            if (lbl.dataset.collBound) return;
-            lbl.dataset.collBound = '1';
-            lbl.addEventListener('click', function() {
-                if (!isMobile()) return;
-                setTimeout(doCollapse, 200);
-                setTimeout(doCollapse, 500);
-            });
-        });
-    }
-    bind();
-    setInterval(bind, 800);
     </script>
     """,
     height=0, width=0
@@ -902,7 +907,7 @@ if aba_selecionada == "Overview":
     <style>
     .ov-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .ov-table {
-        width: 100%; max-width: 620px; border-collapse: collapse;
+        width: 100%; max-width: 700px; border-collapse: collapse;
         font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem;
         border: 1px solid #1a1a1a; margin-top: 8px; table-layout: fixed;
     }
