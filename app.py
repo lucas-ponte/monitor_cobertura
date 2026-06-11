@@ -824,16 +824,20 @@ with c_btn:
 # ── 8. NAVEGAÇÃO ──
 tickers_carteira_usuario = list(set(item['ticker'] for item in APORTES_USUARIO))
 
-opcoes_nav = ["Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices",
+opcoes_nav = ["Overview", "Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices",
               "Backtest", "Backtest portfólio", "Banco de dados", "Calendário econômico"]
+
+# Define "Overview" como página inicial e preserva a aba ao clicar em SYNC
+if "aba_nav" not in st.session_state:
+    st.session_state.aba_nav = "Overview"
 
 with st.sidebar:
     st.markdown('<div ...>MENU</div>', unsafe_allow_html=True)  # mantenha seu markdown atual
-    aba_selecionada = st.radio("", options=opcoes_nav, index=0,
+    aba_selecionada = st.radio("", options=opcoes_nav,
                                key="aba_nav", label_visibility="collapsed")
 
 # ── 9. DADOS MASTER — só carrega nas abas que realmente usam ──
-ABAS_COM_DADOS = {"Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"}
+ABAS_COM_DADOS = {"Overview", "Cobertura", "Acompanhamentos", "Carteira pessoal", "Índices"}
 master_data = pd.DataFrame()
 if aba_selecionada in ABAS_COM_DADOS:
     all_tickers_master = sorted(set(
@@ -845,6 +849,101 @@ if aba_selecionada in ABAS_COM_DADOS:
     if master_data.empty:
         st.error("DADOS INDISPONÍVEIS. Verifique a conexão e tente novamente.")
         st.stop()
+
+# ──────────────────────────────────────────────
+# ABA: OVERVIEW (página inicial)
+# ──────────────────────────────────────────────
+
+if aba_selecionada == "Overview":
+
+    # Estilo dedicado: fonte maior + largura contida (sem vãos enormes)
+    st.markdown("""
+    <style>
+    .ov-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .ov-table {
+        width: 100%; max-width: 620px; border-collapse: collapse;
+        font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem;
+        border: 1px solid #1a1a1a; margin-top: 8px; table-layout: fixed;
+    }
+    .ov-table thead tr { background: #0d0d0d; border-bottom: 1px solid #FF9900; }
+    .ov-table thead th {
+        padding: 8px 12px; color: #FF9900; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1px; font-size: 0.68rem; border-right: 1px solid #1a1a1a;
+        white-space: nowrap; text-align: right;
+    }
+    .ov-table thead th:first-child { text-align: left; }
+    .ov-table tbody tr { border-bottom: 1px solid #111; transition: background 0.1s; }
+    .ov-table tbody tr:hover { background: #0f0f0f; }
+    .ov-table tbody td {
+        padding: 7px 12px; color: #d0d0d0; border-right: 1px solid #111;
+        text-align: right; white-space: nowrap; font-size: 0.82rem;
+    }
+    .ov-table tbody td:first-child { text-align: left; color: #e8e8e8; font-weight: 500; }
+    .ov-table .sector-row td {
+        color: #FF9900; font-weight: 700; letter-spacing: 2px; font-size: 0.68rem;
+        text-align: left; padding: 8px 12px; border-top: 1px solid #1e1e1e;
+    }
+    @media (max-width: 768px) { .ov-table { max-width: 100%; } }
+    </style>
+    """, unsafe_allow_html=True)
+
+    def render_overview(titulo, lista_tickers):
+        st.markdown(f'<div class="section-label" style="margin-top:20px;">{titulo}</div>',
+                    unsafe_allow_html=True)
+
+        html_d = ['<div class="desktop-view"><div class="ov-wrap">'
+                  '<table class="ov-table">'
+                  '<colgroup><col style="width:46%"><col style="width:32%"><col style="width:22%"></colgroup>'
+                  '<thead><tr><th>TICKER</th><th>PREÇO</th><th>HOJE</th></tr></thead><tbody>']
+        html_m = ['<div class="mobile-view">']
+
+        for t in lista_tickers:
+            if isinstance(t, dict):  # linha de setor
+                sn = t["setor"].upper()
+                html_d.append(f'<tr class="sector-row"><td colspan="3" style="color:#FF9900; letter-spacing:2px;">{sn}</td></tr>')
+                html_m.append(f'<div class="mob-sector">{sn}</div>')
+                continue
+
+            if t not in master_data.columns.levels[0]:
+                continue
+            try:
+                cl = master_data[t]['Close'].dropna()
+                if cl.empty:
+                    continue
+                p = float(cl.iloc[-1])
+                sym = "R$ " if (t == "^BVSP" or ".SA" in t) else ""
+                v_h = calc_variation(cl, 1)
+
+                html_d.append(f'<tr><td><span class="ticker-sym">{t}</span></td>'
+                              f'<td>{fmt_price(p, sym)}</td>'
+                              f'<td>{fmt_pct(v_h)}</td></tr>')
+
+                html_m.append(
+                    f'<div style="display:flex; justify-content:space-between; '
+                    f'align-items:center; padding:11px 8px; border-bottom:1px solid #111;">'
+                    f'<span class="mob-ticker" style="font-size:0.82rem;">{t}</span>'
+                    f'<div style="display:flex; flex-direction:column; align-items:flex-end; gap:1px;">'
+                    f'<span class="mob-price" style="font-size:0.76rem;">{sym}{fmt_num(p)}</span>'
+                    f'<span class="mob-today" style="font-size:0.8rem;">{fmt_pct(v_h)}</span></div></div>'
+                )
+            except Exception:
+                continue
+
+        html_d.append('</tbody></table></div></div>')
+        html_m.append('</div>')
+        st.markdown("".join(html_d) + "".join(html_m), unsafe_allow_html=True)
+
+    # 1) Tabela de Índices
+    render_overview("ÍNDICES", INDICES_LIST)
+
+    # 2) Tabela de Acompanhamentos (com divisão por setor)
+    lista_acomp = []
+    for s, ticks in SETORES_ACOMPANHAMENTO.items():
+        lista_acomp.append({"setor": s})
+        lista_acomp.extend(ticks)
+    render_overview("ACOMPANHAMENTOS", lista_acomp)
+
+    st.stop()
 
 # ──────────────────────────────────────────────
 # 10. ABA: BANCO DE DADOS
