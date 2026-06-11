@@ -836,56 +836,46 @@ with st.sidebar:
     aba_selecionada = st.radio("", options=opcoes_nav,
                                key="aba_nav", label_visibility="collapsed")
 
+# Fecha o menu lateral automaticamente ao clicar numa aba — apenas no mobile
 components.html(
     """
     <script>
-    const doc  = window.parent.document;
-    const pwin = window.parent;
+    const doc = window.parent.document;
 
-    function isMobile() { return pwin.innerWidth <= 768; }
+    // injeta o script UMA vez na página principal (sobrevive às trocas de aba)
+    if (!doc.getElementById('__mobile_sidebar_collapse')) {
+        const s = doc.createElement('script');
+        s.id = '__mobile_sidebar_collapse';
+        s.textContent = `
+            (function() {
+                function isMobile() { return window.innerWidth <= 768; }
 
-    function collapseBtn() {
-        const sels = [
-            '[data-testid="stSidebarCollapseButton"] button',
-            'button[data-testid="stSidebarCollapseButton"]',
-            '[data-testid="stSidebarCollapseButton"]',
-            '[data-testid="baseButton-headerNoPadding"]',
-            'section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] button',
-            'section[data-testid="stSidebar"] header button',
-            'section[data-testid="stSidebar"] button[kind="header"]'
-        ];
-        for (const s of sels) { const el = doc.querySelector(s); if (el) return el; }
-        return null;
+                function collapseBtn() {
+                    return document.querySelector('[data-testid="stSidebarCollapseButton"] button')
+                        || document.querySelector('button[data-testid="stSidebarCollapseButton"]')
+                        || document.querySelector('[data-testid="stSidebarCollapseButton"]')
+                        || document.querySelector('[data-testid="baseButton-headerNoPadding"]')
+                        || document.querySelector('section[data-testid="stSidebar"] header button');
+                }
+
+                function doCollapse() {
+                    var btn = collapseBtn();
+                    // só clica se o botão estiver visível (menu aberto) — evita reabrir
+                    if (btn && btn.offsetParent !== null) btn.click();
+                }
+
+                // ouve cliques na página inteira e age só se for num item do menu
+                document.addEventListener('click', function(e) {
+                    if (!isMobile()) return;
+                    var alvo = e.target.closest('section[data-testid="stSidebar"] [data-testid="stRadio"] label');
+                    if (!alvo) return;
+                    setTimeout(doCollapse, 250);
+                    setTimeout(doCollapse, 600);
+                }, true);
+            })();
+        `;
+        doc.head.appendChild(s);
     }
-
-    function doCollapse() {
-        const btn = collapseBtn();
-        if (btn && btn.offsetParent !== null) { btn.click(); return true; }
-        return false;
-    }
-
-    // (A) Se houve clique no menu logo antes do recarregamento, fecha agora
-    if (isMobile() && pwin.__collapseAt && (Date.now() - pwin.__collapseAt < 3000)) {
-        pwin.__collapseAt = 0;
-        let n = 0;
-        const iv = setInterval(function() {
-            n++;
-            if (doCollapse() || n > 25) clearInterval(iv);
-        }, 80);
-    }
-
-    // (B) Liga o clique nos itens do menu
-    doc.querySelectorAll('section[data-testid="stSidebar"] [data-testid="stRadio"] label')
-       .forEach(function(lbl) {
-            if (lbl.dataset.collBound) return;
-            lbl.dataset.collBound = '1';
-            lbl.addEventListener('click', function() {
-                if (!isMobile()) return;
-                pwin.__collapseAt = Date.now();   // marca o pedido (sobrevive ao reload)
-                doCollapse();
-                setTimeout(doCollapse, 250);
-            });
-       });
     </script>
     """,
     height=0, width=0
