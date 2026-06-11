@@ -839,46 +839,64 @@ with st.sidebar:
 components.html(
     """
     <script>
-    const doc  = window.parent.document;
-    const pwin = window.parent;
+    (function() {
+        const doc  = window.parent.document;
+        const pwin = window.parent;
 
-    function isMobile() { return pwin.innerWidth <= 768; }
+        function isMobile() { return pwin.innerWidth <= 768; }
 
-    function collapseBtn() {
-        const sels = [
-            '[data-testid="stSidebarCollapseButton"] button',
-            'button[data-testid="stSidebarCollapseButton"]',
-            '[data-testid="stSidebarCollapseButton"]',
-            '[data-testid="baseButton-headerNoPadding"]',
-            'section[data-testid="stSidebar"] header button'
-        ];
-        for (const s of sels) { const el = doc.querySelector(s); if (el) return el; }
-        return null;
-    }
-    function doCollapse() {
-        const btn = collapseBtn();
-        if (btn && btn.offsetParent !== null) { btn.click(); return true; }
-        return false;
-    }
+        function collapseBtn() {
+            return doc.querySelector('[data-testid="stSidebarCollapseButton"] button')
+                || doc.querySelector('[data-testid="stSidebarCollapseButton"]')
+                || doc.querySelector('section[data-testid="stSidebar"] button[kind="headerNoPadding"]')
+                || doc.querySelector('section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] button');
+        }
+        function mark() { if (isMobile()) pwin.__collapseAt = Date.now(); }
 
-    // (A) Depois que a aba já trocou: se houve pedido recente, fecha o menu
-    if (isMobile() && pwin.__collapseAt && (Date.now() - pwin.__collapseAt < 5000)) {
-        let n = 0;
-        const iv = setInterval(function() {
-            n++;
-            if (doCollapse() || n > 30) { clearInterval(iv); pwin.__collapseAt = 0; }
-        }, 80);
-    }
+        // 1) Liga o clique direto nos itens do menu (só MARCA o pedido)
+        doc.querySelectorAll('section[data-testid="stSidebar"] [data-testid="stRadio"] label')
+           .forEach(function(lbl) {
+                if (lbl.dataset.collBound) return;
+                lbl.dataset.collBound = '1';
+                lbl.addEventListener('click', mark);
+           });
 
-    // (B) Ao tocar num item: SÓ marca o pedido. Não fecha agora (senão a aba não troca)
-    doc.querySelectorAll('section[data-testid="stSidebar"] [data-testid="stRadio"] label')
-       .forEach(function(lbl) {
-            if (lbl.dataset.collBound) return;
-            lbl.dataset.collBound = '1';
-            lbl.addEventListener('click', function() {
-                if (isMobile()) pwin.__collapseAt = Date.now();
-            });
-       });
+        // 2) Reforço: ouve cliques no documento todo (uma única vez)
+        if (!pwin.__collDeleg) {
+            pwin.__collDeleg = true;
+            doc.addEventListener('click', function(e) {
+                if (e.target && e.target.closest &&
+                    e.target.closest('section[data-testid="stSidebar"] [data-testid="stRadio"] label')) {
+                    mark();
+                }
+            }, true);
+        }
+
+        // 3) Ao recarregar: se houve pedido recente, fecha agora (a aba já trocou)
+        if (isMobile() && pwin.__collapseAt && (Date.now() - pwin.__collapseAt < 6000)) {
+            let n = 0;
+            const iv = setInterval(function() {
+                n++;
+                const btn = collapseBtn();
+                if ((btn && btn.offsetParent !== null && (btn.click(), true)) || n > 40) {
+                    clearInterval(iv); pwin.__collapseAt = 0;
+                }
+            }, 70);
+        }
+
+        // 4) Verificador contínuo (caso o quadro interno não recarregue)
+        if (!pwin.__collTimer) {
+            pwin.__collTimer = true;
+            pwin.setInterval(function() {
+                if (!isMobile()) return;
+                var t = pwin.__collapseAt || 0, age = Date.now() - t;
+                if (t && age > 300 && age < 6000) {
+                    var btn = collapseBtn();
+                    if (btn && btn.offsetParent !== null) { btn.click(); pwin.__collapseAt = 0; }
+                }
+            }, 120);
+        }
+    })();
     </script>
     """,
     height=0, width=0
