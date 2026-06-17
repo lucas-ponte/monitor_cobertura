@@ -507,8 +507,8 @@ INDICES_LIST = ["^BVSP", "SMALL11.SA", "EWZ", "^GSPC", "^NDX", "^DJI", "^VIX", "
 
 COBERTURA = {
     "AZZA3.SA": {"Rec": "Neutro", "Alvo": 46.00}, "LREN3.SA": {"Rec": "Compra", "Alvo": 19.00},
-    "MGLU3.SA": {"Rec": "Neutro", "Alvo": 9.00}, "MELI":     {"Rec": "Compra", "Alvo": 2600.00},
-    "ASAI3.SA": {"Rec": "Compra", "Alvo": 14.00}, "RADL3.SA": {"Rec": "Compra", "Alvo": 33.00},
+    "MGLU3.SA": {"Rec": "Neutro", "Alvo": 9.00}, "MELI":     {"Rec": "Compra", "Alvo": 2300.00},
+    "ASAI3.SA": {"Rec": "Compra", "Alvo": 14.00}, "RADL3.SA": {"Rec": "Compra", "Alvo": 29.00},
     "SMFT3.SA": {"Rec": "Compra", "Alvo": 32.00}, "NATU3.SA": {"Rec": "Compra", "Alvo": 16.00},
     "AUAU3.SA": {"Rec": "Neutro", "Alvo": 6.00},  "ABEV3.SA": {"Rec": "Neutro", "Alvo": 17.00},
     "MULT3.SA": {"Rec": "Compra", "Alvo": 35.00}, "WEGE3.SA": {"Rec": "Neutro", "Alvo": 49.00},
