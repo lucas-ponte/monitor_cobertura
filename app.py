@@ -510,7 +510,7 @@ COBERTURA = {
     "MGLU3.SA": {"Rec": "Neutro", "Alvo": 9.00}, "MELI":     {"Rec": "Compra", "Alvo": 2300.00},
     "ASAI3.SA": {"Rec": "Compra", "Alvo": 14.00}, "RADL3.SA": {"Rec": "Compra", "Alvo": 29.00},
     "SMFT3.SA": {"Rec": "Compra", "Alvo": 32.00}, "NATU3.SA": {"Rec": "Compra", "Alvo": 16.00},
-    "AUAU3.SA": {"Rec": "Neutro", "Alvo": 6.00},  "ABEV3.SA": {"Rec": "Neutro", "Alvo": 17.00},
+    "AUAU3.SA": {"Rec": "Neutro", "Alvo": 6.00},  "ABEV3.SA": {"Rec": "Neutro", "Alvo": 19.00},
     "MULT3.SA": {"Rec": "Compra", "Alvo": 35.00}, "WEGE3.SA": {"Rec": "Neutro", "Alvo": 49.00},
     "RENT3.SA": {"Rec": "Compra", "Alvo": 58.00}, "SLCE3.SA": {"Rec": "Compra", "Alvo": 24.60},
     "JBS":      {"Rec": "Compra", "Alvo": 20.00}, "MBRF3.SA": {"Rec": "Neutro", "Alvo": 22.00},
